@@ -1,0 +1,5 @@
+
+addPathsSansGit;
+
+myGUI = beamlineGUI;
+
