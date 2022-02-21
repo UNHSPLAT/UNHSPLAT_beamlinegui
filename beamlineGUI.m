@@ -1,6 +1,9 @@
 classdef beamlineGUI < handle
     %BEAMLINEGUI Summary of this class goes here
     %   Detailed explanation goes here
+    % TODO: 1 - Assign hardware resources to independent handle properties for use in functions
+    %       2 - Develop pushbutton callback methods
+    %       3 - Create timer function that reads and populates all status fields
     
     properties
         Hardware
