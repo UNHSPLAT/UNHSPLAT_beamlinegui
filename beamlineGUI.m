@@ -3,7 +3,7 @@ classdef beamlineGUI < handle
     %       2 - Develop pushbutton callback methods
     %       3 - Finish timer function that reads and populates all status fields
     %       4 - Comments!
-    %BEAMLINEGUI - Defines a GUI used to interact with the Peabody Scientific beamline in lab 145
+    %BEAMLINEGUI - Defines a GUI used to interface with the Peabody Scientific beamline in lab 145
     
     properties
         Hardware % Object handle array to contain all hardware connected to beamline PC
