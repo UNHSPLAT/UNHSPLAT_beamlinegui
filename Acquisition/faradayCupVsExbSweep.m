@@ -1,6 +1,7 @@
 function faradayCupVsExbSweep(hGUI)
-%FARADAYCUPVSEXBSWEEP Summary of this function goes here
-%   Detailed explanation goes here
+%FARADAYCUPVSEXBSWEEP Dummy function to execute selected acquisition type for testing
+
 fprintf('\nYou''ve run a test!\n%s...\n',hGUI.AcquisitionType);
+
 end
 

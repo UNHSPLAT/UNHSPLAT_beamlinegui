@@ -1,113 +1,119 @@
 classdef beamlineGUI < handle
-    %BEAMLINEGUI Summary of this class goes here
-    %   Detailed explanation goes here
     % TODO: 1 - Assign hardware resources to independent handle properties for use in functions
     %       2 - Develop pushbutton callback methods
     %       3 - Finish timer function that reads and populates all status fields
+    %       4 - Comments!
+    %BEAMLINEGUI - Defines a GUI used to interact with the Peabody Scientific beamline in lab 145
     
     properties
-        Hardware
-        TestSequence double
-        TestDate string
-        DataDir string
-        TestOperator string
-        GasType string
-        AcquisitionType string
-        hTimer
-        hFigure
-        hStatusGrp
-        hExtractionText
-        hExtractionReadText
-        hExtractionReadField
-        hEinselText
-        hEinselReadText
-        hEinselReadField
-        hExbText
-        hExbReadText
-        hExbReadField
-        hExbSetText
-        hExbSetField
-        hExbSetBtn
-        hEsaText
-        hEsaReadText
-        hEsaReadField
-        hEsaSetText
-        hEsaSetField
-        hEsaSetBtn
-        hDeflText
-        hDeflReadText
-        hDeflReadField
-        hDeflSetText
-        hDeflSetField
-        hDeflSetBtn
-        hYsteerText
-        hYsteerReadText
-        hYsteerReadField
-        hYsteerSetText
-        hYsteerSetField
-        hYsteerSetBtn
-        hFaradayText
-        hFaradayReadText
-        hFaradayReadField
-        hMassText
-        hMassReadText
-        hMassReadField
-        hMassSetText
-        hMassSetField
-        hMassSetBtn
-        hP1Text
-        hP1ReadText
-        hP1ReadField
-        hP2Text
-        hP2ReadText
-        hP2ReadField
-        hP3Text
-        hP3ReadText
-        hP3ReadField
-        hP4Text
-        hP4ReadText
-        hP4ReadField
-        hP5Text
-        hP5ReadText
-        hP5ReadField
-        hFileMenu
-        hSequenceText
-        hSequenceEdit
-        hDateText
-        hDateEdit
-        hOperatorText
-        hOperatorEdit
-        OperatorList cell = {'Jonathan Bower','Daniel Abel','Skylar Vogler','Colin van Ysseldyk','Philip Valek','Nathan Schwadron','Zack Smith','David Heirtzler'}
-        hGasText
-        hGasEdit
-        GasList cell = {'Air','Argon','Nitrogen','Helium','Deuterium','Oxygen','Magic gas'}
-        hAcquisitionText
-        hAcquisitionEdit
-        AcquisitionList cell = {'Faraday cup vs ExB sweep'}
-        hRunBtn
+        Hardware % Object handle array to contain all hardware connected to beamline PC
+        TestSequence double % Unique test sequence identifier number
+        TestDate string % Test date derived from TestSequence
+        DataDir string % Data directory derived from TestSequence
+        TestOperator string % Test operator string identifier
+        GasType string % Gas type string identifier
+        AcquisitionType string % Acquisition type string identifier
+        hTimer % Handle to timer used to update beamline status read fields
+        hFigure % Handle to GUI figure
+        hStatusGrp % Handle to beamline status uicontrol group
+        hExtractionText % Handle to extraction row label
+        hExtractionReadText % Handle to extraction voltage reading label
+        hExtractionReadField % Handle to extraction voltage reading field
+        hEinselText % Handle to einsel row label
+        hEinselReadText % Handle to einsel voltage reading label
+        hEinselReadField % Handle to einsel voltage reading field
+        hExbText % Handle to ExB row label
+        hExbReadText % Handle to ExB voltage reading label
+        hExbReadField % Handle to ExB voltage reading field
+        hExbSetText % Handle to ExB voltage setting label
+        hExbSetField % Handle to ExB voltage setting field
+        hExbSetBtn % Handle to ExB voltage setting button
+        hEsaText % Handle to ESA row label
+        hEsaReadText % Handle to ESA voltage reading label
+        hEsaReadField % Handle to ESA voltage reading field
+        hEsaSetText % Handle to ESA voltage setting label
+        hEsaSetField % Handle to ESA voltage setting field
+        hEsaSetBtn % Handle to ESA voltage setting button
+        hDeflText % Handle to Defl row label
+        hDeflReadText % Handle to Defl voltage reading label
+        hDeflReadField % Handle to Defl voltage reading field
+        hDeflSetText % Handle to Defl voltage setting label
+        hDeflSetField % Handle to Defl voltage setting field
+        hDeflSetBtn % Handle to Defl voltage setting button
+        hYsteerText % Handle to y-steer row label
+        hYsteerReadText % Handle to y-steer voltage reading label
+        hYsteerReadField % Handle to y-steer voltage reading field
+        hYsteerSetText % Handle to y-steer voltage setting label
+        hYsteerSetField % Handle to y-steer voltage setting field
+        hYsteerSetBtn % Handle to y-steer voltage setting button
+        hFaradayText % Handle to faraday cup row label
+        hFaradayReadText % Handle to faraday cup current reading label
+        hFaradayReadField % Handle to faraday cup current reading field
+        hMassText % Handle to mass flow row label
+        hMassReadText % Handle to mass flow reading label
+        hMassReadField % Handle to mass flow reading field
+        hMassSetText % Handle to mass flow setting label
+        hMassSetField % Handle to mass flow setting field
+        hMassSetBtn % Handle to mass flow setting button
+        hP1Text % Handle to pressure 1 row label
+        hP1ReadText % Handle to pressure 1 reading label
+        hP1ReadField % Handle to pressure 1 reading field
+        hP2Text % Handle to pressure 2 row label
+        hP2ReadText % Handle to pressure 2 reading label
+        hP2ReadField % Handle to pressure 2 reading field
+        hP3Text % Handle to pressure 3 row label
+        hP3ReadText % Handle to pressure 3 reading label
+        hP3ReadField % Handle to pressure 3 reading field
+        hP4Text % Handle to pressure 4 row label
+        hP4ReadText % Handle to pressure 4 reading label
+        hP4ReadField % Handle to pressure 4 reading field
+        hP5Text % Handle to pressure 5 row label
+        hP5ReadText % Handle to pressure 5 reading label
+        hP5ReadField % Handle to pressure 5 reading field
+        hFileMenu % Handle to file top menu dropdown
+        hSequenceText % Handle to test sequence label
+        hSequenceEdit % Handle to test sequence field
+        hDateText % Handle to test date label
+        hDateEdit % Handle to test date field
+        hOperatorText % Handle to test operator label
+        hOperatorEdit % Handle to test operator popupmenu
+        OperatorList cell = {'Jonathan Bower','Daniel Abel','Skylar Vogler','Colin van Ysseldyk','Philip Valek','Nathan Schwadron','Zack Smith','David Heirtzler'} % Test operators available for selection
+        hGasText % Handle to gas type label
+        hGasEdit % Handle to gas type popupmenu
+        GasList cell = {'Air','Argon','Nitrogen','Helium','Deuterium','Oxygen','Magic gas'} % Gas types available for selection
+        hAcquisitionText % Handle to acquisition type label
+        hAcquisitionEdit % Handle to acquisition type popupmenu
+        AcquisitionList cell = {'Faraday cup vs ExB sweep'} % Acquisition types available for selection
+        hRunBtn % Handle to run test button
     end
     
     methods
         function obj = beamlineGUI
             %BEAMLINEGUI Construct an instance of this class
-            %   Detailed explanation goes here
 
+            % Generate a test sequence, test date, and data directory
             obj.genTestSequence;
 
+            % Gather and populate required hardware
 %             obj.gatherHardware;
 
+            % Create GUI components
             obj.createGUI;
 
+            % Create and start beamline status update timer
             obj.createTimer;
 
         end
 
         function delete(obj)
+            %DELETE Handle class destructor to stop timer and close figure when obj is deleted
 
+            % Stop timer if running
             if strcmp(obj.hTimer.Running,'on')
                 stop(obj.hTimer);
             end
 
+            % Delete figure
             if isvalid(obj.hFigure)
                 delete(obj.hFigure);
             end
@@ -119,7 +125,8 @@ classdef beamlineGUI < handle
     methods (Access = private)
 
         function genTestSequence(obj)
-
+            %GENTESTSEQUENCE Generates a test sequence, test date, and data directory and populates respective obj properties
+            
             obj.TestSequence = round(now*1e6);
             obj.TestDate = datestr(obj.TestSequence/1e6,'mmm dd, yyyy HH:MM:SS');
             obj.DataDir = fullfile("C:\data",num2str(obj.TestSequence));
@@ -130,13 +137,17 @@ classdef beamlineGUI < handle
         end
         
         function gatherHardware(obj)
-            %METHOD1 Summary of this method goes here
-            %   Detailed explanation goes here
+            %GATHERHARDWARE Detect and instantiate required hardware objects and populate respective obj properties
+            
+            % Auto-detect hardware
             obj.Hardware = initializeInstruments;
+
         end
 
         function createGUI(obj)
+            %CREATEGUI Create beamline GUI components
 
+            % Create figure
             obj.hFigure = figure('MenuBar','none',...
                 'ToolBar','none',...
                 'Resize','off',...
@@ -144,14 +155,16 @@ classdef beamlineGUI < handle
                 'NumberTitle','off',...
                 'Name','Beamline GUI',...
                 'DeleteFcn',@obj.closeGUI);
-
+            
+            % Create beamline status uicontrol group
             obj.hStatusGrp = uipanel(obj.hFigure,...
                 'Title','Beamline Status',...
                 'FontWeight','bold',...
                 'FontSize',12,...
                 'Units','pixels',...
                 'Position',[40,40,480,420]);
-
+            
+            % Set positions for components
             ysize = 22;
             ygap = 6;
             ystart = 360;
@@ -161,6 +174,7 @@ classdef beamlineGUI < handle
             xpos = xstart;
             xsize = 80;
 
+            % Create beamline status components
             obj.hExtractionText = uicontrol(obj.hStatusGrp,'Style','text',...
                 'Position',[xpos,ypos,xsize,ysize],...
                 'String','Extraction',...
@@ -612,9 +626,13 @@ classdef beamlineGUI < handle
                 'FontSize',9,...
                 'HorizontalAlignment','center');
 
+            % Create file menu
             obj.hFileMenu = uimenu(obj.hFigure,'Text','File');
+
+            % Turn off dock controls (defaults to on when first uimenu created)
             set(obj.hFigure,'DockControls','off');
 
+            % Set positions for right-side GUI components
             xmid = 700;
             xgap = 8;
             ystart = 400;
@@ -623,7 +641,8 @@ classdef beamlineGUI < handle
             ygap = 20;
             xtextsize = 160;
             xeditsize = 180;
-
+            
+            % Create remaning GUI components
             obj.hSequenceText = uicontrol(obj.hFigure,'Style','text',...
                 'Position',[xmid-xtextsize-xgap/2,ypos,xtextsize,ysize],...
                 'String','Test Sequence:',...
@@ -716,20 +735,26 @@ classdef beamlineGUI < handle
         end
 
         function createTimer(obj)
+            %CREATETIMER Creates timer to periodically update readings from beamline hardware
 
+            % Create timer object and populate respective obj property
             obj.hTimer = timer('Name','readTimer',...
                 'Period',5,...
                 'ExecutionMode','fixedRate',...
                 'TimerFcn',@obj.updateReadings);
 
+            % Start timer
             start(obj.hTimer);
 
         end
 
         function operatorCallback(obj,src,~)
-
+            %OPERATORCALLBACK Populate test operator obj property with user selected value
+            
+            % Delete blank popupmenu option
             obj.popupBlankDelete(src);
             
+            % Populate obj property with user selection
             if ~strcmp(src.String{src.Value},"")
                 obj.TestOperator = src.String{src.Value};
             end
@@ -737,9 +762,12 @@ classdef beamlineGUI < handle
         end
 
         function gasCallback(obj,src,~)
+            %GASCALLBACK Populate gas type obj property with user selected value
 
+            % Delete blank popupmenu option
             obj.popupBlankDelete(src);
 
+            % Populate obj property with user selection
             if ~strcmp(src.String{src.Value},"")
                 obj.GasType = src.String{src.Value};
             end
@@ -747,9 +775,12 @@ classdef beamlineGUI < handle
         end
 
         function acquisitionCallback(obj,src,~)
+            %ACQUISITIONCALLBACK Populate acquisition type obj property with user selected value
 
+            % Delete blank popupmenu option
             obj.popupBlankDelete(src);
 
+            % Populate obj property with user selection
             if ~strcmp(src.String{src.Value},"")
                 obj.AcquisitionType = src.String{src.Value};
             end
@@ -757,27 +788,34 @@ classdef beamlineGUI < handle
         end
 
         function runTestCallback(obj,~,~)
+            %RUNTESTCALLBACK Check for required user input, generate new test sequence, and execute selected acquisition type
 
+            % Throw error if test operator not selected
             if isempty(obj.TestOperator)
                 errordlg('A test operator must be selected before proceeding!','Don''t be lazy!');
                 return
             end
 
+            % Throw error if gas type not selected
             if isempty(obj.GasType)
                 errordlg('A gas type must be selected before proceeding!','Don''t be lazy!');
                 return
             end
 
+            % Throw error if acquisition type not selected
             if isempty(obj.AcquisitionType)
                 errordlg('An acquisition type must be selected before proceeding!','Don''t be lazy!');
                 return
             end
 
+            % Generate new test sequence, test date, and data directory
             obj.genTestSequence;
 
+            % Update GUI test sequence and test date fields
             set(obj.hSequenceEdit,'String',num2str(obj.TestSequence));
             set(obj.hDateEdit,'String',obj.TestDate);
 
+            % Find test acquisition function and execute
             acqPath = which(strrep(obj.AcquisitionType,' ',''));
             tokes = regexp(acqPath,'\\','split');
             fcnStr = tokes{end}(1:end-2);
@@ -787,6 +825,7 @@ classdef beamlineGUI < handle
         end
 
         function updateReadings(obj,~,~)
+            %UPDATEREADINGS Read and update all beamline status reading fields
 
             reading = randi([0,9]);
             obj.hExtractionReadField.String = num2str(reading);
@@ -830,11 +869,16 @@ classdef beamlineGUI < handle
         end
 
         function closeGUI(obj,~,~)
+            %CLOSEGUI Stop timer and delete obj when figure is closed
+
+            % Stop timer if running
             if strcmp(obj.hTimer.Running,'on')
                 stop(obj.hTimer);
             end
 
+            % Delete obj
             delete(obj);
+
         end
 
     end
@@ -842,6 +886,7 @@ classdef beamlineGUI < handle
     methods (Static, Access = private)
 
         function popupBlankDelete(src)
+            %POPUPBLANKDELETE Deletes blank option of popupmenu if user selected another value
 
             if isempty(src.String{1})
                 if src.Value ~= 1
