@@ -722,9 +722,10 @@ classdef beamlineGUI < handle
                 'Callback',@obj.acquisitionCallback);
             
             ysize = 66;
+            xbuffer = 40;
 
             obj.hRunBtn = uicontrol(obj.hFigure,'Style','pushbutton',...
-                'Position',[xmid-xtextsize-xgap/2,40,xtextsize+xgap+xeditsize,ysize],...
+                'Position',[xmid-xtextsize+xbuffer/2,40,xtextsize+xeditsize-xbuffer,ysize],...
                 'String','RUN TEST',...
                 'FontSize',16,...
                 'FontWeight','bold',...
@@ -815,12 +816,13 @@ classdef beamlineGUI < handle
             set(obj.hSequenceEdit,'String',num2str(obj.TestSequence));
             set(obj.hDateEdit,'String',obj.TestDate);
 
-            % Find test acquisition function and execute
+            % Find test acquisition class, instantiate, and execute
             acqPath = which(strrep(obj.AcquisitionType,' ',''));
             tokes = regexp(acqPath,'\\','split');
             fcnStr = tokes{end}(1:end-2);
             hFcn = str2func(fcnStr);
-            hFcn(obj);
+            myAcq = hFcn(obj);
+            myAcq.runSweep;
             
         end
 
