@@ -3,7 +3,7 @@ classdef beamlineGUI < handle
     %   Detailed explanation goes here
     % TODO: 1 - Assign hardware resources to independent handle properties for use in functions
     %       2 - Develop pushbutton callback methods
-    %       3 - Create timer function that reads and populates all status fields
+    %       3 - Finish timer function that reads and populates all status fields
     
     properties
         Hardware
@@ -13,6 +13,7 @@ classdef beamlineGUI < handle
         TestOperator string
         GasType string
         AcquisitionType string
+        hTimer
         hFigure
         hStatusGrp
         hExtractionText
@@ -97,6 +98,20 @@ classdef beamlineGUI < handle
 
             obj.createGUI;
 
+            obj.createTimer;
+
+        end
+
+        function delete(obj)
+
+            if strcmp(obj.hTimer.Running,'on')
+                stop(obj.hTimer);
+            end
+
+            if isvalid(obj.hFigure)
+                delete(obj.hFigure);
+            end
+
         end
 
     end
@@ -127,7 +142,8 @@ classdef beamlineGUI < handle
                 'Resize','off',...
                 'Position',[100,100,900,480],...
                 'NumberTitle','off',...
-                'Name','Beamline GUI');
+                'Name','Beamline GUI',...
+                'DeleteFcn',@obj.closeGUI);
 
             obj.hStatusGrp = uipanel(obj.hFigure,...
                 'Title','Beamline Status',...
@@ -699,6 +715,17 @@ classdef beamlineGUI < handle
 
         end
 
+        function createTimer(obj)
+
+            obj.hTimer = timer('Name','readTimer',...
+                'Period',5,...
+                'ExecutionMode','fixedRate',...
+                'TimerFcn',@obj.updateReadings);
+
+            start(obj.hTimer);
+
+        end
+
         function operatorCallback(obj,src,~)
 
             obj.popupBlankDelete(src);
@@ -757,6 +784,57 @@ classdef beamlineGUI < handle
             hFcn = str2func(fcnStr);
             hFcn(obj);
             
+        end
+
+        function updateReadings(obj,~,~)
+
+            reading = randi([0,9]);
+            obj.hExtractionReadField.String = num2str(reading);
+
+            reading = randi([0,9]);
+            obj.hEinselReadField.String = num2str(reading);
+
+            reading = randi([0,9]);
+            obj.hExbReadField.String = num2str(reading);
+
+            reading = randi([0,9]);
+            obj.hEsaReadField.String = num2str(reading);
+
+            reading = randi([0,9]);
+            obj.hDeflReadField.String = num2str(reading);
+
+            reading = randi([0,9]);
+            obj.hYsteerReadField.String = num2str(reading);
+
+            reading = randi([0,9]);
+            obj.hFaradayReadField.String = num2str(reading);
+
+            reading = randi([0,9]);
+            obj.hMassReadField.String = num2str(reading);
+
+            reading = randi([0,9]);
+            obj.hP1ReadField.String = num2str(reading);
+
+            reading = randi([0,9]);
+            obj.hP2ReadField.String = num2str(reading);
+
+            reading = randi([0,9]);
+            obj.hP3ReadField.String = num2str(reading);
+
+            reading = randi([0,9]);
+            obj.hP4ReadField.String = num2str(reading);
+
+            reading = randi([0,9]);
+            obj.hP5ReadField.String = num2str(reading);
+
+        end
+
+        function closeGUI(obj,~,~)
+            if strcmp(obj.hTimer.Running,'on')
+                stop(obj.hTimer);
+            end
+
+            delete(obj);
         end
 
     end
