@@ -137,7 +137,7 @@ classdef beamlineGUI < handle
         end
         
         function gatherHardware(obj)
-            %GATHERHARDWARE Detect and instantiate required hardware objects and populate respective obj properties
+            %GATHERHARDWARE Detect and instantiate required hardware objects, set hardware tags, and populate respective obj properties
             
             % Auto-detect hardware
             obj.Hardware = initializeInstruments;
