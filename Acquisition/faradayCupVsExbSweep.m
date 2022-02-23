@@ -55,7 +55,8 @@ classdef faradayCupVsExbSweep < acquisition
                 'Resize','off',...
                 'Position',[400,160,300,185],...
                 'NumberTitle','off',...
-                'Name','ExB Sweep Config');
+                'Name','ExB Sweep Config',...
+                'DeleteFcn',@obj.deleteFigure);
             
             % Set positions
             ystart = 155;
@@ -164,12 +165,26 @@ classdef faradayCupVsExbSweep < acquisition
             elseif minVal > maxVal || minVal < 0 || maxVal < 0
                 errordlg('Invalid min and max voltages! Must be increasing positive values.','User input error!');
                 return
-            elseif maxVal > obj.hExb.VMax || minVal < obj.hExb.VMin
-                errordlg('Invalid min and max voltages! Cannot exceed power supply range of %g to %g V',obj.hExb.VMin,obj.hExb.VMax);
-                return
+%             elseif maxVal > obj.hExb.VMax || minVal < obj.hExb.VMin
+%                 errordlg('Invalid min and max voltages! Cannot exceed power supply range of %g to %g V',obj.hExb.VMin,obj.hExb.VMax);
+%                 return
             end
 
             spacingVal = logical(obj.hSpacingEdit.Value);
+
+            if spacingVal
+                obj.VPoints = logspace(log10(minVal),log10(maxVal),stepsVal);
+            else
+                obj.VPoints = linspace(minVal,maxVal,stepsVal);
+            end
+
+
+
+        end
+
+        function deleteFigure(obj,~,~)
+
+
 
         end
 

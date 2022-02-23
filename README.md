@@ -11,5 +11,5 @@ myGUI = beamlineGUI;
 The GUI can then be used to perform various functions such as adjusting beamline settings or running test acquisitions, and if needed the GUI can be accessed directly using the `myGUI` handle. 
 
 ## How to Contribute
-Support for new acquisition types can be added by defining a function with a beamlineGUI handle as the only input argument and no output arguments. The name of the function can then be added to the AcquisitionList property (case and white space insensitive) to allow user selection.
+Support for new acquisition types can be added by defining an acquisition class (see abstract class 'acquisition.m') with a beamlineGUI handle as the only input argument to the constructor. The name of the class can then be added to the AcquisitionList property (case and white space insensitive) to allow user selection.
 The OperatorList and GasList properties can also be easily expanded to include new selectable options.
