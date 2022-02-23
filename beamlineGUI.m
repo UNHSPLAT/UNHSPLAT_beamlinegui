@@ -1,5 +1,5 @@
 classdef beamlineGUI < handle
-    % TODO: 1 - Assign hardware resources to independent handle properties for use in functions
+    % TODO: 1 - Create method to set hardware tags
     %       2 - Develop pushbutton callback methods
     %       3 - Finish timer function that reads and populates all status fields
     %       4 - Comments!
@@ -19,9 +19,9 @@ classdef beamlineGUI < handle
         hExtractionText % Handle to extraction row label
         hExtractionReadText % Handle to extraction voltage reading label
         hExtractionReadField % Handle to extraction voltage reading field
-        hEinselText % Handle to einsel row label
-        hEinselReadText % Handle to einsel voltage reading label
-        hEinselReadField % Handle to einsel voltage reading field
+        hEinzelText % Handle to einzel row label
+        hEinzelReadText % Handle to einzel voltage reading label
+        hEinzelReadField % Handle to einzel voltage reading field
         hExbText % Handle to ExB row label
         hExbReadText % Handle to ExB voltage reading label
         hExbReadField % Handle to ExB voltage reading field
@@ -129,7 +129,7 @@ classdef beamlineGUI < handle
             
             obj.TestSequence = round(now*1e6);
             obj.TestDate = datestr(obj.TestSequence/1e6,'mmm dd, yyyy HH:MM:SS');
-            obj.DataDir = fullfile("C:\data",num2str(obj.TestSequence));
+            obj.DataDir = fullfile(getenv("USERPROFILE"),"data",num2str(obj.TestSequence));
             if ~exist(obj.DataDir,'dir')
                 mkdir(obj.DataDir);
             end
@@ -184,9 +184,9 @@ classdef beamlineGUI < handle
 
             ypos = ypos-ysize-ygap;
 
-            obj.hEinselText = uicontrol(obj.hStatusGrp,'Style','text',...
+            obj.hEinzelText = uicontrol(obj.hStatusGrp,'Style','text',...
                 'Position',[xpos,ypos,xsize,ysize],...
-                'String','Einsel',...
+                'String','Einzel',...
                 'FontWeight','bold',...
                 'FontSize',9,...
                 'HorizontalAlignment','right');
@@ -302,7 +302,7 @@ classdef beamlineGUI < handle
 
             ypos = ypos-ysize-ygap;
 
-            obj.hEinselReadText = uicontrol(obj.hStatusGrp,'Style','text',...
+            obj.hEinzelReadText = uicontrol(obj.hStatusGrp,'Style','text',...
                 'Position',[xpos,ypos,xsize,ysize],...
                 'String','Voltage [V]: ',...
                 'FontSize',9,...
@@ -408,7 +408,7 @@ classdef beamlineGUI < handle
 
             ypos = ypos-ysize-ygap;
 
-            obj.hEinselReadField = uicontrol(obj.hStatusGrp,'Style','edit',...
+            obj.hEinzelReadField = uicontrol(obj.hStatusGrp,'Style','edit',...
                 'Position',[xpos,ypos,xsize,ysize],...
                 'Enable','inactive',...
                 'FontSize',9,...
@@ -826,47 +826,47 @@ classdef beamlineGUI < handle
             
         end
 
-        function updateReadings(obj,~,~)
+        function readings = updateReadings(obj,~,~)
             %UPDATEREADINGS Read and update all beamline status reading fields
 
-            reading = randi([0,9]);
-            obj.hExtractionReadField.String = num2str(reading);
+            readings.Extraction = randi([0,9]);
+            obj.hExtractionReadField.String = num2str(readings.Extraction);
 
-            reading = randi([0,9]);
-            obj.hEinselReadField.String = num2str(reading);
+            readings.Einzel = randi([0,9]);
+            obj.hEinzelReadField.String = num2str(readings.Einzel);
 
-            reading = randi([0,9]);
-            obj.hExbReadField.String = num2str(reading);
+            readings.Exb = randi([0,9]);
+            obj.hExbReadField.String = num2str(readings.Exb);
 
-            reading = randi([0,9]);
-            obj.hEsaReadField.String = num2str(reading);
+            readings.Esa = randi([0,9]);
+            obj.hEsaReadField.String = num2str(readings.Esa);
 
-            reading = randi([0,9]);
-            obj.hDeflReadField.String = num2str(reading);
+            readings.Defl = randi([0,9]);
+            obj.hDeflReadField.String = num2str(readings.Defl);
 
-            reading = randi([0,9]);
-            obj.hYsteerReadField.String = num2str(reading);
+            readings.Ysteer = randi([0,9]);
+            obj.hYsteerReadField.String = num2str(readings.Ysteer);
 
-            reading = randi([0,9]);
-            obj.hFaradayReadField.String = num2str(reading);
+            readings.Faraday = randi([0,9]);
+            obj.hFaradayReadField.String = num2str(readings.Faraday);
 
-            reading = randi([0,9]);
-            obj.hMassReadField.String = num2str(reading);
+            readings.Mass = randi([0,9]);
+            obj.hMassReadField.String = num2str(readings.Mass);
 
-            reading = randi([0,9]);
-            obj.hP1ReadField.String = num2str(reading);
+            readings.P1 = randi([0,9]);
+            obj.hP1ReadField.String = num2str(readings.P1);
 
-            reading = randi([0,9]);
-            obj.hP2ReadField.String = num2str(reading);
+            readings.P2 = randi([0,9]);
+            obj.hP2ReadField.String = num2str(readings.P2);
 
-            reading = randi([0,9]);
-            obj.hP3ReadField.String = num2str(reading);
+            readings.P3 = randi([0,9]);
+            obj.hP3ReadField.String = num2str(readings.P3);
 
-            reading = randi([0,9]);
-            obj.hP4ReadField.String = num2str(reading);
+            readings.P4 = randi([0,9]);
+            obj.hP4ReadField.String = num2str(readings.P4);
 
-            reading = randi([0,9]);
-            obj.hP5ReadField.String = num2str(reading);
+            readings.P5 = randi([0,9]);
+            obj.hP5ReadField.String = num2str(readings.P5);
 
         end
 
