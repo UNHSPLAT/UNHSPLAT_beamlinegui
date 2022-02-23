@@ -7,7 +7,7 @@ classdef acquisition < handle
     end
 
     properties (Abstract, Constant)
-        Type string
+        Type string % Acquisition type identifier string
     end
 
     methods

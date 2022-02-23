@@ -1,4 +1,7 @@
 classdef faradayCupVsExbSweep < acquisition
+    % TODO: 1 - Add "RUN TEST" button enable and disable points
+    %       2 - Manage figure window appropriately (invisible, delete, etc.)
+    %       3 - Save data
     %UNTITLED2 Summary of this class goes here
     %   Detailed explanation goes here
 
@@ -36,6 +39,9 @@ classdef faradayCupVsExbSweep < acquisition
         end
 
         function runSweep(obj)
+
+            set(obj.hBeamlineGUI.hRunBtn,'Enable','off');
+            set(obj.hBeamlineGUI.hRunBtn,'String','Test in progress...');
             
             % % Find ExB power supply
             % obj.hExb = hBeamlineGUI.Hardware(contains(hBeamlineGUI.Hardware.Tag,'ExB')&strcmp(hBeamlineGUI.Hardware.Type,'Power Supply'));
@@ -153,38 +159,81 @@ classdef faradayCupVsExbSweep < acquisition
     methods (Access = private)
 
         function sweepBtnCallback(obj,~,~)
+            
+            try
+    
+                % Retrieve config values
+                minVal = str2double(obj.hMinEdit.String);
+                maxVal = str2double(obj.hMaxEdit.String);
+                stepsVal = str2double(obj.hStepsEdit.String);
+                dwellVal = str2double(obj.hDwellEdit.String);
+                operator = obj.hBeamlineGUI.TestOperator;
+    
+                % Error checking
+                if isnan(minVal) || isnan(maxVal) || isnan(stepsVal) || isnan(dwellVal)
+                    errordlg('All fields must be filled with a valid numeric entry!','User input error!');
+                    return
+                elseif minVal > maxVal || minVal < 0 || maxVal < 0
+                    errordlg('Invalid min and max voltages! Must be increasing positive values.','User input error!');
+                    return
+%                 elseif maxVal > obj.hExb.VMax || minVal < obj.hExb.VMin
+%                     errordlg(['Invalid min and max voltages! Cannot exceed power supply range of ',num2str(obj.hExb.VMin),' to ',num2str(obj.hExb.VMax),' V'],'User input error!');
+%                     return
+                elseif dwellVal <= 0
+                    errordlg('Invalid dwell time! Must be a positive value.','User input error!');
+                    return
+                elseif uint64(stepsVal) ~= stepsVal || ~stepsVal
+                    errordlg('Invalid number of steps! Must be a positive integer.','User input error!');
+                    return
+                end
+    
+                % Determine log vs linear spacing
+                logSpacing = logical(obj.hSpacingEdit.Value);
+    
+                % Create voltage setpoint array
+                if logSpacing
+                    obj.VPoints = logspace(log10(minVal),log10(maxVal),stepsVal);
+                else
+                    obj.VPoints = linspace(minVal,maxVal,stepsVal);
+                end
+    
+                % Set DwellTime property
+                obj.DwellTime = dwellVal;
+    
+                % Set config figure to invisible
+                set(obj.hFigure,'Visible','off');
+    
+                % Run sweep
+                for iV = 1:length(obj.VPoints)
+                    % Set ExB voltage
+                    fprintf('Setting voltage to %.2f V...\n',obj.VPoints(iV));
+%                     obj.hExb.setVSet(obj.VPoints(iV));
+                    % Pause for dwell time
+                    pause(obj.DwellTime);
+                    % Obtain readings
+%                     readings = obj.hBeamlineGUI.updateReadings;
+                    % Save data
+                    fname = strrep(sprintf('ExB_%.2fV.mat',obj.VPoints(iV)),'.','p');
+                    fprintf('Saving data to file: %s\n',fname);
+%                     save(fullfile(obj.hBeamlineGUI.DataDir,fname),'readings');
+                end
 
-            minVal = str2double(obj.hMinEdit.String);
-            maxVal = str2double(obj.hMaxEdit.String);
-            stepsVal = str2double(obj.hStepsEdit.String);
-            dwellVal = str2double(obj.hDwellEdit.String);
+                fprintf('\nTest complete!\n');
+                delete(obj.hFigure);
 
-            if isnan(minVal) || isnan(maxVal) || isnan(stepsVal) || isnan(dwellVal)
-                errordlg('All fields must be filled with a valid numeric entry!','User input error!');
-                return
-            elseif minVal > maxVal || minVal < 0 || maxVal < 0
-                errordlg('Invalid min and max voltages! Must be increasing positive values.','User input error!');
-                return
-%             elseif maxVal > obj.hExb.VMax || minVal < obj.hExb.VMin
-%                 errordlg('Invalid min and max voltages! Cannot exceed power supply range of %g to %g V',obj.hExb.VMin,obj.hExb.VMax);
-%                 return
+            catch MExc
+
+                delete(obj.hFigure);
+                rethrow(MExc);
+
             end
-
-            spacingVal = logical(obj.hSpacingEdit.Value);
-
-            if spacingVal
-                obj.VPoints = logspace(log10(minVal),log10(maxVal),stepsVal);
-            else
-                obj.VPoints = linspace(minVal,maxVal,stepsVal);
-            end
-
-
 
         end
 
         function deleteFigure(obj,~,~)
 
-
+            set(obj.hBeamlineGUI.hRunBtn,'String','RUN TEST');
+            set(obj.hBeamlineGUI.hRunBtn,'Enable','on');
 
         end
 
