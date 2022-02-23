@@ -2,6 +2,7 @@ classdef faradayCupVsExbSweep < acquisition
     % TODO: 1 - Add "RUN TEST" button enable and disable points
     %       2 - Manage figure window appropriately (invisible, delete, etc.)
     %       3 - Save data
+    %       4 - Fix issue where closing beamlineGUI doesn't close config GUI
     %UNTITLED2 Summary of this class goes here
     %   Detailed explanation goes here
 
