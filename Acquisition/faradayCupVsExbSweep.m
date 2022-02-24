@@ -1,47 +1,46 @@
 classdef faradayCupVsExbSweep < acquisition
-    % TODO: 1 - Add "RUN TEST" button enable and disable points
-    %       2 - Manage figure window appropriately (invisible, delete, etc.)
-    %       3 - Save data
-    %       4 - Comments!
-    %UNTITLED2 Summary of this class goes here
-    %   Detailed explanation goes here
+    % TODO: 1 - Test and uncomment hardware-dependent lines
+    %FARADAYCUPVSEXBSWEEP Configures and runs a sweep of Faraday cup current vs ExB voltage
 
     properties (Constant)
-        Type string = "Faraday cup vs ExB Sweep"
-        MinDefault double = 100
-        MaxDefault double = 5000
-        StepsDefault double = 20
-        DwellDefault double = 10
+        Type string = "Faraday cup vs ExB Sweep" % Acquisition type identifier string
+        MinDefault double = 100 % Default minimum voltage
+        MaxDefault double = 5000 % Default maximum voltage
+        StepsDefault double = 20 % Default number of steps
+        DwellDefault double = 10 % Default dwell time
     end
 
     properties
-        hExb
-        hFaraday
-        hFigure
-        hMinText
-        hMinEdit
-        hStepsText
-        hStepsEdit
-        hSpacingEdit
-        hMaxText
-        hMaxEdit
-        hDwellText
-        hDwellEdit
-        hSweepBtn
-        VPoints double
-        DwellTime double
+        hExb % Handle to ExB power supply
+        hFigure % Handle to configuration GUI figure
+        hMinText % Handle to minimum voltage label
+        hMinEdit % Handle to minimum voltage field
+        hStepsText % Handle to number of steps label
+        hStepsEdit % Handle to number of steps field
+        hSpacingEdit % Handle to log spacing checkbox
+        hMaxText % Handle to maximum voltage label
+        hMaxEdit % Handle to maximum voltage field
+        hDwellText % Handle to dwell time label
+        hDwellEdit % Handle to dwell time field
+        hSweepBtn % Handle to run sweep button
+        VPoints double % Array of ExB voltage setpoints
+        DwellTime double % Dwell time setting
     end
 
     methods
         function obj = faradayCupVsExbSweep(hGUI)
-            %UNTITLED2 Construct an instance of this class
-            %   Detailed explanation goes here
+            %FARADAYCUPVSEXBSWEEP Construct an instance of this class
+
             obj@acquisition(hGUI);
+            
+            % Add listener to delete configuration GUI figure if main beamline GUI deleted
             addlistener(obj.hBeamlineGUI,'ObjectBeingDestroyed',@obj.beamlineGUIDeleted);
         end
 
         function runSweep(obj)
+            %RUNSWEEP Establishes configuration GUI, with run sweep button triggering actual sweep execution
 
+            % Disable and relabel beamline GUI run test button
             set(obj.hBeamlineGUI.hRunBtn,'Enable','off');
             set(obj.hBeamlineGUI.hRunBtn,'String','Test in progress...');
             
@@ -49,12 +48,6 @@ classdef faradayCupVsExbSweep < acquisition
             % obj.hExb = hBeamlineGUI.Hardware(contains(hBeamlineGUI.Hardware.Tag,'ExB')&strcmp(hBeamlineGUI.Hardware.Type,'Power Supply'));
             % if length(hExb)~=1
             %     error('faradayCupVsExbSweep:invalidTags','Invalid tags! Must be exactly one power supply available with tag containing ''ExB''...');
-            % end
-            %
-            % % Find Faraday cup picoammeter
-            % obj.hFaraday = hBeamlineGUI.Hardware(contains(hBeamlineGUI.Hardware.Tag,'Faraday')&strcmp(hBeamlineGUI.Hardware.Type,'Picoammeter'));
-            % if length(hFaraday)~=1
-            %     error('faradayCupVsExbSweep:invalidTags','Invalid tags! Must be exactly one picoammeter available with tag containing ''Faraday''...');
             % end
             
             % Create figure
@@ -153,11 +146,10 @@ classdef faradayCupVsExbSweep < acquisition
                 'HorizontalAlignment','center',...
                 'Callback',@obj.sweepBtnCallback);
 
-%             waitfor(obj.hFigure); % not sure i need this
-
         end
 
         function beamlineGUIDeleted(obj,~,~)
+            %BEAMLINEGUIDELETED Delete configuration GUI figure
 
             if isvalid(obj) && isvalid(obj.hFigure)
                 delete(obj.hFigure);
@@ -169,7 +161,9 @@ classdef faradayCupVsExbSweep < acquisition
     methods (Access = private)
 
         function sweepBtnCallback(obj,~,~)
+            %SWEEPBTNCALLBACK Begin sweep execution based on configuration info
             
+            % Run inside a try-catch to reset beamline GUI run test button if error occurs
             try
     
                 % Retrieve config values
@@ -203,9 +197,6 @@ classdef faradayCupVsExbSweep < acquisition
                 operator = obj.hBeamlineGUI.TestOperator;
                 gasType = obj.hBeamlineGUI.GasType;
                 testSequence = obj.hBeamlineGUI.TestSequence;
-
-                % Save config info
-                save(fullfile(obj.hBeamlineGUI.DataDir,'config.mat'),'minVal','maxVal','stepsVal','dwellVal','logSpacing','operator','gasType','testSequence');
     
                 % Create voltage setpoint array
                 if logSpacing
@@ -214,6 +205,9 @@ classdef faradayCupVsExbSweep < acquisition
                     vPoints = linspace(minVal,maxVal,stepsVal);
                 end
                 obj.VPoints = vPoints;
+
+                % Save config info
+                save(fullfile(obj.hBeamlineGUI.DataDir,'config.mat'),'vPoints','minVal','maxVal','stepsVal','dwellVal','logSpacing','operator','gasType','testSequence');
     
                 % Set DwellTime property
                 obj.DwellTime = dwellVal;
@@ -242,7 +236,10 @@ classdef faradayCupVsExbSweep < acquisition
 
             catch MExc
 
+                % Delete figure if error, triggering closeGUI callback
                 delete(obj.hFigure);
+
+                % Rethrow caught exception
                 rethrow(MExc);
 
             end
@@ -250,12 +247,15 @@ classdef faradayCupVsExbSweep < acquisition
         end
 
         function closeGUI(obj,~,~)
+            %CLOSEGUI Re-enable beamline GUI run test button and delete obj when figure is closed
 
+            % Enable beamline GUI run test button if still valid
             if isvalid(obj.hBeamlineGUI)
                 set(obj.hBeamlineGUI.hRunBtn,'String','RUN TEST');
                 set(obj.hBeamlineGUI.hRunBtn,'Enable','on');
             end
 
+            % Delete obj
             delete(obj);
 
         end
