@@ -2,7 +2,7 @@ classdef faradayCupVsExbSweep < acquisition
     % TODO: 1 - Add "RUN TEST" button enable and disable points
     %       2 - Manage figure window appropriately (invisible, delete, etc.)
     %       3 - Save data
-    %       4 - Fix issue where closing beamlineGUI doesn't close config GUI
+    %       4 - Comments!
     %UNTITLED2 Summary of this class goes here
     %   Detailed explanation goes here
 
@@ -37,6 +37,7 @@ classdef faradayCupVsExbSweep < acquisition
             %UNTITLED2 Construct an instance of this class
             %   Detailed explanation goes here
             obj@acquisition(hGUI);
+            addlistener(obj.hBeamlineGUI,'ObjectBeingDestroyed',@obj.beamlineGUIDeleted);
         end
 
         function runSweep(obj)
@@ -63,7 +64,7 @@ classdef faradayCupVsExbSweep < acquisition
                 'Position',[400,160,300,185],...
                 'NumberTitle','off',...
                 'Name','ExB Sweep Config',...
-                'DeleteFcn',@obj.deleteFigure);
+                'DeleteFcn',@obj.closeGUI);
             
             % Set positions
             ystart = 155;
@@ -155,6 +156,14 @@ classdef faradayCupVsExbSweep < acquisition
 %             waitfor(obj.hFigure); % not sure i need this
 
         end
+
+        function beamlineGUIDeleted(obj,~,~)
+
+            if isvalid(obj) && isvalid(obj.hFigure)
+                delete(obj.hFigure);
+            end
+            
+        end
     end
 
     methods (Access = private)
@@ -168,7 +177,6 @@ classdef faradayCupVsExbSweep < acquisition
                 maxVal = str2double(obj.hMaxEdit.String);
                 stepsVal = str2double(obj.hStepsEdit.String);
                 dwellVal = str2double(obj.hDwellEdit.String);
-                operator = obj.hBeamlineGUI.TestOperator;
     
                 % Error checking
                 if isnan(minVal) || isnan(maxVal) || isnan(stepsVal) || isnan(dwellVal)
@@ -190,13 +198,22 @@ classdef faradayCupVsExbSweep < acquisition
     
                 % Determine log vs linear spacing
                 logSpacing = logical(obj.hSpacingEdit.Value);
+
+                % Retrieve config info
+                operator = obj.hBeamlineGUI.TestOperator;
+                gasType = obj.hBeamlineGUI.GasType;
+                testSequence = obj.hBeamlineGUI.TestSequence;
+
+                % Save config info
+                save(fullfile(obj.hBeamlineGUI.DataDir,'config.mat'),'minVal','maxVal','stepsVal','dwellVal','logSpacing','operator','gasType','testSequence');
     
                 % Create voltage setpoint array
                 if logSpacing
-                    obj.VPoints = logspace(log10(minVal),log10(maxVal),stepsVal);
+                    vPoints = logspace(log10(minVal),log10(maxVal),stepsVal);
                 else
-                    obj.VPoints = linspace(minVal,maxVal,stepsVal);
+                    vPoints = linspace(minVal,maxVal,stepsVal);
                 end
+                obj.VPoints = vPoints;
     
                 % Set DwellTime property
                 obj.DwellTime = dwellVal;
@@ -213,10 +230,11 @@ classdef faradayCupVsExbSweep < acquisition
                     pause(obj.DwellTime);
                     % Obtain readings
 %                     readings = obj.hBeamlineGUI.updateReadings;
+%                     timestamp = now;
                     % Save data
                     fname = strrep(sprintf('ExB_%.2fV.mat',obj.VPoints(iV)),'.','p');
                     fprintf('Saving data to file: %s\n',fname);
-%                     save(fullfile(obj.hBeamlineGUI.DataDir,fname),'readings');
+%                     save(fullfile(obj.hBeamlineGUI.DataDir,fname),'readings','timestamp');
                 end
 
                 fprintf('\nTest complete!\n');
@@ -231,10 +249,14 @@ classdef faradayCupVsExbSweep < acquisition
 
         end
 
-        function deleteFigure(obj,~,~)
+        function closeGUI(obj,~,~)
 
-            set(obj.hBeamlineGUI.hRunBtn,'String','RUN TEST');
-            set(obj.hBeamlineGUI.hRunBtn,'Enable','on');
+            if isvalid(obj.hBeamlineGUI)
+                set(obj.hBeamlineGUI.hRunBtn,'String','RUN TEST');
+                set(obj.hBeamlineGUI.hRunBtn,'Enable','on');
+            end
+
+            delete(obj);
 
         end
 
