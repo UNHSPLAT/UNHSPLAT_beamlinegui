@@ -7,6 +7,11 @@ classdef beamlineGUI < handle
     
     properties
         Hardware % Object handle array to contain all hardware connected to beamline PC
+        hExb % Handle to ExB HV power supply
+        hEsa % Handle to ESA HV power supply
+        hDefl % Handle to defl HV power supply
+        hYsteer % Handle to y-steer HV power supply
+        hMass % Handle to mass flow controller power supply
         TestSequence double % Unique test sequence identifier number
         TestDate string % Test date derived from TestSequence
         DataDir string % Data directory derived from TestSequence
@@ -588,7 +593,8 @@ classdef beamlineGUI < handle
                 'String','SET',...
                 'FontWeight','bold',...
                 'FontSize',9,...
-                'HorizontalAlignment','center');
+                'HorizontalAlignment','center',...
+                'Callback',@obj.exbBtnCallback);
 
             ypos = ypos-ysize-ygap;
 
@@ -597,7 +603,8 @@ classdef beamlineGUI < handle
                 'String','SET',...
                 'FontWeight','bold',...
                 'FontSize',9,...
-                'HorizontalAlignment','center');
+                'HorizontalAlignment','center',...
+                'Callback',@obj.esaBtnCallback);
 
             ypos = ypos-ysize-ygap;
 
@@ -606,7 +613,8 @@ classdef beamlineGUI < handle
                 'String','SET',...
                 'FontWeight','bold',...
                 'FontSize',9,...
-                'HorizontalAlignment','center');
+                'HorizontalAlignment','center',...
+                'Callback',@obj.deflBtnCallback);
 
             ypos = ypos-ysize-ygap;
 
@@ -615,7 +623,8 @@ classdef beamlineGUI < handle
                 'String','SET',...
                 'FontWeight','bold',...
                 'FontSize',9,...
-                'HorizontalAlignment','center');
+                'HorizontalAlignment','center',...
+                'Callback',@obj.ysteerBtnCallback);
 
             ypos = ypos-ysize*2-ygap*2;
 
@@ -624,7 +633,8 @@ classdef beamlineGUI < handle
                 'String','SET',...
                 'FontWeight','bold',...
                 'FontSize',9,...
-                'HorizontalAlignment','center');
+                'HorizontalAlignment','center',...
+                'Callback',@obj.massBtnCallback);
 
             % Create file menu
             obj.hFileMenu = uimenu(obj.hFigure,'Text','File');
@@ -746,6 +756,103 @@ classdef beamlineGUI < handle
 
             % Start timer
             start(obj.hTimer);
+
+        end
+
+        function exbBtnCallback(obj,~,~)
+
+            setVal = str2double(obj.hExbSetField.String);
+
+            if isnan(setVal)
+                errordlg('A valid voltage value must be entered!','Invalid input!');
+                set(obj.hExbSetField,'String','');
+                return
+            elseif setVal > obj.hExb.VMax || setVal < obj.hExb.VMin
+                errordlg(['ExB voltage setpoint must be between ',num2str(obj.hExb.VMin),' and ',num2str(obj.hExb.VMax),' V!'],'Invalid input!');
+                set(obj.hExbSetField,'String','');
+                return
+            end
+
+            obj.hExb.setVSet(setVal);
+            set(obj.hExbSetField,'String','');
+
+        end
+
+        function esaBtnCallback(obj,~,~)
+
+            setVal = str2double(obj.hEsaSetField.String);
+
+            if isnan(setVal)
+                errordlg('A valid voltage value must be entered!','Invalid input!');
+                set(obj.hEsaSetField,'String','');
+                return
+            elseif setVal > obj.hEsa.VMax || setVal < obj.hEsa.VMin
+                errordlg(['ESA voltage setpoint must be between ',num2str(obj.hEsa.VMin),' and ',num2str(obj.hEsa.VMax),' V!'],'Invalid input!');
+                set(obj.hEsaSetField,'String','');
+                return
+            end
+
+            obj.hEsa.setVSet(setVal);
+            set(obj.hEsaSetField,'String','');
+
+        end
+
+        function deflBtnCallback(obj,~,~)
+
+            setVal = str2double(obj.hDeflSetField.String);
+
+            if isnan(setVal)
+                errordlg('A valid voltage value must be entered!','Invalid input!');
+                set(obj.hDeflSetField,'String','');
+                return
+            elseif setVal > obj.hDefl.VMax || setVal < obj.hDefl.VMin
+                errordlg(['Defl voltage setpoint must be between ',num2str(obj.hDefl.VMin),' and ',num2str(obj.hDefl.VMax),' V!'],'Invalid input!');
+                set(obj.hDeflSetField,'String','');
+                return
+            end
+
+            obj.hDefl.setVSet(setVal);
+            set(obj.hDeflSetField,'String','');
+
+        end
+
+        function ysteerBtnCallback(obj,~,~)
+
+            setVal = str2double(obj.hYsteerSetField.String);
+
+            if isnan(setVal)
+                errordlg('A valid voltage value must be entered!','Invalid input!');
+                set(obj.hYsteerSetField,'String','');
+                return
+            elseif setVal > obj.hYsteer.VMax || setVal < obj.hYsteer.VMin
+                errordlg(['y-steer voltage setpoint must be between ',num2str(obj.hYsteer.VMin),' and ',num2str(obj.hYsteer.VMax),' V!'],'Invalid input!');
+                set(obj.hYsteerSetField,'String','');
+                return
+            end
+
+            obj.hYsteer.setVSet(setVal);
+            set(obj.hYsteerSetField,'String','');
+
+        end
+
+        function massBtnCallback(obj,~,~)
+
+            setVal = str2double(obj.hMassSetField.String);
+
+            if isnan(setVal)
+                errordlg('A valid set value must be entered!','Invalid input!');
+                set(obj.hMassSetField,'String','');
+                return
+            elseif setVal > 100 || setVal < 0
+                errordlg('Mass flow setpoint must be between 0 and 100%!','Invalid input!');
+                set(obj.hMassSetField,'String','');
+                return
+            end
+
+            setVoltage = 5*setVal/100;
+
+            obj.hMass.setVSet(setVoltage);
+            set(obj.hMassSetField,'String','');
 
         end
 
