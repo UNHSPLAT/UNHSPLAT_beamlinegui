@@ -1,17 +1,11 @@
 classdef beamlineGUI < handle
-    % TODO: 1 - Create method to set hardware tags
-    %       2 - Develop pushbutton callback methods
-    %       3 - Finish timer function that reads and populates all status fields
-    %       4 - Comments!
+    % TODO: 1 - Finish gatherHardware method
+    %       2 - Finish timer function that reads and populates all status fields
+    %       3 - Comments!
     %BEAMLINEGUI - Defines a GUI used to interface with the Peabody Scientific beamline in lab 145
     
     properties
         Hardware % Object handle array to contain all hardware connected to beamline PC
-        hExb % Handle to ExB HV power supply
-        hEsa % Handle to ESA HV power supply
-        hDefl % Handle to defl HV power supply
-        hYsteer % Handle to y-steer HV power supply
-        hMass % Handle to mass flow controller power supply
         TestSequence double % Unique test sequence identifier number
         TestDate string % Test date derived from TestSequence
         DataDir string % Data directory derived from TestSequence
@@ -146,6 +140,18 @@ classdef beamlineGUI < handle
             
             % Auto-detect hardware
             obj.Hardware = initializeInstruments;
+
+            % Connect serial port hardware
+            
+            % Set ExB power supply tag
+
+            % Set ESA power supply tag
+
+            % Set defl power supply tag
+
+            % Set y-steer power supply tag
+
+            % Set mass flow power supply tag
 
         end
 
@@ -763,17 +769,23 @@ classdef beamlineGUI < handle
 
             setVal = str2double(obj.hExbSetField.String);
 
+            % Find ExB power supply
+            hExb = obj.Hardware(contains(obj.Hardware.Tag,'ExB','IgnoreCase',true)&strcmpi(obj.Hardware.Type,'Power Supply'));
+            if length(hExb)~=1
+                error('beamlineGUI:invalidTags','Invalid tags! Must be exactly one power supply available with tag containing ''ExB''...');
+            end
+
             if isnan(setVal)
                 errordlg('A valid voltage value must be entered!','Invalid input!');
                 set(obj.hExbSetField,'String','');
                 return
-            elseif setVal > obj.hExb.VMax || setVal < obj.hExb.VMin
-                errordlg(['ExB voltage setpoint must be between ',num2str(obj.hExb.VMin),' and ',num2str(obj.hExb.VMax),' V!'],'Invalid input!');
+            elseif setVal > hExb.VMax || setVal < hExb.VMin
+                errordlg(['ExB voltage setpoint must be between ',num2str(hExb.VMin),' and ',num2str(hExb.VMax),' V!'],'Invalid input!');
                 set(obj.hExbSetField,'String','');
                 return
             end
 
-            obj.hExb.setVSet(setVal);
+            hExb.setVSet(setVal);
             set(obj.hExbSetField,'String','');
 
         end
@@ -782,17 +794,23 @@ classdef beamlineGUI < handle
 
             setVal = str2double(obj.hEsaSetField.String);
 
+            % Find ESA power supply
+            hEsa = obj.Hardware(contains(obj.Hardware.Tag,'ESA','IgnoreCase',true)&strcmpi(obj.Hardware.Type,'Power Supply'));
+            if length(hEsa)~=1
+                error('beamlineGUI:invalidTags','Invalid tags! Must be exactly one power supply available with tag containing ''ESA''...');
+            end
+
             if isnan(setVal)
                 errordlg('A valid voltage value must be entered!','Invalid input!');
                 set(obj.hEsaSetField,'String','');
                 return
-            elseif setVal > obj.hEsa.VMax || setVal < obj.hEsa.VMin
-                errordlg(['ESA voltage setpoint must be between ',num2str(obj.hEsa.VMin),' and ',num2str(obj.hEsa.VMax),' V!'],'Invalid input!');
+            elseif setVal > hEsa.VMax || setVal < hEsa.VMin
+                errordlg(['ESA voltage setpoint must be between ',num2str(hEsa.VMin),' and ',num2str(hEsa.VMax),' V!'],'Invalid input!');
                 set(obj.hEsaSetField,'String','');
                 return
             end
 
-            obj.hEsa.setVSet(setVal);
+            hEsa.setVSet(setVal);
             set(obj.hEsaSetField,'String','');
 
         end
@@ -801,17 +819,23 @@ classdef beamlineGUI < handle
 
             setVal = str2double(obj.hDeflSetField.String);
 
+            % Find Defl power supply
+            hDefl = obj.Hardware(contains(obj.Hardware.Tag,'Defl','IgnoreCase',true)&strcmpi(obj.Hardware.Type,'Power Supply'));
+            if length(hDefl)~=1
+                error('beamlineGUI:invalidTags','Invalid tags! Must be exactly one power supply available with tag containing ''defl''...');
+            end
+
             if isnan(setVal)
                 errordlg('A valid voltage value must be entered!','Invalid input!');
                 set(obj.hDeflSetField,'String','');
                 return
-            elseif setVal > obj.hDefl.VMax || setVal < obj.hDefl.VMin
-                errordlg(['Defl voltage setpoint must be between ',num2str(obj.hDefl.VMin),' and ',num2str(obj.hDefl.VMax),' V!'],'Invalid input!');
+            elseif setVal > hDefl.VMax || setVal < hDefl.VMin
+                errordlg(['Defl voltage setpoint must be between ',num2str(hDefl.VMin),' and ',num2str(hDefl.VMax),' V!'],'Invalid input!');
                 set(obj.hDeflSetField,'String','');
                 return
             end
 
-            obj.hDefl.setVSet(setVal);
+            hDefl.setVSet(setVal);
             set(obj.hDeflSetField,'String','');
 
         end
@@ -820,17 +844,23 @@ classdef beamlineGUI < handle
 
             setVal = str2double(obj.hYsteerSetField.String);
 
+            % Find y-steer power supply
+            hYsteer = obj.Hardware(contains(obj.Hardware.Tag,'Ysteer','IgnoreCase',true)&strcmpi(obj.Hardware.Type,'Power Supply'));
+            if length(hYsteer)~=1
+                error('beamlineGUI:invalidTags','Invalid tags! Must be exactly one power supply available with tag containing ''ysteer''...');
+            end
+
             if isnan(setVal)
                 errordlg('A valid voltage value must be entered!','Invalid input!');
                 set(obj.hYsteerSetField,'String','');
                 return
-            elseif setVal > obj.hYsteer.VMax || setVal < obj.hYsteer.VMin
-                errordlg(['y-steer voltage setpoint must be between ',num2str(obj.hYsteer.VMin),' and ',num2str(obj.hYsteer.VMax),' V!'],'Invalid input!');
+            elseif setVal > hYsteer.VMax || setVal < hYsteer.VMin
+                errordlg(['y-steer voltage setpoint must be between ',num2str(hYsteer.VMin),' and ',num2str(hYsteer.VMax),' V!'],'Invalid input!');
                 set(obj.hYsteerSetField,'String','');
                 return
             end
 
-            obj.hYsteer.setVSet(setVal);
+            hYsteer.setVSet(setVal);
             set(obj.hYsteerSetField,'String','');
 
         end
@@ -838,6 +868,12 @@ classdef beamlineGUI < handle
         function massBtnCallback(obj,~,~)
 
             setVal = str2double(obj.hMassSetField.String);
+
+            % Find mass flow power supply
+            hMass = obj.Hardware(contains(obj.Hardware.Tag,'Mass','IgnoreCase',true)&strcmpi(obj.Hardware.Type,'Power Supply'));
+            if length(hMass)~=1
+                error('beamlineGUI:invalidTags','Invalid tags! Must be exactly one power supply available with tag containing ''mass''...');
+            end
 
             if isnan(setVal)
                 errordlg('A valid set value must be entered!','Invalid input!');
@@ -851,7 +887,7 @@ classdef beamlineGUI < handle
 
             setVoltage = 5*setVal/100;
 
-            obj.hMass.setVSet(setVoltage);
+            hMass.setVSet(setVoltage,1);
             set(obj.hMassSetField,'String','');
 
         end
