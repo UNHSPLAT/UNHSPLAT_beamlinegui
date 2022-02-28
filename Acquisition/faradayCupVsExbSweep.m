@@ -45,8 +45,8 @@ classdef faradayCupVsExbSweep < acquisition
             set(obj.hBeamlineGUI.hRunBtn,'String','Test in progress...');
             
             % % Find ExB power supply
-            % obj.hExb = hBeamlineGUI.Hardware(contains(hBeamlineGUI.Hardware.Tag,'ExB')&strcmp(hBeamlineGUI.Hardware.Type,'Power Supply'));
-            % if length(hExb)~=1
+            % obj.hExb = hBeamlineGUI.Hardware(contains(hBeamlineGUI.Hardware.Tag,'ExB','IgnoreCase',true)&strcmpi(hBeamlineGUI.Hardware.Type,'Power Supply'));
+            % if length(obj.hExb)~=1
             %     error('faradayCupVsExbSweep:invalidTags','Invalid tags! Must be exactly one power supply available with tag containing ''ExB''...');
             % end
             
