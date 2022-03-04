@@ -82,7 +82,7 @@ classdef beamlineGUI < handle
         GasList cell = {'Air','Argon','Nitrogen','Helium','Deuterium','Oxygen','Magic gas'} % Gas types available for selection
         hAcquisitionText % Handle to acquisition type label
         hAcquisitionEdit % Handle to acquisition type popupmenu
-        AcquisitionList cell = {'Faraday cup vs ExB sweep'} % Acquisition types available for selection
+        AcquisitionList cell = {'Faraday cup vs ExB sweep','Pressure Monitor'} % Acquisition types available for selection
         hRunBtn % Handle to run test button
     end
     
@@ -94,7 +94,7 @@ classdef beamlineGUI < handle
             obj.genTestSequence;
 
             % Gather and populate required hardware
-%             obj.gatherHardware;
+            obj.gatherHardware;
 
             % Create GUI components
             obj.createGUI;
@@ -142,6 +142,10 @@ classdef beamlineGUI < handle
             obj.Hardware = initializeInstruments;
 
             % Connect serial port hardware
+            obj.Hardware(end+1) = leyboldCenter2("ASRL7::INSTR");
+            obj.Hardware(end).Tag = "Rough,Gas";
+            obj.Hardware(end+1) = leyboldGraphix3("ASRL8::INSTR");
+            obj.Hardware(end).Tag = "Chamber";
             
             % Set ExB power supply tag
 
@@ -154,14 +158,14 @@ classdef beamlineGUI < handle
             % Set mass flow power supply tag
 
             % Set multimeter tag and configure route
-            hDMM = obj.Hardware(strcmpi(obj.Hardware.Type,'Multimeter')&strcmpi(obj.Hardware.ModelNum,'DAQ6510'));
-            if length(hDMM)~=1
-                error('beamlineGUI:deviceNotFound','Device not found! Device with specified properties not found...');
-            end
-            hDMM.Tag = "Extraction,Einzel,Mass";
-            hDMM.devRW('SENS:FUNC "VOLT", (@101:103)');
-            hDMM.devRW('SENS:VOLT:NPLC 1, (@101:103)');
-            hDMM.devRW('ROUT:SCAN:CRE (@101:103)');
+%             hDMM = obj.Hardware(strcmpi(obj.Hardware.Type,'Multimeter')&strcmpi(obj.Hardware.ModelNum,'DAQ6510'));
+%             if length(hDMM)~=1
+%                 error('beamlineGUI:deviceNotFound','Device not found! Device with specified properties not found...');
+%             end
+%             hDMM.Tag = "Extraction,Einzel,Mass";
+%             hDMM.devRW('SENS:FUNC "VOLT", (@101:103)');
+%             hDMM.devRW('SENS:VOLT:NPLC 1, (@101:103)');
+%             hDMM.devRW('ROUT:SCAN:CRE (@101:103)');
 
         end
 
