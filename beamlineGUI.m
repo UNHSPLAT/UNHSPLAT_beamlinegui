@@ -136,7 +136,7 @@ classdef beamlineGUI < handle
         end
         
         function gatherHardware(obj)
-            %GATHERHARDWARE Detect and instantiate required hardware objects, set hardware tags, and populate respective obj properties
+            %GATHERHARDWARE Detect, instantiate, and configure required hardware objects, set hardware tags, and populate respective obj properties
             
             % Auto-detect hardware
             obj.Hardware = initializeInstruments;
@@ -152,6 +152,16 @@ classdef beamlineGUI < handle
             % Set y-steer power supply tag
 
             % Set mass flow power supply tag
+
+            % Set multimeter tag and configure route
+            hDMM = obj.Hardware(strcmpi(obj.Hardware.Type,'Multimeter')&strcmpi(obj.Hardware.ModelNum,'DAQ6510'));
+            if length(hDMM)~=1
+                error('beamlineGUI:deviceNotFound','Device not found! Device with specified properties not found...');
+            end
+            hDMM.Tag = "Extraction,Einzel,Mass";
+            hDMM.devRW('SENS:FUNC "VOLT", (@101:103)');
+            hDMM.devRW('SENS:VOLT:NPLC 1, (@101:103)');
+            hDMM.devRW('ROUT:SCAN:CRE (@101:103)');
 
         end
 
@@ -973,43 +983,115 @@ classdef beamlineGUI < handle
             %UPDATEREADINGS Read and update all beamline status reading fields
 
             readings.Extraction = randi([0,9]);
+%             readings.Extraction = obj.readDMM('Extraction');
             obj.hExtractionReadField.String = num2str(readings.Extraction);
 
             readings.Einzel = randi([0,9]);
+%             readings.Einzel = obj.readDMM('Einzel');
             obj.hEinzelReadField.String = num2str(readings.Einzel);
 
             readings.Exb = randi([0,9]);
+%             readings.Exb = obj.readHVPS('Exb');
             obj.hExbReadField.String = num2str(readings.Exb);
 
             readings.Esa = randi([0,9]);
+%             readings.Esa = obj.readHVPS('Esa');
             obj.hEsaReadField.String = num2str(readings.Esa);
 
             readings.Defl = randi([0,9]);
+%             readings.Defl = obj.readHVPS('Defl');
             obj.hDeflReadField.String = num2str(readings.Defl);
 
             readings.Ysteer = randi([0,9]);
+%             readings.Ysteer = obj.readHVPS('Ysteer');
             obj.hYsteerReadField.String = num2str(readings.Ysteer);
 
             readings.Faraday = randi([0,9]);
+%             readings.Faraday = obj.readFaraday;
             obj.hFaradayReadField.String = num2str(readings.Faraday);
 
             readings.Mass = randi([0,9]);
+%             readings.Mass = obj.readDMM('Mass');
             obj.hMassReadField.String = num2str(readings.Mass);
 
             readings.P1 = randi([0,9]);
+%             readings.P1 = obj.readPressureSensor('P1');
             obj.hP1ReadField.String = num2str(readings.P1);
 
             readings.P2 = randi([0,9]);
+%             readings.P2 = obj.readPressureSensor('P2');
             obj.hP2ReadField.String = num2str(readings.P2);
 
             readings.P3 = randi([0,9]);
+%             readings.P3 = obj.readPressureSensor('P3');
             obj.hP3ReadField.String = num2str(readings.P3);
 
             readings.P4 = randi([0,9]);
+%             readings.P4 = obj.readPressureSensor('P4');
             obj.hP4ReadField.String = num2str(readings.P4);
 
             readings.P5 = randi([0,9]);
+%             readings.P5 = obj.readPressureSensor('P5');
             obj.hP5ReadField.String = num2str(readings.P5);
+
+        end
+
+        function [extraction,einzel,mass] = readDMM(obj)
+
+            % Find DMM
+            hDMM = obj.Hardware(contains(obj.Hardware.Tag,'extraction','IgnoreCase',true)&contains(obj.Hardware.Tag,'einzel','IgnoreCase',true)&contains(obj.Hardware.Tag,'mass','IgnoreCase',true)&strcmpi(obj.Hardware.Type,'Multimeter'));
+            if length(hDMM)~=1
+                error('beamlineGUI:invalidTags','Invalid tag! No multimeter with ''Extraction'', ''Einzel'', & ''Mass'' tags found...');
+            end
+
+            dataOut = obj.hDMM.initThenRead;
+
+            % Parse dataOut for voltages and turn into readings
+
+        end
+
+        function readVal = readHVPS(obj,tag)
+
+            % Find power supply matching tags
+            hHVPS = obj.Hardware(contains(obj.Hardware.Tag,tag,'IgnoreCase',true)&strcmpi(obj.Hardware.Type,'Power Supply'));
+            if length(hHVPS)~=1
+                error('beamlineGUI:invalidTags','Invalid tag! No power supply with tag %s found...',tag);
+            end
+
+            readVal = hHVPS.measV;
+
+        end
+
+        function readVal = readFaraday(obj)
+
+            % Find picoammeter
+            hFaraday = obj.Hardware(contains(obj.Hardware.Tag,'Faraday','IgnoreCase',true)&strcmpi(obj.Hardware.Type,'Picoammeter'));
+            if length(hFaraday)~=1
+                error('beamlineGUI:invalidHardware','Invalid hardware configuration! Faraday picoammeter not found...');
+            end
+
+            readVal = hFaraday.read;
+
+        end
+
+        function readVal = readPressureSensor(obj,tag)
+
+            switch lower(tag)
+                case {'p1','p4'}
+                    sensorNum = 1;
+                case {'p2','p5'}
+                    sensorNum = 2;
+                case 'p3'
+                    sensorNum = 3;
+            end
+
+            % Find correct gauge controller
+            hPressure = obj.Hardware(contains(obj.Hardware.Tag,tag,'IgnoreCase',true)&strcmpi(obj.Hardware.Type,'Pressure Sensor'));
+            if length(hPressure)~=1
+                error('beamlineGUI:invalidTags','Invalid tag! No pressure sensor with tag %s found...',tag);
+            end
+
+            readVal = hPressure.readPressure(sensorNum);
 
         end
 
