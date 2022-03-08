@@ -82,7 +82,7 @@ classdef beamlineGUI < handle
         GasList cell = {'Air','Argon','Nitrogen','Helium','Deuterium','Oxygen','Magic gas'} % Gas types available for selection
         hAcquisitionText % Handle to acquisition type label
         hAcquisitionEdit % Handle to acquisition type popupmenu
-        AcquisitionList cell = {'Faraday cup vs ExB sweep','Pressure Monitor'} % Acquisition types available for selection
+        AcquisitionList cell = {'Faraday cup vs ExB sweep','Pressure Monitor','Faraday Cup Stability'} % Acquisition types available for selection
         hRunBtn % Handle to run test button
     end
     
@@ -128,7 +128,7 @@ classdef beamlineGUI < handle
             
             obj.TestSequence = round(now*1e6);
             obj.TestDate = datestr(obj.TestSequence/1e6,'mmm dd, yyyy HH:MM:SS');
-            obj.DataDir = fullfile(getenv("USERPROFILE"),"data",num2str(obj.TestSequence));
+            obj.DataDir = fullfile(getenv("USERPROFILE"),"data",strrep(obj.AcquisitionType,' ',''),num2str(obj.TestSequence));
             if ~exist(obj.DataDir,'dir')
                 mkdir(obj.DataDir);
             end
@@ -143,9 +143,11 @@ classdef beamlineGUI < handle
 
             % Connect serial port hardware
             obj.Hardware(end+1) = leyboldCenter2("ASRL7::INSTR");
-            obj.Hardware(end).Tag = "Rough,Gas";
+            obj.Hardware(end).Tag = "Gas,Rough";
             obj.Hardware(end+1) = leyboldGraphix3("ASRL8::INSTR");
             obj.Hardware(end).Tag = "Chamber";
+            obj.Hardware(end+1) = keithley6485("ASRL9::INSTR");
+            obj.Hardware(end).Tag = "Faraday";
             
             % Set ExB power supply tag
 
@@ -164,7 +166,8 @@ classdef beamlineGUI < handle
 %             end
 %             hDMM.Tag = "Extraction,Einzel,Mass";
 %             hDMM.devRW('SENS:FUNC "VOLT", (@101:103)');
-%             hDMM.devRW('SENS:VOLT:NPLC 1, (@101:103)');
+%             hDMM.devRW('SENS:VOLT:INP MOHM10, (@101:103)');
+%             hDMM.devRW('SENS:VOLT:NPLC 10, (@101:103)');
 %             hDMM.devRW('ROUT:SCAN:CRE (@101:103)');
 
         end
