@@ -50,17 +50,17 @@ classdef pressureMonitor < acquisition
                 'Name','Pressure Monitor',...
                 'DeleteFcn',@obj.closeGUI);
 
-            obj.hAxes = axes(obj.hFigure);
-
-            % Retrieve config info
-            operator = obj.hBeamlineGUI.TestOperator;
-            gasType = obj.hBeamlineGUI.GasType;
-            testSequence = obj.hBeamlineGUI.TestSequence;
-
-            % Save config info
-            save(fullfile(obj.hBeamlineGUI.DataDir,'config.mat'),'operator','gasType','testSequence');
-
             try
+
+                obj.hAxes = axes(obj.hFigure);
+    
+                % Retrieve config info
+                operator = obj.hBeamlineGUI.TestOperator;
+                gasType = obj.hBeamlineGUI.GasType;
+                testSequence = obj.hBeamlineGUI.TestSequence;
+    
+                % Save config info
+                save(fullfile(obj.hBeamlineGUI.DataDir,'config.mat'),'operator','gasType','testSequence');
 
                 tic;
                 iR = 1;
