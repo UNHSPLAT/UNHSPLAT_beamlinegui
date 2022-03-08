@@ -128,7 +128,11 @@ classdef beamlineGUI < handle
             
             obj.TestSequence = round(now*1e6);
             obj.TestDate = datestr(obj.TestSequence/1e6,'mmm dd, yyyy HH:MM:SS');
-            obj.DataDir = fullfile(getenv("USERPROFILE"),"data",strrep(obj.AcquisitionType,' ',''),num2str(obj.TestSequence));
+            if ~isempty(obj.AcquisitionType)
+                obj.DataDir = fullfile(getenv("USERPROFILE"),"data",strrep(obj.AcquisitionType,' ',''),num2str(obj.TestSequence));
+            else
+                obj.DataDir = fullfile(getenv("USERPROFILE"),"data","General",num2str(obj.TestSequence));
+            end
             if ~exist(obj.DataDir,'dir')
                 mkdir(obj.DataDir);
             end
