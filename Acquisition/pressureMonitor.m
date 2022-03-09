@@ -70,12 +70,16 @@ classdef pressureMonitor < acquisition
                     readings(iR).rough = obj.hCenter2.readPressure(2);
                     readings(iR).chamber = obj.hGraphix3.readPressure(1);
                     save(fullfile(obj.hBeamlineGUI.DataDir,'readings.mat'),'readings');
-                    plot(obj.hAxes,[readings.time],[readings.rough],'r-',[readings.time],[readings.gas],'g-',[readings.time],[readings.chamber],'b-');
+                    if length(readings)>=100
+                        plot(obj.hAxes,[readings(end-99:end).time],[readings(end-99:end).rough],'r-',[readings(end-99:end).time],[readings(end-99:end).gas],'g-',[readings(end-99:end).time],[readings(end-99:end).chamber],'b-');
+                    else
+                        plot(obj.hAxes,[readings.time],[readings.rough],'r-',[readings.time],[readings.gas],'g-',[readings.time],[readings.chamber],'b-');
+                    end
                     set(obj.hAxes,'YScale','log');
                     xlabel(obj.hAxes,'Time [sec]');
                     ylabel(obj.hAxes,'Pressure [torr]');
-                    title(obj.hAxes,'PRESSURE MONITOR - CLOSE WINDOW TO EXIT TEST');
-                    legend(obj.hAxes,'Rough Vac','Gas Line','Chamber');
+                    title(obj.hAxes,'PRESSURE MONITOR (LAST 100 READINGS) - CLOSE WINDOW TO EXIT TEST');
+                    legend(obj.hAxes,'Rough Vac','Gas Line','Chamber','Location','northwest');
                     pause(obj.Period);
                     iR = iR+1;
                 end
