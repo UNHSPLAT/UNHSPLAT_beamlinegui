@@ -87,7 +87,7 @@ classdef pressureMonitor < acquisition
                 xlabel(hAx,'Time [sec]');
                 ylabel(hAx,'Pressure [torr]');
                 title(hAx,'Pressure vs Time');
-                legend(hAx,'Rough Vac','Gas Line','Chamber');
+                legend(hAx,'Rough Vac','Gas Line','Chamber','Location','northwest');
 
             catch MExc
 
