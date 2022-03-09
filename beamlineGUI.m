@@ -152,6 +152,9 @@ classdef beamlineGUI < handle
             obj.Hardware(end).Tag = "Chamber";
             obj.Hardware(end+1) = keithley6485("ASRL9::INSTR");
             obj.Hardware(end).Tag = "Faraday";
+            obj.Hardware(end).devRW(':SYST:ZCH OFF');
+            obj.Hardware(end).devRW('ARM:COUN 1');
+            obj.Hardware(end).devRW('FORM:ELEM READ');
             
             % Set ExB power supply tag
 
