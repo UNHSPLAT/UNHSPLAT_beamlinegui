@@ -1048,6 +1048,9 @@ classdef beamlineGUI < handle
 %             readings.P5 = obj.readPressureSensor('P5');
             obj.hP5ReadField.String = num2str(readings.P5);
 
+%             fname = fullfile(obj.DataDir,['readings_',num2str(round(now*1e6)),'.mat']);
+%             save(fname,'readings');
+
         end
 
         function [extraction,einzel,mass] = readDMM(obj)
