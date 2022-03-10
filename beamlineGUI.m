@@ -152,12 +152,27 @@ classdef beamlineGUI < handle
             obj.Hardware(end).Tag = "Chamber";
             obj.Hardware(end+1) = keithley6485("ASRL9::INSTR");
             obj.Hardware(end).Tag = "Faraday";
-            pause(0.1);
             obj.Hardware(end).devRW(':SYST:ZCH OFF');
-            pause(0.1);
+            dataOut = strtrim(obj.Hardware(end).devRW(':SYST:ZCH?'));
+            while ~strcmp(dataOut,'0')
+                warning('beamlineGUI:keithleyNonresponsive','Keithley not listening! Zcheck did not shut off as expected...');
+                obj.Hardware(end).devRW(':SYST:ZCH OFF');
+                dataOut = strtrim(obj.Hardware(end).devRW(':SYST:ZCH?'));
+            end
             obj.Hardware(end).devRW('ARM:COUN 1');
-            pause(0.1);
+            dataOut = strtrim(obj.Hardware(end).devRW('ARM:COUN?'));
+            while ~strcmp(dataOut,'1')
+                warning('beamlineGUI:keithleyNonresponsive','Keithley not listening! Arm count did not set to 1 as expected...');
+                obj.Hardware(end).devRW('ARM:COUN 1');
+                dataOut = strtrim(obj.Hardware(end).devRW('ARM:COUN?'));
+            end
             obj.Hardware(end).devRW('FORM:ELEM READ');
+            dataOut = strtrim(obj.Hardware(end).devRW('FORM:ELEM?'));
+            while ~strcmp(dataOut,'READ')
+                warning('beamlineGUI:keithleyNonresponsive','Keithley not listening! Output format not set to ''READ'' as expected...');
+                obj.Hardware(end).devRW('FORM:ELEM READ');
+                dataOut = strtrim(obj.Hardware(end).devRW('FORM:ELEM?'));
+            end
             
             % Set ExB power supply tag
 
