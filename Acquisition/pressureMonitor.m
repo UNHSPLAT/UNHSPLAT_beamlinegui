@@ -7,11 +7,14 @@ classdef pressureMonitor < acquisition
         Period double = 5 % Period of pressure readings in seconds
     end
 
-    properties
+    properties (SetAccess = private)
         hCenter2 % Handle to Leybold Center 2 pressure gauge controller
         hGraphix3 % Handle to Leybold Graphix 3 pressure gauge controller
         hFigure % Handle to pressure readings figure
         hAxes % Handle to pressure readings axes
+        hTimer % Handle to timer used to execute pressure readings
+        Readings struct % Structure containing all pressure readings
+        tStart % Handle to start time
     end
 
     methods
@@ -62,36 +65,8 @@ classdef pressureMonitor < acquisition
                 % Save config info
                 save(fullfile(obj.hBeamlineGUI.DataDir,'config.mat'),'operator','gasType','testSequence');
 
-                tic;
-                iR = 1;
-                while isvalid(obj) && isvalid(obj.hFigure)
-                    readings(iR).time = toc; %#ok<*AGROW> % Needs to grow on every loop iteration
-                    readings(iR).gas = obj.hCenter2.readPressure(1);
-                    readings(iR).rough = obj.hCenter2.readPressure(2);
-                    readings(iR).chamber = obj.hGraphix3.readPressure(1);
-                    save(fullfile(obj.hBeamlineGUI.DataDir,'readings.mat'),'readings');
-                    if length(readings)>=100
-                        plot(obj.hAxes,[readings(end-99:end).time],[readings(end-99:end).rough],'r-',[readings(end-99:end).time],[readings(end-99:end).gas],'g-',[readings(end-99:end).time],[readings(end-99:end).chamber],'b-');
-                    else
-                        plot(obj.hAxes,[readings.time],[readings.rough],'r-',[readings.time],[readings.gas],'g-',[readings.time],[readings.chamber],'b-');
-                    end
-                    set(obj.hAxes,'YScale','log');
-                    xlabel(obj.hAxes,'Time [sec]');
-                    ylabel(obj.hAxes,'Pressure [torr]');
-                    title(obj.hAxes,'PRESSURE MONITOR (LAST 100 READINGS) - CLOSE WINDOW TO EXIT TEST');
-                    legend(obj.hAxes,'Rough Vac','Gas Line','Chamber','Location','northwest');
-                    pause(obj.Period);
-                    iR = iR+1;
-                end
-
-                hFig = figure;
-                hAx = axes(hFig);
-                plot(hAx,[readings.time],[readings.rough],'r-',[readings.time],[readings.gas],'g-',[readings.time],[readings.chamber],'b-');
-                set(hAx,'YScale','log');
-                xlabel(hAx,'Time [sec]');
-                ylabel(hAx,'Pressure [torr]');
-                title(hAx,'Pressure vs Time');
-                legend(hAx,'Rough Vac','Gas Line','Chamber','Location','northwest');
+                obj.tStart = tic;
+                obj.createTimer;
 
             catch MExc
 
@@ -123,8 +98,71 @@ classdef pressureMonitor < acquisition
                 set(obj.hBeamlineGUI.hRunBtn,'Enable','on');
             end
 
+            if strcmp(obj.hTimer.Running,'on')
+                stop(obj.hTimer);
+            end
+
+            hFig = figure;
+            hAx = axes(hFig);
+            readings = obj.Readings;
+            plot(hAx,[readings.time],[readings.rough],'r-',[readings.time],[readings.gas],'g-',[readings.time],[readings.chamber],'b-');
+            set(hAx,'YScale','log');
+            xlabel(hAx,'Time [sec]');
+            ylabel(hAx,'Pressure [torr]');
+            title(hAx,'Pressure vs Time');
+            legend(hAx,'Rough Vac','Gas Line','Chamber','Location','northwest');
+
             % Delete obj
             delete(obj);
+
+        end
+
+    end
+
+    methods (Access = private)
+
+        function createTimer(obj)
+
+            obj.hTimer = timer('Name','pressureTimer',...
+                'Period',obj.Period,...
+                'ExecutionMode','fixedDelay',...
+                'TimerFcn',@obj.updateReadings);
+
+            start(obj.hTimer);
+
+        end
+
+        function updateReadings(obj,~,~)
+
+            try
+
+                obj.Readings(end+1).time = toc(obj.tStart);
+                obj.Readings(end).gas = obj.hCenter2.readPressure(1);
+                obj.Readings(end).rough = obj.hCenter2.readPressure(2);
+                obj.Readings(end).chamber = obj.hGraphix3.readPressure(1);
+    
+                readings = obj.Readings;
+                save(fullfile(obj.hBeamlineGUI.DataDir,'readings.mat'),'readings');
+                if length(readings)>=100
+                    plot(obj.hAxes,[readings(end-99:end).time],[readings(end-99:end).rough],'r-',[readings(end-99:end).time],[readings(end-99:end).gas],'g-',[readings(end-99:end).time],[readings(end-99:end).chamber],'b-');
+                else
+                    plot(obj.hAxes,[readings.time],[readings.rough],'r-',[readings.time],[readings.gas],'g-',[readings.time],[readings.chamber],'b-');
+                end
+                set(obj.hAxes,'YScale','log');
+                xlabel(obj.hAxes,'Time [sec]');
+                ylabel(obj.hAxes,'Pressure [torr]');
+                title(obj.hAxes,'PRESSURE MONITOR (LAST 100 READINGS) - CLOSE WINDOW TO EXIT TEST');
+                legend(obj.hAxes,'Rough Vac','Gas Line','Chamber','Location','northwest');
+
+            catch MExc
+
+                % Delete figure if error, triggering closeGUI callback
+                delete(obj.hFigure);
+
+                % Rethrow caught exception
+                rethrow(MExc);
+
+            end
 
         end
 
