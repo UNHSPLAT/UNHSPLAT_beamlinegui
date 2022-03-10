@@ -142,7 +142,7 @@ classdef pressureMonitor < acquisition
                 obj.Readings(end).chamber = obj.hGraphix3.readPressure(1);
     
                 readings = obj.Readings;
-                save(fullfile(obj.hBeamlineGUI.DataDir,'readings.mat'),'readings');
+                save(fullfile(obj.hBeamlineGUI.DataDir,'pressureMonitor.mat'),'readings');
                 if length(readings)>=100
                     plot(obj.hAxes,[readings(end-99:end).time],[readings(end-99:end).rough],'r-',[readings(end-99:end).time],[readings(end-99:end).gas],'g-',[readings(end-99:end).time],[readings(end-99:end).chamber],'b-');
                 else

@@ -7,10 +7,13 @@ classdef faradayCupStability < acquisition
         Period double = 5 % Period of current readings in seconds
     end
 
-    properties
+    properties (SetAccess = private)
         hPico % Handle to Keithley picoammeter
         hFigure % Handle to pressure readings figure
         hAxes % Handle to pressure readings axes
+        hTimer % Handle to timer used to execute current readings
+        Readings struct % Structure containing all current readings
+        tStart % Handle to start time
     end
 
     methods
@@ -43,40 +46,20 @@ classdef faradayCupStability < acquisition
                 'Name','Faraday Cup Current Monitor',...
                 'DeleteFcn',@obj.closeGUI);
 
-            obj.hAxes = axes(obj.hFigure);
-
-            % Retrieve config info
-            operator = obj.hBeamlineGUI.TestOperator;
-            gasType = obj.hBeamlineGUI.GasType;
-            testSequence = obj.hBeamlineGUI.TestSequence;
-
-            % Save config info
-            save(fullfile(obj.hBeamlineGUI.DataDir,'config.mat'),'operator','gasType','testSequence');
-
             try
 
-                tic;
-                iR = 1;
-                while isvalid(obj) && isvalid(obj.hFigure)
-                    readings(iR).time = toc; %#ok<*AGROW> % Needs to grow on every loop iteration
-                    readings(iR).faraday = obj.hPico.read;
-                    save(fullfile(obj.hBeamlineGUI.DataDir,'readings.mat'),'readings');
-                    plot(obj.hAxes,[readings.time],[readings.faraday],'r-');
-                    set(obj.hAxes,'YScale','log');
-                    xlabel(obj.hAxes,'Time [sec]');
-                    ylabel(obj.hAxes,'Current [A]');
-                    title(obj.hAxes,'FARADAY CUP MONITOR - CLOSE WINDOW TO EXIT TEST');
-                    pause(obj.Period);
-                    iR = iR+1;
-                end
+                obj.hAxes = axes(obj.hFigure);
 
-                hFig = figure;
-                hAx = axes(hFig);
-                plot(hAx,[readings.time],[readings.faraday],'r-');
-                set(hAx,'YScale','log');
-                xlabel(hAx,'Time [sec]');
-                ylabel(hAx,'Current [A]');
-                title(hAx,'Faraday Cup Current vs Time');
+                % Retrieve config info
+                operator = obj.hBeamlineGUI.TestOperator;
+                gasType = obj.hBeamlineGUI.GasType;
+                testSequence = obj.hBeamlineGUI.TestSequence;
+
+                % Save config info
+                save(fullfile(obj.hBeamlineGUI.DataDir,'config.mat'),'operator','gasType','testSequence');
+                
+                obj.tStart = tic;
+                obj.createTimer;
 
             catch MExc
 
@@ -108,8 +91,67 @@ classdef faradayCupStability < acquisition
                 set(obj.hBeamlineGUI.hRunBtn,'Enable','on');
             end
 
+            if strcmp(obj.hTimer.Running,'on')
+                stop(obj.hTimer);
+            end
+
+            hFig = figure;
+            hAx = axes(hFig);
+            readings = obj.Readings;
+            plot(hAx,[readings.time],[readings.faraday],'r-');
+            set(hAx,'YScale','log');
+            xlabel(hAx,'Time [sec]');
+            ylabel(hAx,'Current [A]');
+            title(hAx,'Faraday Cup Current vs Time');
+
             % Delete obj
             delete(obj);
+
+        end
+
+    end
+
+    methods (Access = private)
+
+        function createTimer(obj)
+
+            obj.hTimer = timer('Name','currentTimer',...
+                'Period',obj.Period,...
+                'ExecutionMode','fixedDelay',...
+                'TimerFcn',@obj.updateReadings);
+
+            start(obj.hTimer);
+
+        end
+
+        function updateReadings(obj,~,~)
+
+            try
+
+                obj.Readings(end+1).time = toc(obj.tStart);
+                obj.Readings(end).faraday = obj.hPico.read;
+    
+                readings = obj.Readings;
+                save(fullfile(obj.hBeamlineGUI.DataDir,'faradayCupStability.mat'),'readings');
+                if length(readings)>=100
+                    plot(obj.hAxes,[readings(end-99:end).time],[readings(end-99:end).faraday],'r-');
+                else
+                    plot(obj.hAxes,[readings.time],[readings.faraday],'r-');
+                end
+                set(obj.hAxes,'YScale','log');
+                xlabel(obj.hAxes,'Time [sec]');
+                ylabel(obj.hAxes,'Current [A]');
+                title(obj.hAxes,'FARADAY CUP MONITOR (LAST 100 READINGS) - CLOSE WINDOW TO EXIT TEST');
+
+            catch MExc
+
+                % Delete figure if error, triggering closeGUI callback
+                delete(obj.hFigure);
+
+                % Rethrow caught exception
+                rethrow(MExc);
+
+            end
 
         end
 
