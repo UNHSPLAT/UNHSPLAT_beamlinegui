@@ -129,6 +129,7 @@ classdef faradayCupStability < acquisition
             try
 
                 obj.Readings(end+1).time = toc(obj.tStart);
+                obj.Readings(end).timestamp = round(now*1e6);
                 obj.Readings(end).faraday = obj.hPico.read;
     
                 readings = obj.Readings;

@@ -137,6 +137,7 @@ classdef pressureMonitor < acquisition
             try
 
                 obj.Readings(end+1).time = toc(obj.tStart);
+                obj.Readings(end).timestamp = round(now*1e6);
                 obj.Readings(end).gas = obj.hCenter2.readPressure(1);
                 obj.Readings(end).rough = obj.hCenter2.readPressure(2);
                 obj.Readings(end).chamber = obj.hGraphix3.readPressure(1);
