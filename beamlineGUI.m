@@ -185,15 +185,15 @@ classdef beamlineGUI < handle
             % Set mass flow power supply tag
 
             % Set multimeter tag and configure route
-%             hDMM = obj.Hardware(strcmpi(obj.Hardware.Type,'Multimeter')&strcmpi(obj.Hardware.ModelNum,'DAQ6510'));
-%             if length(hDMM)~=1
-%                 error('beamlineGUI:deviceNotFound','Device not found! Device with specified properties not found...');
-%             end
-%             hDMM.Tag = "Extraction,Einzel,Mass";
-%             hDMM.devRW('SENS:FUNC "VOLT", (@101:103)');
-%             hDMM.devRW('SENS:VOLT:INP MOHM10, (@101:103)');
-%             hDMM.devRW('SENS:VOLT:NPLC 10, (@101:103)');
-%             hDMM.devRW('ROUT:SCAN:CRE (@101:103)');
+            hDMM = obj.Hardware(strcmpi(obj.Hardware.Type,'Multimeter')&strcmpi(obj.Hardware.ModelNum,'DAQ6510'));
+            if length(hDMM)~=1
+                error('beamlineGUI:deviceNotFound','Device not found! Device with specified properties not found...');
+            end
+            hDMM.Tag = "Extraction,Einzel,Mass";
+            hDMM.devRW('SENS:FUNC "VOLT", (@101:103)');
+            hDMM.devRW('SENS:VOLT:INP MOHM10, (@101:103)');
+            hDMM.devRW('SENS:VOLT:NPLC 10, (@101:103)');
+            hDMM.devRW('ROUT:SCAN:CRE (@101:103)');
 
         end
 
@@ -1079,9 +1079,12 @@ classdef beamlineGUI < handle
                 error('beamlineGUI:invalidTags','Invalid tag! No multimeter with ''Extraction'', ''Einzel'', & ''Mass'' tags found...');
             end
 
-            dataOut = obj.hDMM.initThenRead;
+            dataOut = hDMM.performScan(1,3);
 
             % Parse dataOut for voltages and turn into readings
+            extraction = dataOut(1);
+            einzel = dataOut(2);
+            mass = dataOut(3);
 
         end
 
