@@ -152,12 +152,27 @@ classdef beamlineGUI < handle
             obj.Hardware(end).Tag = "Chamber";
             obj.Hardware(end+1) = keithley6485("ASRL9::INSTR");
             obj.Hardware(end).Tag = "Faraday";
-            pause(0.1);
             obj.Hardware(end).devRW(':SYST:ZCH OFF');
-            pause(0.1);
+            dataOut = strtrim(obj.Hardware(end).devRW(':SYST:ZCH?'));
+            while ~strcmp(dataOut,'0')
+                warning('beamlineGUI:keithleyNonresponsive','Keithley not listening! Zcheck did not shut off as expected...');
+                obj.Hardware(end).devRW(':SYST:ZCH OFF');
+                dataOut = strtrim(obj.Hardware(end).devRW(':SYST:ZCH?'));
+            end
             obj.Hardware(end).devRW('ARM:COUN 1');
-            pause(0.1);
+            dataOut = strtrim(obj.Hardware(end).devRW('ARM:COUN?'));
+            while ~strcmp(dataOut,'1')
+                warning('beamlineGUI:keithleyNonresponsive','Keithley not listening! Arm count did not set to 1 as expected...');
+                obj.Hardware(end).devRW('ARM:COUN 1');
+                dataOut = strtrim(obj.Hardware(end).devRW('ARM:COUN?'));
+            end
             obj.Hardware(end).devRW('FORM:ELEM READ');
+            dataOut = strtrim(obj.Hardware(end).devRW('FORM:ELEM?'));
+            while ~strcmp(dataOut,'READ')
+                warning('beamlineGUI:keithleyNonresponsive','Keithley not listening! Output format not set to ''READ'' as expected...');
+                obj.Hardware(end).devRW('FORM:ELEM READ');
+                dataOut = strtrim(obj.Hardware(end).devRW('FORM:ELEM?'));
+            end
             
             % Set ExB power supply tag
 
@@ -170,15 +185,15 @@ classdef beamlineGUI < handle
             % Set mass flow power supply tag
 
             % Set multimeter tag and configure route
-%             hDMM = obj.Hardware(strcmpi(obj.Hardware.Type,'Multimeter')&strcmpi(obj.Hardware.ModelNum,'DAQ6510'));
-%             if length(hDMM)~=1
-%                 error('beamlineGUI:deviceNotFound','Device not found! Device with specified properties not found...');
-%             end
-%             hDMM.Tag = "Extraction,Einzel,Mass";
-%             hDMM.devRW('SENS:FUNC "VOLT", (@101:103)');
-%             hDMM.devRW('SENS:VOLT:INP MOHM10, (@101:103)');
-%             hDMM.devRW('SENS:VOLT:NPLC 10, (@101:103)');
-%             hDMM.devRW('ROUT:SCAN:CRE (@101:103)');
+            hDMM = obj.Hardware(strcmpi(obj.Hardware.Type,'Multimeter')&strcmpi(obj.Hardware.ModelNum,'DAQ6510'));
+            if length(hDMM)~=1
+                error('beamlineGUI:deviceNotFound','Device not found! Device with specified properties not found...');
+            end
+            hDMM.Tag = "Extraction,Einzel,Mass";
+            hDMM.devRW('SENS:FUNC "VOLT", (@101:103)');
+            hDMM.devRW('SENS:VOLT:INP MOHM10, (@101:103)');
+            hDMM.devRW('SENS:VOLT:NPLC 10, (@101:103)');
+            hDMM.devRW('ROUT:SCAN:CRE (@101:103)');
 
         end
 
@@ -1065,9 +1080,12 @@ classdef beamlineGUI < handle
                 error('beamlineGUI:invalidTags','Invalid tag! No multimeter with ''Extraction'', ''Einzel'', & ''Mass'' tags found...');
             end
 
-            dataOut = obj.hDMM.initThenRead;
+            dataOut = hDMM.performScan(1,3);
 
             % Parse dataOut for voltages and turn into readings
+            extraction = dataOut(1);
+            einzel = dataOut(2);
+            mass = dataOut(3);
 
         end
 
