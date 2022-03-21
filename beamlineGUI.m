@@ -390,7 +390,7 @@ classdef beamlineGUI < handle
 
             obj.hMassReadText = uicontrol(obj.hStatusGrp,'Style','text',...
                 'Position',[xpos,ypos,xsize,ysize],...
-                'String','Flow [sccm]: ',...
+                'String','Vset [V]: ',...
                 'FontSize',9,...
                 'HorizontalAlignment','right');
 
@@ -577,7 +577,7 @@ classdef beamlineGUI < handle
 
             obj.hMassSetText = uicontrol(obj.hStatusGrp,'Style','text',...
                 'Position',[xpos,ypos,xsize,ysize],...
-                'String','Fset [%]: ',...
+                'String','Vset [V]: ',...
                 'FontSize',9,...
                 'HorizontalAlignment','right');
 
@@ -906,15 +906,13 @@ classdef beamlineGUI < handle
                 errordlg('A valid set value must be entered!','Invalid input!');
                 set(obj.hMassSetField,'String','');
                 return
-            elseif setVal > 100 || setVal < 0
-                errordlg('Mass flow setpoint must be between 0 and 100%!','Invalid input!');
+            elseif setVal > 5 || setVal < 0
+                errordlg('Mass flow setpoint must be between 0 and 5V!','Invalid input!');
                 set(obj.hMassSetField,'String','');
                 return
             end
 
-            setVoltage = 5*setVal/100;
-
-            hMass.setVSet(setVoltage,1);
+            hMass.setVSet(setVal,1);
             set(obj.hMassSetField,'String','');
 
         end
@@ -999,56 +997,59 @@ classdef beamlineGUI < handle
         function readings = updateReadings(obj,~,~)
             %UPDATEREADINGS Read and update all beamline status reading fields
 
+%             % Gather readings
+%             [extraction,einzel,mass] = obj.readDMM;
+%             readings.Extraction = extraction*10000;
+%             readings.Einzel = einzel*1000;
+%             readings.Mass = mass;
+%             readings.Exb = obj.readHVPS('Exb');
+%             readings.Esa = obj.readHVPS('Esa');
+%             readings.Defl = obj.readHVPS('Defl');
+%             readings.Ysteer = obj.readHVPS('Ysteer');
+%             readings.Faraday = obj.readFaraday;
+%             readings.P1 = obj.readPressureSensor('P1');
+%             readings.P2 = obj.readPressureSensor('P2');
+%             readings.P3 = obj.readPressureSensor('P3');
+%             readings.P4 = obj.readPressureSensor('P4');
+%             readings.P5 = obj.readPressureSensor('P5');
+
             readings.Extraction = randi([0,9]);
-%             readings.Extraction = obj.readDMM('Extraction');
             obj.hExtractionReadField.String = num2str(readings.Extraction);
 
             readings.Einzel = randi([0,9]);
-%             readings.Einzel = obj.readDMM('Einzel');
             obj.hEinzelReadField.String = num2str(readings.Einzel);
 
             readings.Exb = randi([0,9]);
-%             readings.Exb = obj.readHVPS('Exb');
             obj.hExbReadField.String = num2str(readings.Exb);
 
             readings.Esa = randi([0,9]);
-%             readings.Esa = obj.readHVPS('Esa');
             obj.hEsaReadField.String = num2str(readings.Esa);
 
             readings.Defl = randi([0,9]);
-%             readings.Defl = obj.readHVPS('Defl');
             obj.hDeflReadField.String = num2str(readings.Defl);
 
             readings.Ysteer = randi([0,9]);
-%             readings.Ysteer = obj.readHVPS('Ysteer');
             obj.hYsteerReadField.String = num2str(readings.Ysteer);
 
             readings.Faraday = randi([0,9]);
-%             readings.Faraday = obj.readFaraday;
             obj.hFaradayReadField.String = num2str(readings.Faraday);
 
             readings.Mass = randi([0,9]);
-%             readings.Mass = obj.readDMM('Mass');
             obj.hMassReadField.String = num2str(readings.Mass);
 
             readings.P1 = randi([0,9]);
-%             readings.P1 = obj.readPressureSensor('P1');
             obj.hP1ReadField.String = num2str(readings.P1);
 
             readings.P2 = randi([0,9]);
-%             readings.P2 = obj.readPressureSensor('P2');
             obj.hP2ReadField.String = num2str(readings.P2);
 
             readings.P3 = randi([0,9]);
-%             readings.P3 = obj.readPressureSensor('P3');
             obj.hP3ReadField.String = num2str(readings.P3);
 
             readings.P4 = randi([0,9]);
-%             readings.P4 = obj.readPressureSensor('P4');
             obj.hP4ReadField.String = num2str(readings.P4);
 
             readings.P5 = randi([0,9]);
-%             readings.P5 = obj.readPressureSensor('P5');
             obj.hP5ReadField.String = num2str(readings.P5);
 
 %             fname = fullfile(obj.DataDir,['readings_',num2str(round(now*1e6)),'.mat']);
