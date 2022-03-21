@@ -224,11 +224,11 @@ classdef faradayCupVsExbSweep < acquisition
                     pause(obj.DwellTime);
                     % Obtain readings
 %                     readings = obj.hBeamlineGUI.updateReadings;
-%                     timestamp = now;
+%                     readings.timestamp = now;
                     % Save data
                     fname = [strrep(sprintf('ExB_%.2fV',obj.VPoints(iV)),'.','p'),'.mat'];
                     fprintf('Saving data to file: %s\n',fname);
-%                     save(fullfile(obj.hBeamlineGUI.DataDir,fname),'readings','timestamp');
+%                     save(fullfile(obj.hBeamlineGUI.DataDir,fname),'readings');
                 end
 
                 fprintf('\nTest complete!\n');
