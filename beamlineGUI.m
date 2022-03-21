@@ -1,7 +1,4 @@
 classdef beamlineGUI < handle
-    % TODO: 1 - Finish gatherHardware method
-    %       2 - Finish timer function that reads and populates all status fields
-    %       3 - Comments!
     %BEAMLINEGUI - Defines a GUI used to interface with the Peabody Scientific beamline in lab 145
     
     properties
@@ -90,6 +87,9 @@ classdef beamlineGUI < handle
         function obj = beamlineGUI
             %BEAMLINEGUI Construct an instance of this class
 
+            % Make user confirm control power on
+            uiwait(msgbox('Confirm that control power to high voltage rack is turned on.','Control Power Check'));
+
             % Generate a test sequence, test date, and data directory
             obj.genTestSequence;
 
@@ -150,39 +150,51 @@ classdef beamlineGUI < handle
             obj.Hardware(end).Tag = "Gas,Rough";
             obj.Hardware(end+1) = leyboldGraphix3("ASRL8::INSTR");
             obj.Hardware(end).Tag = "Chamber";
-            obj.Hardware(end+1) = keithley6485("ASRL9::INSTR");
-            obj.Hardware(end).Tag = "Faraday";
-            obj.Hardware(end).devRW(':SYST:ZCH OFF');
-            dataOut = strtrim(obj.Hardware(end).devRW(':SYST:ZCH?'));
+
+            % Configure picoammeter
+            hFaraday = obj.Hardware(strcmpi(obj.Hardware.Type,'Picoammeter')&strcmpi(obj.Hardware.ModelNum,'6485'));
+            hFaraday.Tag = "Faraday";
+            hFaraday.devRW(':SYST:ZCH OFF');
+            dataOut = strtrim(hFaraday.devRW(':SYST:ZCH?'));
             while ~strcmp(dataOut,'0')
                 warning('beamlineGUI:keithleyNonresponsive','Keithley not listening! Zcheck did not shut off as expected...');
-                obj.Hardware(end).devRW(':SYST:ZCH OFF');
-                dataOut = strtrim(obj.Hardware(end).devRW(':SYST:ZCH?'));
+                hFaraday.devRW(':SYST:ZCH OFF');
+                dataOut = strtrim(hFaraday.devRW(':SYST:ZCH?'));
             end
-            obj.Hardware(end).devRW('ARM:COUN 1');
-            dataOut = strtrim(obj.Hardware(end).devRW('ARM:COUN?'));
+            hFaraday.devRW('ARM:COUN 1');
+            dataOut = strtrim(hFaraday.devRW('ARM:COUN?'));
             while ~strcmp(dataOut,'1')
                 warning('beamlineGUI:keithleyNonresponsive','Keithley not listening! Arm count did not set to 1 as expected...');
-                obj.Hardware(end).devRW('ARM:COUN 1');
-                dataOut = strtrim(obj.Hardware(end).devRW('ARM:COUN?'));
+                hFaraday.devRW('ARM:COUN 1');
+                dataOut = strtrim(hFaraday.devRW('ARM:COUN?'));
             end
-            obj.Hardware(end).devRW('FORM:ELEM READ');
-            dataOut = strtrim(obj.Hardware(end).devRW('FORM:ELEM?'));
+            hFaraday.devRW('FORM:ELEM READ');
+            dataOut = strtrim(hFaraday.devRW('FORM:ELEM?'));
             while ~strcmp(dataOut,'READ')
                 warning('beamlineGUI:keithleyNonresponsive','Keithley not listening! Output format not set to ''READ'' as expected...');
-                obj.Hardware(end).devRW('FORM:ELEM READ');
-                dataOut = strtrim(obj.Hardware(end).devRW('FORM:ELEM?'));
+                hFaraday.devRW('FORM:ELEM READ');
+                dataOut = strtrim(hFaraday.devRW('FORM:ELEM?'));
             end
             
             % Set ExB power supply tag
+            hExb = obj.Hardware(strcmpi(obj.Hardware.ModelNum,'PS350')&strcmpi(obj.Hardware.Address,'GPIB0::15::INSTR'));
+            hExb.Tag = "Exb";
 
             % Set ESA power supply tag
+            hEsa = obj.Hardware(strcmpi(obj.Hardware.ModelNum,'PS350')&strcmpi(obj.Hardware.Address,'GPIB0::16::INSTR'));
+            hEsa.Tag = "Esa";
 
             % Set defl power supply tag
+            hDefl = obj.Hardware(strcmpi(obj.Hardware.ModelNum,'PS350')&strcmpi(obj.Hardware.Address,'GPIB0::17::INSTR'));
+            hDefl.Tag = "Defl";
 
             % Set y-steer power supply tag
+            hYsteer = obj.Hardware(strcmpi(obj.Hardware.ModelNum,'PS350')&strcmpi(obj.Hardware.Address,'GPIB0::18::INSTR'));
+            hYsteer.Tag = "Ysteer";
 
             % Set mass flow power supply tag
+            hMass = obj.Hardware(strcmpi(obj.Hardware.ModelNum,'E36313A')&strcmpi(obj.Hardware.Address,'GPIB0::5::INSTR'));
+            hMass.Tag = "Mass";
 
             % Set multimeter tag and configure route
             hDMM = obj.Hardware(strcmpi(obj.Hardware.Type,'Multimeter')&strcmpi(obj.Hardware.ModelNum,'DAQ6510'));
@@ -1012,63 +1024,44 @@ classdef beamlineGUI < handle
         function readings = updateReadings(obj,~,~)
             %UPDATEREADINGS Read and update all beamline status reading fields
 
-%             % Gather readings
-%             [extraction,einzel,mass] = obj.readDMM;
-%             readings.Extraction = extraction*10000;
-%             readings.Einzel = einzel*1000;
-%             readings.Mass = mass;
-%             readings.Exb = obj.readHVPS('Exb');
-%             readings.Esa = obj.readHVPS('Esa');
-%             readings.Defl = obj.readHVPS('Defl');
-%             readings.Ysteer = obj.readHVPS('Ysteer');
-%             readings.Faraday = obj.readFaraday;
-%             readings.P1 = obj.readPressureSensor('P1');
-%             readings.P2 = obj.readPressureSensor('P2');
-%             readings.P3 = obj.readPressureSensor('P3');
-%             readings.P4 = obj.readPressureSensor('P4');
-%             readings.P5 = obj.readPressureSensor('P5');
+            % Gather readings
+            [extraction,einzel,mass] = obj.readDMM;
+            readings.Extraction = extraction*10000;
+            readings.Einzel = einzel*1000;
+            readings.Mass = mass;
+            readings.Exb = obj.readHVPS('Exb');
+            readings.Esa = obj.readHVPS('Esa');
+            readings.Defl = obj.readHVPS('Defl');
+            readings.Ysteer = obj.readHVPS('Ysteer');
+            readings.Faraday = obj.readFaraday;
+            readings.Chamber = obj.readPressureSensor('P1');
+            readings.Gas = obj.readPressureSensor('P4');
+            readings.Rough = obj.readPressureSensor('P5');
 
-            readings.Extraction = randi([0,9]);
             obj.hExtractionReadField.String = num2str(readings.Extraction);
 
-            readings.Einzel = randi([0,9]);
             obj.hEinzelReadField.String = num2str(readings.Einzel);
 
-            readings.Exb = randi([0,9]);
             obj.hExbReadField.String = num2str(readings.Exb);
 
-            readings.Esa = randi([0,9]);
             obj.hEsaReadField.String = num2str(readings.Esa);
 
-            readings.Defl = randi([0,9]);
             obj.hDeflReadField.String = num2str(readings.Defl);
 
-            readings.Ysteer = randi([0,9]);
             obj.hYsteerReadField.String = num2str(readings.Ysteer);
 
-            readings.Faraday = randi([0,9]);
             obj.hFaradayReadField.String = num2str(readings.Faraday);
 
-            readings.Mass = randi([0,9]);
             obj.hMassReadField.String = num2str(readings.Mass);
 
-            readings.P1 = randi([0,9]);
-            obj.hP1ReadField.String = num2str(readings.P1);
+            obj.hP1ReadField.String = num2str(readings.Chamber);
 
-            readings.P2 = randi([0,9]);
-            obj.hP2ReadField.String = num2str(readings.P2);
+            obj.hP4ReadField.String = num2str(readings.Gas);
 
-            readings.P3 = randi([0,9]);
-            obj.hP3ReadField.String = num2str(readings.P3);
+            obj.hP5ReadField.String = num2str(readings.Rough);
 
-            readings.P4 = randi([0,9]);
-            obj.hP4ReadField.String = num2str(readings.P4);
-
-            readings.P5 = randi([0,9]);
-            obj.hP5ReadField.String = num2str(readings.P5);
-
-%             fname = fullfile(obj.DataDir,['readings_',num2str(round(now*1e6)),'.mat']);
-%             save(fname,'readings');
+            fname = fullfile(obj.DataDir,['readings_',num2str(round(now*1e6)),'.mat']);
+            save(fname,'readings');
 
         end
 
