@@ -175,6 +175,7 @@ classdef beamlineGUI < handle
                 hFaraday.devRW('FORM:ELEM READ');
                 dataOut = strtrim(hFaraday.devRW('FORM:ELEM?'));
             end
+            hFaraday.devRW(':SYST:LOC');
             
             % Set ExB power supply tag
             hExb = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::15::INSTR'));
@@ -1099,10 +1100,11 @@ classdef beamlineGUI < handle
             % Find picoammeter
             hFaraday = obj.Hardware(contains([obj.Hardware.Tag],'Faraday','IgnoreCase',true)&strcmpi([obj.Hardware.Type],'Picoammeter'));
             if length(hFaraday)~=1
-                error('beamlineGUI:invalidHardware','Invalid hardware configuration! Faraday picoammeter not found...');
+                error('beamlineGUI:invalidHardware','Invalid hardware configuration! Must be exactly one picoammeter with tag containing ''Faraday''...');
             end
 
             readVal = hFaraday.read;
+            hFaraday.devRW(':SYST:LOC');
 
         end
 
