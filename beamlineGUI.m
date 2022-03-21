@@ -87,8 +87,8 @@ classdef beamlineGUI < handle
         function obj = beamlineGUI
             %BEAMLINEGUI Construct an instance of this class
 
-            % Make user confirm control power on
-            uiwait(msgbox('Confirm that control power to high voltage rack is turned on.','Control Power Check'));
+%             % Make user confirm control power on
+%             uiwait(msgbox('Confirm that control power to high voltage rack is turned on.','Control Power Check'));
 
             % Generate a test sequence, test date, and data directory
             obj.genTestSequence;
@@ -152,7 +152,7 @@ classdef beamlineGUI < handle
             obj.Hardware(end).Tag = "Chamber";
 
             % Configure picoammeter
-            hFaraday = obj.Hardware(strcmpi(obj.Hardware.Type,'Picoammeter')&strcmpi(obj.Hardware.ModelNum,'6485'));
+            hFaraday = obj.Hardware(strcmpi([obj.Hardware.Type],'Picoammeter')&strcmpi([obj.Hardware.ModelNum],'6485'));
             hFaraday.Tag = "Faraday";
             hFaraday.devRW(':SYST:ZCH OFF');
             dataOut = strtrim(hFaraday.devRW(':SYST:ZCH?'));
@@ -177,27 +177,27 @@ classdef beamlineGUI < handle
             end
             
             % Set ExB power supply tag
-            hExb = obj.Hardware(strcmpi(obj.Hardware.ModelNum,'PS350')&strcmpi(obj.Hardware.Address,'GPIB0::15::INSTR'));
+            hExb = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::15::INSTR'));
             hExb.Tag = "Exb";
 
             % Set ESA power supply tag
-            hEsa = obj.Hardware(strcmpi(obj.Hardware.ModelNum,'PS350')&strcmpi(obj.Hardware.Address,'GPIB0::16::INSTR'));
+            hEsa = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::16::INSTR'));
             hEsa.Tag = "Esa";
 
             % Set defl power supply tag
-            hDefl = obj.Hardware(strcmpi(obj.Hardware.ModelNum,'PS350')&strcmpi(obj.Hardware.Address,'GPIB0::17::INSTR'));
+            hDefl = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::17::INSTR'));
             hDefl.Tag = "Defl";
 
             % Set y-steer power supply tag
-            hYsteer = obj.Hardware(strcmpi(obj.Hardware.ModelNum,'PS350')&strcmpi(obj.Hardware.Address,'GPIB0::18::INSTR'));
+            hYsteer = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::18::INSTR'));
             hYsteer.Tag = "Ysteer";
 
             % Set mass flow power supply tag
-            hMass = obj.Hardware(strcmpi(obj.Hardware.ModelNum,'E36313A')&strcmpi(obj.Hardware.Address,'GPIB0::5::INSTR'));
+            hMass = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'E36313A')&strcmpi([obj.Hardware.Address],'GPIB0::5::INSTR'));
             hMass.Tag = "Mass";
 
             % Set multimeter tag and configure route
-            hDMM = obj.Hardware(strcmpi(obj.Hardware.Type,'Multimeter')&strcmpi(obj.Hardware.ModelNum,'DAQ6510'));
+            hDMM = obj.Hardware(strcmpi([obj.Hardware.Type],'Multimeter')&strcmpi([obj.Hardware.ModelNum],'DAQ6510'));
             if length(hDMM)~=1
                 error('beamlineGUI:deviceNotFound','Device not found! Device with specified properties not found...');
             end
@@ -824,7 +824,7 @@ classdef beamlineGUI < handle
             setVal = str2double(obj.hExbSetField.String);
 
             % Find ExB power supply
-            hExb = obj.Hardware(contains(obj.Hardware.Tag,'ExB','IgnoreCase',true)&strcmpi(obj.Hardware.Type,'Power Supply'));
+            hExb = obj.Hardware(contains([obj.Hardware.Tag],'ExB','IgnoreCase',true)&strcmpi([obj.Hardware.Type],'Power Supply'));
             if length(hExb)~=1
                 error('beamlineGUI:invalidTags','Invalid tags! Must be exactly one power supply available with tag containing ''ExB''...');
             end
@@ -849,7 +849,7 @@ classdef beamlineGUI < handle
             setVal = str2double(obj.hEsaSetField.String);
 
             % Find ESA power supply
-            hEsa = obj.Hardware(contains(obj.Hardware.Tag,'ESA','IgnoreCase',true)&strcmpi(obj.Hardware.Type,'Power Supply'));
+            hEsa = obj.Hardware(contains([obj.Hardware.Tag],'ESA','IgnoreCase',true)&strcmpi([obj.Hardware.Type],'Power Supply'));
             if length(hEsa)~=1
                 error('beamlineGUI:invalidTags','Invalid tags! Must be exactly one power supply available with tag containing ''ESA''...');
             end
@@ -874,7 +874,7 @@ classdef beamlineGUI < handle
             setVal = str2double(obj.hDeflSetField.String);
 
             % Find Defl power supply
-            hDefl = obj.Hardware(contains(obj.Hardware.Tag,'Defl','IgnoreCase',true)&strcmpi(obj.Hardware.Type,'Power Supply'));
+            hDefl = obj.Hardware(contains([obj.Hardware.Tag],'Defl','IgnoreCase',true)&strcmpi([obj.Hardware.Type],'Power Supply'));
             if length(hDefl)~=1
                 error('beamlineGUI:invalidTags','Invalid tags! Must be exactly one power supply available with tag containing ''defl''...');
             end
@@ -899,7 +899,7 @@ classdef beamlineGUI < handle
             setVal = str2double(obj.hYsteerSetField.String);
 
             % Find y-steer power supply
-            hYsteer = obj.Hardware(contains(obj.Hardware.Tag,'Ysteer','IgnoreCase',true)&strcmpi(obj.Hardware.Type,'Power Supply'));
+            hYsteer = obj.Hardware(contains([obj.Hardware.Tag],'Ysteer','IgnoreCase',true)&strcmpi([obj.Hardware.Type],'Power Supply'));
             if length(hYsteer)~=1
                 error('beamlineGUI:invalidTags','Invalid tags! Must be exactly one power supply available with tag containing ''ysteer''...');
             end
@@ -924,7 +924,7 @@ classdef beamlineGUI < handle
             setVal = str2double(obj.hMassSetField.String);
 
             % Find mass flow power supply
-            hMass = obj.Hardware(contains(obj.Hardware.Tag,'Mass','IgnoreCase',true)&strcmpi(obj.Hardware.Type,'Power Supply'));
+            hMass = obj.Hardware(contains([obj.Hardware.Tag],'Mass','IgnoreCase',true)&strcmpi([obj.Hardware.Type],'Power Supply'));
             if length(hMass)~=1
                 error('beamlineGUI:invalidTags','Invalid tags! Must be exactly one power supply available with tag containing ''mass''...');
             end
@@ -1034,31 +1034,31 @@ classdef beamlineGUI < handle
             readings.Defl = obj.readHVPS('Defl');
             readings.Ysteer = obj.readHVPS('Ysteer');
             readings.Faraday = obj.readFaraday;
-            readings.Chamber = obj.readPressureSensor('P1');
-            readings.Gas = obj.readPressureSensor('P4');
-            readings.Rough = obj.readPressureSensor('P5');
+            readings.Chamber = obj.readPressureSensor('Chamber');
+            readings.Gas = obj.readPressureSensor('Gas');
+            readings.Rough = obj.readPressureSensor('Rough');
 
-            obj.hExtractionReadField.String = num2str(readings.Extraction);
+            obj.hExtractionReadField.String = num2str(readings.Extraction,'%.1f');
 
-            obj.hEinzelReadField.String = num2str(readings.Einzel);
+            obj.hEinzelReadField.String = num2str(readings.Einzel,'%.1f');
 
-            obj.hExbReadField.String = num2str(readings.Exb);
+            obj.hExbReadField.String = num2str(readings.Exb,'%.1f');
 
-            obj.hEsaReadField.String = num2str(readings.Esa);
+            obj.hEsaReadField.String = num2str(readings.Esa,'%.1f');
 
-            obj.hDeflReadField.String = num2str(readings.Defl);
+            obj.hDeflReadField.String = num2str(readings.Defl,'%.1f');
 
-            obj.hYsteerReadField.String = num2str(readings.Ysteer);
+            obj.hYsteerReadField.String = num2str(readings.Ysteer,'%.1f');
 
-            obj.hFaradayReadField.String = num2str(readings.Faraday);
+            obj.hFaradayReadField.String = num2str(readings.Faraday,'%.2e');
 
-            obj.hMassReadField.String = num2str(readings.Mass);
+            obj.hMassReadField.String = num2str(readings.Mass,'%.1f');
 
-            obj.hP1ReadField.String = num2str(readings.Chamber);
+            obj.hP1ReadField.String = num2str(readings.Chamber,'%.2e');
 
-            obj.hP4ReadField.String = num2str(readings.Gas);
+            obj.hP4ReadField.String = num2str(readings.Gas,'%.2e');
 
-            obj.hP5ReadField.String = num2str(readings.Rough);
+            obj.hP5ReadField.String = num2str(readings.Rough,'%.2e');
 
             fname = fullfile(obj.DataDir,['readings_',num2str(round(now*1e6)),'.mat']);
             save(fname,'readings');
@@ -1068,7 +1068,7 @@ classdef beamlineGUI < handle
         function [extraction,einzel,mass] = readDMM(obj)
 
             % Find DMM
-            hDMM = obj.Hardware(contains(obj.Hardware.Tag,'extraction','IgnoreCase',true)&contains(obj.Hardware.Tag,'einzel','IgnoreCase',true)&contains(obj.Hardware.Tag,'mass','IgnoreCase',true)&strcmpi(obj.Hardware.Type,'Multimeter'));
+            hDMM = obj.Hardware(contains([obj.Hardware.Tag],'extraction','IgnoreCase',true)&contains([obj.Hardware.Tag],'einzel','IgnoreCase',true)&contains([obj.Hardware.Tag],'mass','IgnoreCase',true)&strcmpi([obj.Hardware.Type],'Multimeter'));
             if length(hDMM)~=1
                 error('beamlineGUI:invalidTags','Invalid tag! No multimeter with ''Extraction'', ''Einzel'', & ''Mass'' tags found...');
             end
@@ -1085,7 +1085,7 @@ classdef beamlineGUI < handle
         function readVal = readHVPS(obj,tag)
 
             % Find power supply matching tags
-            hHVPS = obj.Hardware(contains(obj.Hardware.Tag,tag,'IgnoreCase',true)&strcmpi(obj.Hardware.Type,'Power Supply'));
+            hHVPS = obj.Hardware(contains([obj.Hardware.Tag],tag,'IgnoreCase',true)&strcmpi([obj.Hardware.Type],'Power Supply'));
             if length(hHVPS)~=1
                 error('beamlineGUI:invalidTags','Invalid tag! No power supply with tag %s found...',tag);
             end
@@ -1097,7 +1097,7 @@ classdef beamlineGUI < handle
         function readVal = readFaraday(obj)
 
             % Find picoammeter
-            hFaraday = obj.Hardware(contains(obj.Hardware.Tag,'Faraday','IgnoreCase',true)&strcmpi(obj.Hardware.Type,'Picoammeter'));
+            hFaraday = obj.Hardware(contains([obj.Hardware.Tag],'Faraday','IgnoreCase',true)&strcmpi([obj.Hardware.Type],'Picoammeter'));
             if length(hFaraday)~=1
                 error('beamlineGUI:invalidHardware','Invalid hardware configuration! Faraday picoammeter not found...');
             end
@@ -1109,16 +1109,16 @@ classdef beamlineGUI < handle
         function readVal = readPressureSensor(obj,tag)
 
             switch lower(tag)
-                case {'p1','p4'}
+                case {'chamber','gas'}
                     sensorNum = 1;
-                case {'p2','p5'}
+                case {'p2','rough'}
                     sensorNum = 2;
                 case 'p3'
                     sensorNum = 3;
             end
 
             % Find correct gauge controller
-            hPressure = obj.Hardware(contains(obj.Hardware.Tag,tag,'IgnoreCase',true)&strcmpi(obj.Hardware.Type,'Pressure Sensor'));
+            hPressure = obj.Hardware(contains([obj.Hardware.Tag],tag,'IgnoreCase',true)&strcmpi([obj.Hardware.Type],'Pressure Sensor'));
             if length(hPressure)~=1
                 error('beamlineGUI:invalidTags','Invalid tag! No pressure sensor with tag %s found...',tag);
             end
