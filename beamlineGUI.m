@@ -87,8 +87,8 @@ classdef beamlineGUI < handle
         function obj = beamlineGUI
             %BEAMLINEGUI Construct an instance of this class
 
-%             % Make user confirm control power on
-%             uiwait(msgbox('Confirm that control power to high voltage rack is turned on.','Control Power Check'));
+            % Make user confirm control power on
+            uiwait(msgbox('Confirm that control power to high voltage rack is turned on.','Control Power Check'));
 
             % Generate a test sequence, test date, and data directory
             obj.genTestSequence;
