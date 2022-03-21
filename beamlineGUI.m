@@ -1027,7 +1027,7 @@ classdef beamlineGUI < handle
 
             % Gather readings
             [extraction,einzel,mass] = obj.readDMM;
-            readings.Extraction = extraction*10000;
+            readings.Extraction = extraction*4000;
             readings.Einzel = einzel*1000;
             readings.Mass = mass;
             readings.Exb = obj.readHVPS('Exb');
@@ -1053,7 +1053,7 @@ classdef beamlineGUI < handle
 
             obj.hFaradayReadField.String = num2str(readings.Faraday,'%.2e');
 
-            obj.hMassReadField.String = num2str(readings.Mass,'%.1f');
+            obj.hMassReadField.String = num2str(readings.Mass,'%.3f');
 
             obj.hP1ReadField.String = num2str(readings.Chamber,'%.2e');
 
