@@ -44,11 +44,11 @@ classdef faradayCupVsExbSweep < acquisition
             set(obj.hBeamlineGUI.hRunBtn,'Enable','off');
             set(obj.hBeamlineGUI.hRunBtn,'String','Test in progress...');
             
-            % % Find ExB power supply
-            % obj.hExb = hBeamlineGUI.Hardware(contains(hBeamlineGUI.Hardware.Tag,'ExB','IgnoreCase',true)&strcmpi(hBeamlineGUI.Hardware.Type,'Power Supply'));
-            % if length(obj.hExb)~=1
-            %     error('faradayCupVsExbSweep:invalidTags','Invalid tags! Must be exactly one power supply available with tag containing ''ExB''...');
-            % end
+            % Find ExB power supply
+            obj.hExb = hBeamlineGUI.Hardware(contains(hBeamlineGUI.Hardware.Tag,'ExB','IgnoreCase',true)&strcmpi(hBeamlineGUI.Hardware.Type,'Power Supply'));
+            if length(obj.hExb)~=1
+                error('faradayCupVsExbSweep:invalidTags','Invalid tags! Must be exactly one power supply available with tag containing ''ExB''...');
+            end
             
             % Create figure
             obj.hFigure = figure('MenuBar','none',...
@@ -179,9 +179,9 @@ classdef faradayCupVsExbSweep < acquisition
                 elseif minVal > maxVal || minVal < 0 || maxVal < 0
                     errordlg('Invalid min and max voltages! Must be increasing positive values.','User input error!');
                     return
-%                 elseif maxVal > obj.hExb.VMax || minVal < obj.hExb.VMin
-%                     errordlg(['Invalid min and max voltages! Cannot exceed power supply range of ',num2str(obj.hExb.VMin),' to ',num2str(obj.hExb.VMax),' V'],'User input error!');
-%                     return
+                elseif maxVal > obj.hExb.VMax || minVal < obj.hExb.VMin
+                    errordlg(['Invalid min and max voltages! Cannot exceed power supply range of ',num2str(obj.hExb.VMin),' to ',num2str(obj.hExb.VMax),' V'],'User input error!');
+                    return
                 elseif dwellVal <= 0
                     errordlg('Invalid dwell time! Must be a positive value.','User input error!');
                     return
@@ -219,16 +219,16 @@ classdef faradayCupVsExbSweep < acquisition
                 for iV = 1:length(obj.VPoints)
                     % Set ExB voltage
                     fprintf('Setting voltage to %.2f V...\n',obj.VPoints(iV));
-%                     obj.hExb.setVSet(obj.VPoints(iV));
+                    obj.hExb.setVSet(obj.VPoints(iV));
                     % Pause for dwell time
                     pause(obj.DwellTime);
                     % Obtain readings
-%                     readings = obj.hBeamlineGUI.updateReadings;
-%                     readings.timestamp = now;
+                    readings = obj.hBeamlineGUI.updateReadings;
+                    readings.timestamp = now;
                     % Save data
                     fname = [strrep(sprintf('ExB_%.2fV',obj.VPoints(iV)),'.','p'),'.mat'];
                     fprintf('Saving data to file: %s\n',fname);
-%                     save(fullfile(obj.hBeamlineGUI.DataDir,fname),'readings');
+                    save(fullfile(obj.hBeamlineGUI.DataDir,fname),'readings');
                 end
 
                 fprintf('\nTest complete!\n');
