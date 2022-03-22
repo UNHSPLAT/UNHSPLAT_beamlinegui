@@ -104,6 +104,50 @@ classdef beamlineGUI < handle
 
         end
 
+        function readings = updateReadings(obj,~,~)
+            %UPDATEREADINGS Read and update all beamline status reading fields
+
+            % Gather readings
+            [extraction,einzel,mass] = obj.readDMM;
+            readings.Extraction = extraction*4000;
+            readings.Einzel = einzel*1000;
+            readings.Mass = mass;
+            readings.Exb = obj.readHVPS('Exb');
+            readings.Esa = obj.readHVPS('Esa');
+            readings.Defl = obj.readHVPS('Defl');
+            readings.Ysteer = obj.readHVPS('Ysteer');
+            readings.Faraday = obj.readFaraday;
+            readings.Chamber = obj.readPressureSensor('Chamber');
+            readings.Gas = obj.readPressureSensor('Gas');
+            readings.Rough = obj.readPressureSensor('Rough');
+
+            obj.hExtractionReadField.String = num2str(readings.Extraction,'%.1f');
+
+            obj.hEinzelReadField.String = num2str(readings.Einzel,'%.1f');
+
+            obj.hExbReadField.String = num2str(readings.Exb,'%.1f');
+
+            obj.hEsaReadField.String = num2str(readings.Esa,'%.1f');
+
+            obj.hDeflReadField.String = num2str(readings.Defl,'%.1f');
+
+            obj.hYsteerReadField.String = num2str(readings.Ysteer,'%.1f');
+
+            obj.hFaradayReadField.String = num2str(readings.Faraday,'%.2e');
+
+            obj.hMassReadField.String = num2str(readings.Mass,'%.3f');
+
+            obj.hP1ReadField.String = num2str(readings.Chamber,'%.2e');
+
+            obj.hP4ReadField.String = num2str(readings.Gas,'%.2e');
+
+            obj.hP5ReadField.String = num2str(readings.Rough,'%.2e');
+
+            fname = fullfile(obj.DataDir,['readings_',num2str(round(now*1e6)),'.mat']);
+            save(fname,'readings');
+
+        end
+
         function delete(obj)
             %DELETE Handle class destructor to stop timer and close figure when obj is deleted
 
@@ -1020,50 +1064,6 @@ classdef beamlineGUI < handle
             myAcq = hFcn(obj);
             myAcq.runSweep;
             
-        end
-
-        function readings = updateReadings(obj,~,~)
-            %UPDATEREADINGS Read and update all beamline status reading fields
-
-            % Gather readings
-            [extraction,einzel,mass] = obj.readDMM;
-            readings.Extraction = extraction*4000;
-            readings.Einzel = einzel*1000;
-            readings.Mass = mass;
-            readings.Exb = obj.readHVPS('Exb');
-            readings.Esa = obj.readHVPS('Esa');
-            readings.Defl = obj.readHVPS('Defl');
-            readings.Ysteer = obj.readHVPS('Ysteer');
-            readings.Faraday = obj.readFaraday;
-            readings.Chamber = obj.readPressureSensor('Chamber');
-            readings.Gas = obj.readPressureSensor('Gas');
-            readings.Rough = obj.readPressureSensor('Rough');
-
-            obj.hExtractionReadField.String = num2str(readings.Extraction,'%.1f');
-
-            obj.hEinzelReadField.String = num2str(readings.Einzel,'%.1f');
-
-            obj.hExbReadField.String = num2str(readings.Exb,'%.1f');
-
-            obj.hEsaReadField.String = num2str(readings.Esa,'%.1f');
-
-            obj.hDeflReadField.String = num2str(readings.Defl,'%.1f');
-
-            obj.hYsteerReadField.String = num2str(readings.Ysteer,'%.1f');
-
-            obj.hFaradayReadField.String = num2str(readings.Faraday,'%.2e');
-
-            obj.hMassReadField.String = num2str(readings.Mass,'%.3f');
-
-            obj.hP1ReadField.String = num2str(readings.Chamber,'%.2e');
-
-            obj.hP4ReadField.String = num2str(readings.Gas,'%.2e');
-
-            obj.hP5ReadField.String = num2str(readings.Rough,'%.2e');
-
-            fname = fullfile(obj.DataDir,['readings_',num2str(round(now*1e6)),'.mat']);
-            save(fname,'readings');
-
         end
 
         function [extraction,einzel,mass] = readDMM(obj)
