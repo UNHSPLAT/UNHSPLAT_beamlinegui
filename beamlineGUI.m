@@ -221,20 +221,24 @@ classdef beamlineGUI < handle
             end
             hFaraday.devRW(':SYST:LOC');
             
-            % Set ExB power supply tag
+            % Set ExB power supply to 0V and set tag
             hExb = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::15::INSTR'));
+            hExb.setVSet(0);
             hExb.Tag = "Exb";
 
-            % Set ESA power supply tag
+            % Set ESA power supply to 0V and set tag
             hEsa = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::16::INSTR'));
+            hEsa.setVSet(0);
             hEsa.Tag = "Esa";
 
-            % Set defl power supply tag
+            % Set defl power supply to 0V and set tag
             hDefl = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::17::INSTR'));
+            hDefl.setVSet(0);
             hDefl.Tag = "Defl";
 
-            % Set y-steer power supply tag
+            % Set y-steer power supply to 0V and set tag
             hYsteer = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::18::INSTR'));
+            hYsteer.setVSet(0);
             hYsteer.Tag = "Ysteer";
 
             % Set mass flow power supply tag
