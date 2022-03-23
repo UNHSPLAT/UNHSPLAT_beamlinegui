@@ -250,6 +250,7 @@ classdef faradayCupVsExbSweep < acquisition
                     Vexb(iV) = readings.Exb;
                     Ifar(iV) = readings.Faraday;
                     plot(obj.hAxes,Vexb,Ifar);
+                    set(obj.hAxes,'YScale','log');
                     xlabel(obj.hAxes,'V_E_x_B [V]');
                     ylabel(obj.hAxes,'I_F_a_r_a_d_a_y [A]');
                     % Save data
