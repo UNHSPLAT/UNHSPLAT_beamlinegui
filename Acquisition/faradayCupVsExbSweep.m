@@ -12,8 +12,10 @@ classdef faradayCupVsExbSweep < acquisition
     properties
         hExb % Handle to ExB power supply
         hConfFigure % Handle to configuration GUI figure
-        hFigure % Handle to data plot
-        hAxes % Handle to data axes
+        hFigure1 % Handle to I-V data plot
+        hFigure2 % Handle to I-1/V^2 data plot
+        hAxes1 % Handle to I-V data axes
+        hAxes2 % Handle to I-1/V^2 data axes
         hMinText % Handle to minimum voltage label
         hMinEdit % Handle to minimum voltage field
         hStepsText % Handle to number of steps label
@@ -216,12 +218,19 @@ classdef faradayCupVsExbSweep < acquisition
                 % Set config figure to invisible
                 set(obj.hConfFigure,'Visible','off');
 
-                obj.hFigure = figure('MenuBar','none',...
+                obj.hFigure1 = figure('MenuBar','none',...
                     'ToolBar','none',...
                     'NumberTitle','off',...
                     'Name','Faraday Cup Current vs ExB Voltage');
 
-                obj.hAxes = axes(obj.hFigure);
+                obj.hAxes1 = axes(obj.hFigure1);
+
+                obj.hFigure2 = figure('MenuBar','none',...
+                    'ToolBar','none',...
+                    'NumberTitle','off',...
+                    'Name','Faraday Cup Current vs 1/V_E_x_B^2');
+
+                obj.hAxes2 = axes(obj.hFigure2);
 
                 Vexb = zeros(1,length(obj.VPoints));
                 Ifar = zeros(1,length(obj.VPoints));
@@ -248,10 +257,14 @@ classdef faradayCupVsExbSweep < acquisition
                     % Plot data
                     Vexb(iV) = readings.Exb;
                     Ifar(iV) = readings.Faraday;
-                    plot(obj.hAxes,Vexb,Ifar);
-                    set(obj.hAxes,'YScale','log');
-                    xlabel(obj.hAxes,'V_E_x_B [V]');
-                    ylabel(obj.hAxes,'I_F_a_r_a_d_a_y [A]');
+                    plot(obj.hAxes1,Vexb,Ifar);
+                    set(obj.hAxes1,'YScale','log');
+                    xlabel(obj.hAxes1,'V_E_x_B [V]');
+                    ylabel(obj.hAxes1,'I_F_a_r_a_d_a_y [A]');
+                    plot(obj.hAxes2,1./Vexb.^2,Ifar);
+                    set(obj.hAxes2,'Yscale','log');
+                    xlabel(obj.hAxes2,'1/V_E_x_B^2 [1/V^2]');
+                    ylabel(obj.hAxes2,'I_F_a_r_a_d_a_y [A]');
                     % Save data
                     fname = [strrep(sprintf('ExB_%.2fV',obj.VPoints(iV)),'.','p'),'.mat'];
                     fprintf('Saving data to file: %s\n',fname);
