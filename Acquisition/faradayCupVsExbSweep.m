@@ -1,13 +1,12 @@
 classdef faradayCupVsExbSweep < acquisition
-    % TODO: 1 - Test and uncomment hardware-dependent lines
     %FARADAYCUPVSEXBSWEEP Configures and runs a sweep of Faraday cup current vs ExB voltage
 
     properties (Constant)
         Type string = "Faraday cup vs ExB Sweep" % Acquisition type identifier string
         MinDefault double = 100 % Default minimum voltage
-        MaxDefault double = 5000 % Default maximum voltage
-        StepsDefault double = 20 % Default number of steps
-        DwellDefault double = 10 % Default dwell time
+        MaxDefault double = 2500 % Default maximum voltage
+        StepsDefault double = 40 % Default number of steps
+        DwellDefault double = 5 % Default dwell time
     end
 
     properties
@@ -47,7 +46,7 @@ classdef faradayCupVsExbSweep < acquisition
             set(obj.hBeamlineGUI.hRunBtn,'String','Test in progress...');
             
             % Find ExB power supply
-            obj.hExb = hBeamlineGUI.Hardware(contains(hBeamlineGUI.Hardware.Tag,'ExB','IgnoreCase',true)&strcmpi(hBeamlineGUI.Hardware.Type,'Power Supply'));
+            obj.hExb = obj.hBeamlineGUI.Hardware(contains([obj.hBeamlineGUI.Hardware.Tag],'ExB','IgnoreCase',true)&strcmpi([obj.hBeamlineGUI.Hardware.Type],'Power Supply'));
             if length(obj.hExb)~=1
                 error('faradayCupVsExbSweep:invalidTags','Invalid tags! Must be exactly one power supply available with tag containing ''ExB''...');
             end
