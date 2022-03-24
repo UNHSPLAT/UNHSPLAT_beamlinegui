@@ -79,7 +79,7 @@ classdef beamlineGUI < handle
         GasList cell = {'Air','Argon','Nitrogen','Helium','Deuterium','Oxygen','Magic gas'} % Gas types available for selection
         hAcquisitionText % Handle to acquisition type label
         hAcquisitionEdit % Handle to acquisition type popupmenu
-        AcquisitionList cell = {'Faraday cup vs ExB sweep','Pressure Monitor','Faraday Cup Stability'} % Acquisition types available for selection
+        AcquisitionList cell = {'Faraday cup vs ExB sweep','Pressure Monitor','Faraday Cup Stability','Beamline Monitor'} % Acquisition types available for selection
         hRunBtn % Handle to run test button
     end
 
