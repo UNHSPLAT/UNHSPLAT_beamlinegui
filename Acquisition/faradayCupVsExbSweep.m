@@ -232,8 +232,18 @@ classdef faradayCupVsExbSweep < acquisition
 
                 obj.hAxes2 = axes(obj.hFigure2);
 
+                % Preallocate arrays
+                T = strings(1,length(obj.VPoints));
                 Vexb = zeros(1,length(obj.VPoints));
                 Ifar = zeros(1,length(obj.VPoints));
+                Vext = zeros(1,length(obj.VPoints));
+                Vesa = zeros(1,length(obj.VPoints));
+                Vdef = zeros(1,length(obj.VPoints));
+                Vyst = zeros(1,length(obj.VPoints));
+                Vmfc = zeros(1,length(obj.VPoints));
+                Pbml = zeros(1,length(obj.VPoints));
+                Pgas = zeros(1,length(obj.VPoints));
+                Prou = zeros(1,length(obj.VPoints));
     
                 % Run sweep
                 for iV = 1:length(obj.VPoints)
@@ -254,14 +264,24 @@ classdef faradayCupVsExbSweep < acquisition
                     % Obtain readings
                     readings = obj.hBeamlineGUI.updateReadings;
                     readings.timestamp = now;
-                    % Plot data
+                    % Assign variables
+                    T(iV) = datestr(readings.timestamp,"yyyy-mm-dd HH:MM:SS");
                     Vexb(iV) = readings.Exb;
                     Ifar(iV) = readings.Faraday;
-                    plot(obj.hAxes1,Vexb,Ifar);
+                    Vext(iV) = readings.Extraction;
+                    Vesa(iV) = readings.Esa;
+                    Vdef(iV) = readings.Defl;
+                    Vyst(iV) = readings.Ysteer;
+                    Vmfc(iV) = readings.Mass;
+                    Pbml(iV) = readings.Beamline;
+                    Pgas(iV) = readings.Gas;
+                    Prou(iV) = readings.Rough;
+                    % Plot data
+                    plot(obj.hAxes1,Vexb(1:iV),Ifar(1:iV));
                     set(obj.hAxes1,'YScale','log');
                     xlabel(obj.hAxes1,'V_E_x_B [V]');
                     ylabel(obj.hAxes1,'I_F_a_r_a_d_a_y [A]');
-                    plot(obj.hAxes2,1./Vexb.^2,Ifar);
+                    plot(obj.hAxes2,1./Vexb(1:iV).^2,Ifar(1:iV));
                     set(obj.hAxes2,'Yscale','log');
                     xlabel(obj.hAxes2,'1/V_E_x_B^2 [1/V^2]');
                     ylabel(obj.hAxes2,'I_F_a_r_a_d_a_y [A]');
@@ -270,6 +290,15 @@ classdef faradayCupVsExbSweep < acquisition
                     fprintf('Saving data to file: %s\n',fname);
                     save(fullfile(obj.hBeamlineGUI.DataDir,fname),'readings');
                 end
+
+                % Save results .mat file
+                fname = 'results.mat';
+                save(fullfile(obj.hBeamlineGUI.DataDir,fname),'Vexb','Ifar','Vext','Vesa','Vdef','Vyst','Vmfc','Pbml','Pgas','Prou','T');
+
+                % Save results .csv file
+                fname = strrep(fname,'.mat','.csv');
+                t = table(T',Vexb',Ifar',Vext',Vesa',Vdef',Vyst',Vmfc',Pbml',Pgas',Prou','VariableNames',{'t','Vexb','Ifar','Vext','Vesa','Vdef','Vyst','Vmfc','Pbml','Pgas','Prou'});
+                writetable(t,fullfile(obj.hBeamlineGUI.DataDir,fname));
 
                 fprintf('\nTest complete!\n');
                 delete(obj.hConfFigure);

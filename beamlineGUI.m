@@ -117,7 +117,7 @@ classdef beamlineGUI < handle
             readings.Defl = obj.readHVPS('Defl');
             readings.Ysteer = obj.readHVPS('Ysteer');
             readings.Faraday = obj.readFaraday;
-            readings.Chamber = obj.readPressureSensor('Chamber');
+            readings.Beamline = obj.readPressureSensor('Beamline');
             readings.Gas = obj.readPressureSensor('Gas');
             readings.Rough = obj.readPressureSensor('Rough');
 
@@ -137,7 +137,7 @@ classdef beamlineGUI < handle
 
             obj.hMassReadField.String = num2str(readings.Mass,'%.3f');
 
-            obj.hP1ReadField.String = num2str(readings.Chamber,'%.2e');
+            obj.hP1ReadField.String = num2str(readings.Beamline,'%.2e');
 
             obj.hP4ReadField.String = num2str(readings.Gas,'%.2e');
 
@@ -193,7 +193,7 @@ classdef beamlineGUI < handle
             obj.Hardware(end+1) = leyboldCenter2("ASRL7::INSTR");
             obj.Hardware(end).Tag = "Gas,Rough";
             obj.Hardware(end+1) = leyboldGraphix3("ASRL8::INSTR");
-            obj.Hardware(end).Tag = "Chamber";
+            obj.Hardware(end).Tag = "Beamline";
 
             % Configure picoammeter
             hFaraday = obj.Hardware(strcmpi([obj.Hardware.Type],'Picoammeter')&strcmpi([obj.Hardware.ModelNum],'6485'));
@@ -363,7 +363,7 @@ classdef beamlineGUI < handle
 
             obj.hP1Text = uicontrol(obj.hStatusGrp,'Style','text',...
                 'Position',[xpos,ypos,xsize,ysize],...
-                'String','Chamber',...
+                'String','Beamline',...
                 'FontWeight','bold',...
                 'FontSize',9,...
                 'HorizontalAlignment','right');
@@ -1115,7 +1115,7 @@ classdef beamlineGUI < handle
         function readVal = readPressureSensor(obj,tag)
 
             switch lower(tag)
-                case {'chamber','gas'}
+                case {'beamline','gas'}
                     sensorNum = 1;
                 case {'p2','rough'}
                     sensorNum = 2;
