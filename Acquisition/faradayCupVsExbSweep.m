@@ -263,9 +263,8 @@ classdef faradayCupVsExbSweep < acquisition
                     % Obtain readings
                     fname = fullfile(obj.hBeamlineGUI.DataDir,[strrep(sprintf('ExB_%.2fV',obj.VPoints(iV)),'.','p'),'.mat']);
                     readings = obj.hBeamlineGUI.updateReadings([],[],fname);
-                    readings.timestamp = now;
                     % Assign variables
-                    T(iV) = datestr(readings.timestamp,"yyyy-mm-dd HH:MM:SS");
+                    T(iV) = datestr(readings.T,"yyyy-mm-dd HH:MM:SS");
                     Vexb(iV) = readings.VExb;
                     Ifar(iV) = readings.IFaraday;
                     Vext(iV) = readings.VExtraction;

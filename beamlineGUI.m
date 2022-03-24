@@ -10,7 +10,6 @@ classdef beamlineGUI < handle
         GasType string % Gas type string identifier
         AcquisitionType string % Acquisition type string identifier
         hTimer % Handle to timer used to update beamline status read fields
-        LastRead struct % Last readings of beamline timer
         hFigure % Handle to GUI figure
         hStatusGrp % Handle to beamline status uicontrol group
         hExtractionText % Handle to extraction row label
@@ -83,6 +82,10 @@ classdef beamlineGUI < handle
         AcquisitionList cell = {'Faraday cup vs ExB sweep','Pressure Monitor','Faraday Cup Stability'} % Acquisition types available for selection
         hRunBtn % Handle to run test button
     end
+
+    properties (SetObservable)
+        LastRead struct % Last readings of beamline timer
+    end
     
     methods
         function obj = beamlineGUI
@@ -121,6 +124,7 @@ classdef beamlineGUI < handle
             obj.LastRead.PBeamline = obj.readPressureSensor('Beamline');
             obj.LastRead.PGas = obj.readPressureSensor('Gas');
             obj.LastRead.PRough = obj.readPressureSensor('Rough');
+            obj.LastRead.T = now;
 
             obj.hExtractionReadField.String = num2str(obj.LastRead.VExtraction,'%.1f');
 
@@ -258,7 +262,7 @@ classdef beamlineGUI < handle
             hDMM.Tag = "Extraction,Einzel,Mass";
             hDMM.devRW('SENS:FUNC "VOLT", (@101:103)');
             hDMM.devRW('SENS:VOLT:INP MOHM10, (@101:103)');
-            hDMM.devRW('SENS:VOLT:NPLC 10, (@101:103)');
+            hDMM.devRW('SENS:VOLT:NPLC 1, (@101:103)');
             hDMM.devRW('ROUT:SCAN:CRE (@101:103)');
 
         end
