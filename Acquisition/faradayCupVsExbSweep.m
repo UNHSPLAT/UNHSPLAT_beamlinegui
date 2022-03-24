@@ -218,14 +218,13 @@ classdef faradayCupVsExbSweep < acquisition
                 % Set config figure to invisible
                 set(obj.hConfFigure,'Visible','off');
 
-                obj.hFigure1 = figure('NumberTitle','off',...
-                    'Name','Faraday Cup Current vs ExB Voltage');
+                % Stop beamline timer (timer callback executed manually during test)
+                stop(obj.hBeamlineGUI.hTimer);
 
+                % Create figures and axes
+                obj.hFigure1 = figure('NumberTitle','off','Name','Faraday Cup Current vs ExB Voltage');
                 obj.hAxes1 = axes(obj.hFigure1);
-
-                obj.hFigure2 = figure('NumberTitle','off',...
-                    'Name','Faraday Cup Current vs 1/V_E_x_B^2');
-
+                obj.hFigure2 = figure('NumberTitle','off','Name','Faraday Cup Current vs 1/V_E_x_B^2');
                 obj.hAxes2 = axes(obj.hFigure2);
 
                 % Preallocate arrays
@@ -262,20 +261,21 @@ classdef faradayCupVsExbSweep < acquisition
                     % Pause for dwell time
                     pause(obj.DwellTime);
                     % Obtain readings
-                    readings = obj.hBeamlineGUI.updateReadings;
+                    fname = fullfile(obj.hBeamlineGUI.DataDir,[strrep(sprintf('ExB_%.2fV',obj.VPoints(iV)),'.','p'),'.mat']);
+                    readings = obj.hBeamlineGUI.updateReadings([],[],fname);
                     readings.timestamp = now;
                     % Assign variables
                     T(iV) = datestr(readings.timestamp,"yyyy-mm-dd HH:MM:SS");
-                    Vexb(iV) = readings.Exb;
-                    Ifar(iV) = readings.Faraday;
-                    Vext(iV) = readings.Extraction;
-                    Vesa(iV) = readings.Esa;
-                    Vdef(iV) = readings.Defl;
-                    Vyst(iV) = readings.Ysteer;
-                    Vmfc(iV) = readings.Mass;
-                    Pbml(iV) = readings.Beamline;
-                    Pgas(iV) = readings.Gas;
-                    Prou(iV) = readings.Rough;
+                    Vexb(iV) = readings.VExb;
+                    Ifar(iV) = readings.IFaraday;
+                    Vext(iV) = readings.VExtraction;
+                    Vesa(iV) = readings.VEsa;
+                    Vdef(iV) = readings.VDefl;
+                    Vyst(iV) = readings.VYsteer;
+                    Vmfc(iV) = readings.VMass;
+                    Pbml(iV) = readings.PBeamline;
+                    Pgas(iV) = readings.PGas;
+                    Prou(iV) = readings.PRough;
                     % Plot data
                     plot(obj.hAxes1,Vexb(1:iV),Ifar(1:iV));
                     set(obj.hAxes1,'YScale','log');
@@ -285,10 +285,6 @@ classdef faradayCupVsExbSweep < acquisition
                     set(obj.hAxes2,'Yscale','log');
                     xlabel(obj.hAxes2,'1/V_E_x_B^2 [1/V^2]');
                     ylabel(obj.hAxes2,'I_F_a_r_a_d_a_y [A]');
-                    % Save data
-                    fname = [strrep(sprintf('ExB_%.2fV',obj.VPoints(iV)),'.','p'),'.mat'];
-                    fprintf('Saving data to file: %s\n',fname);
-                    save(fullfile(obj.hBeamlineGUI.DataDir,fname),'readings');
                 end
 
                 % Save results .mat file
@@ -316,12 +312,16 @@ classdef faradayCupVsExbSweep < acquisition
         end
 
         function closeGUI(obj,~,~)
-            %CLOSEGUI Re-enable beamline GUI run test button and delete obj when figure is closed
+            %CLOSEGUI Re-enable beamline GUI run test button, restart timer, and delete obj when figure is closed
 
             % Enable beamline GUI run test button if still valid
             if isvalid(obj.hBeamlineGUI)
                 set(obj.hBeamlineGUI.hRunBtn,'String','RUN TEST');
                 set(obj.hBeamlineGUI.hRunBtn,'Enable','on');
+            end
+
+            if strcmp(obj.hBeamlineGUI.hTimer.Running,'off')
+                start(obj.hBeamlineGUI.hTimer);
             end
 
             % Delete obj

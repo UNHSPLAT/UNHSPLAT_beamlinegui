@@ -10,6 +10,7 @@ classdef beamlineGUI < handle
         GasType string % Gas type string identifier
         AcquisitionType string % Acquisition type string identifier
         hTimer % Handle to timer used to update beamline status read fields
+        LastRead struct % Last readings of beamline timer
         hFigure % Handle to GUI figure
         hStatusGrp % Handle to beamline status uicontrol group
         hExtractionText % Handle to extraction row label
@@ -104,46 +105,50 @@ classdef beamlineGUI < handle
 
         end
 
-        function readings = updateReadings(obj,~,~)
+        function readings = updateReadings(obj,~,~,fname)
             %UPDATEREADINGS Read and update all beamline status reading fields
 
             % Gather readings
             [extraction,einzel,mass] = obj.readDMM;
-            readings.Extraction = extraction*4000;
-            readings.Einzel = einzel*1000;
-            readings.Mass = mass;
-            readings.Exb = obj.readHVPS('Exb');
-            readings.Esa = obj.readHVPS('Esa');
-            readings.Defl = obj.readHVPS('Defl');
-            readings.Ysteer = obj.readHVPS('Ysteer');
-            readings.Faraday = obj.readFaraday;
-            readings.Beamline = obj.readPressureSensor('Beamline');
-            readings.Gas = obj.readPressureSensor('Gas');
-            readings.Rough = obj.readPressureSensor('Rough');
+            obj.LastRead.VExtraction = extraction*4000;
+            obj.LastRead.VEinzel = einzel*1000;
+            obj.LastRead.VMass = mass;
+            obj.LastRead.VExb = obj.readHVPS('Exb');
+            obj.LastRead.VEsa = obj.readHVPS('Esa');
+            obj.LastRead.VDefl = obj.readHVPS('Defl');
+            obj.LastRead.VYsteer = obj.readHVPS('Ysteer');
+            obj.LastRead.IFaraday = obj.readFaraday;
+            obj.LastRead.PBeamline = obj.readPressureSensor('Beamline');
+            obj.LastRead.PGas = obj.readPressureSensor('Gas');
+            obj.LastRead.PRough = obj.readPressureSensor('Rough');
 
-            obj.hExtractionReadField.String = num2str(readings.Extraction,'%.1f');
+            obj.hExtractionReadField.String = num2str(obj.LastRead.VExtraction,'%.1f');
 
-            obj.hEinzelReadField.String = num2str(readings.Einzel,'%.1f');
+            obj.hEinzelReadField.String = num2str(obj.LastRead.VEinzel,'%.1f');
 
-            obj.hExbReadField.String = num2str(readings.Exb,'%.1f');
+            obj.hExbReadField.String = num2str(obj.LastRead.VExb,'%.1f');
 
-            obj.hEsaReadField.String = num2str(readings.Esa,'%.1f');
+            obj.hEsaReadField.String = num2str(obj.LastRead.VEsa,'%.1f');
 
-            obj.hDeflReadField.String = num2str(readings.Defl,'%.1f');
+            obj.hDeflReadField.String = num2str(obj.LastRead.VDefl,'%.1f');
 
-            obj.hYsteerReadField.String = num2str(readings.Ysteer,'%.1f');
+            obj.hYsteerReadField.String = num2str(obj.LastRead.VYsteer,'%.1f');
 
-            obj.hFaradayReadField.String = num2str(readings.Faraday,'%.2e');
+            obj.hFaradayReadField.String = num2str(obj.LastRead.IFaraday,'%.2e');
 
-            obj.hMassReadField.String = num2str(readings.Mass,'%.3f');
+            obj.hMassReadField.String = num2str(obj.LastRead.VMass,'%.3f');
 
-            obj.hP1ReadField.String = num2str(readings.Beamline,'%.2e');
+            obj.hP1ReadField.String = num2str(obj.LastRead.PBeamline,'%.2e');
 
-            obj.hP4ReadField.String = num2str(readings.Gas,'%.2e');
+            obj.hP4ReadField.String = num2str(obj.LastRead.PGas,'%.2e');
 
-            obj.hP5ReadField.String = num2str(readings.Rough,'%.2e');
+            obj.hP5ReadField.String = num2str(obj.LastRead.PRough,'%.2e');
 
-            fname = fullfile(obj.DataDir,['readings_',num2str(round(now*1e6)),'.mat']);
+            readings = obj.LastRead;
+
+            if ~exist('fname','var')
+                fname = fullfile(obj.DataDir,['readings_',num2str(round(now*1e6)),'.mat']);
+            end
             save(fname,'readings');
 
         end
