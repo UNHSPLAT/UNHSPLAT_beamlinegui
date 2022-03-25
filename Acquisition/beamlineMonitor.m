@@ -7,11 +7,9 @@ classdef beamlineMonitor < acquisition
     end
 
     properties (SetAccess = private)
-        hFigureP % Handle to pressure readings figure
+        hFigure % Handle to readings figure
         hAxesP % Handle to pressure readings axes
-        hFigureI % Handle to current readings figure
         hAxesI % Handle to current readings axes
-        hFigureV % Handle to voltage readings figure
         hAxesV % Handle to voltage readings axes
         Readings struct % Structure containing all readings
         ReadingsListener % Listener for beamlineGUI readings
@@ -36,16 +34,20 @@ classdef beamlineMonitor < acquisition
             set(obj.hBeamlineGUI.hRunBtn,'Enable','off');
 
             % Create figures
-            obj.hFigureP = figure('NumberTitle','off','Name','Pressure Monitor','DeleteFcn',@obj.closeFigure);
-            obj.hFigureI = figure('NumberTitle','off','Name','Current Monitor','DeleteFcn',@obj.closeFigure);
-            obj.hFigureV = figure('NumberTitle','off','Name','Voltage Monitor','DeleteFcn',@obj.closeFigure);
+            obj.hFigure = figure('NumberTitle','off',...
+                'Name','Beamline Monitor',...
+                'Position',[100,100,1680,480],...
+                'DeleteFcn',@obj.closeFigure);
 
             try
 
                 % Create axes
-                obj.hAxesP = axes(obj.hFigureP);
-                obj.hAxesI = axes(obj.hFigureI);
-                obj.hAxesV = axes(obj.hFigureV);
+                obj.hAxesP = axes(obj.hFigure);
+                subplot(1,3,1,obj.hAxesP);
+                obj.hAxesI = axes(obj.hFigure);
+                subplot(1,3,2,obj.hAxesI);
+                obj.hAxesV = axes(obj.hFigure);
+                subplot(1,3,3,obj.hAxesV);
 
                 % Add listener to update data when new readings are taken by main beamlineGUI
                 obj.ReadingsListener = addlistener(obj.hBeamlineGUI,'LastRead','PostSet',@obj.updateFigures);
@@ -64,7 +66,7 @@ classdef beamlineMonitor < acquisition
             catch MExc
 
                 % Delete figure if error, triggering closeGUI callback
-                delete(obj.hFigureP);
+                delete(obj.hFigure);
 
                 % Rethrow caught exception
                 rethrow(MExc);
@@ -76,36 +78,19 @@ classdef beamlineMonitor < acquisition
         function beamlineGUIDeleted(obj,~,~)
             %BEAMLINEGUIDELETED Delete configuration GUI figure
 
-            if isvalid(obj) && isvalid(obj.hFigureP)
-                delete(obj.hFigureP);
+            if isvalid(obj) && isvalid(obj.hFigure)
+                delete(obj.hFigure);
             end
 
         end
 
         function closeFigure(obj,~,~)
-            %CLOSEFIGURE Re-enable beamline GUI run test button, close remaining figures, and delete obj when figure is closed
+            %CLOSEFIGURE Re-enable beamline GUI run test button, plot all data, and delete obj when figure is closed
             
             % Enable beamline GUI run test button if still valid
             if isvalid(obj.hBeamlineGUI)
                 set(obj.hBeamlineGUI.hRunBtn,'String','RUN TEST');
                 set(obj.hBeamlineGUI.hRunBtn,'Enable','on');
-            end
-
-            % Get handle to figure being closed
-            h = gcbo;
-
-            if ~strcmp(h.Name,'Pressure Monitor')
-                if isvalid(obj.hFigureP)
-                    set(obj.hFigureP,'Visible','off');
-                end
-            elseif ~strcmp(h.Name,'Current Monitor')
-                if isvalid(obj.hFigureI)
-                    set(obj.hFigureI,'Visible','off');
-                end
-            elseif ~strcmp(h.Name,'Voltage Monitor')
-                if isvalid(obj.hFigureV)
-                    set(obj.hFigureV,'Visible','off');
-                end
             end
     
             % Plot pressure data
@@ -216,7 +201,7 @@ classdef beamlineMonitor < acquisition
                 catch MExc
     
                     % Delete figure if error, triggering closeGUI callback
-                    delete(obj.hFigureP);
+                    delete(obj.hFigure);
     
                     % Rethrow caught exception
                     rethrow(MExc);
