@@ -245,9 +245,9 @@ classdef faradayCupSweep < acquisition
                 stop(obj.hBeamlineGUI.hTimer);
 
                 % Create figures and axes
-                obj.hFigure1 = figure('NumberTitle','off','Name','Faraday Cup Current vs ExB Voltage');
+                obj.hFigure1 = figure('NumberTitle','off','Name','Faraday Cup Current vs Voltage');
                 obj.hAxes1 = axes(obj.hFigure1);
-                obj.hFigure2 = figure('NumberTitle','off','Name','Faraday Cup Current vs 1/V_E_x_B^2');
+                obj.hFigure2 = figure('NumberTitle','off','Name','Faraday Cup Current vs 1/V^2');
                 obj.hAxes2 = axes(obj.hFigure2);
 
                 % Preallocate arrays
@@ -317,7 +317,7 @@ classdef faradayCupSweep < acquisition
                     xlabel(obj.hAxes1,['V_{',char(psTag),'} [V]']);
                     ylabel(obj.hAxes1,'I_{Faraday} [A]');
                     set(obj.hAxes2,'Yscale','log');
-                    xlabel(obj.hAxes2,['1/V^2_{',char(psTag),'} [1/V^2]');
+                    xlabel(obj.hAxes2,['1/V^2_{',char(psTag),'} [1/V^2]']);
                     ylabel(obj.hAxes2,'I_F_a_r_a_d_a_y [A]');
                 end
 
