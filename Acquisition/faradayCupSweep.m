@@ -267,13 +267,13 @@ classdef faradayCupSweep < acquisition
                 for iV = 1:length(obj.VPoints)
                     if isempty(obj.hFigure1) || ~isvalid(obj.hFigure1)
                         obj.hFigure1 = figure('NumberTitle','off',...
-                            'Name','Faraday Cup Current vs ExB Voltage');
+                            'Name','Faraday Cup Current vs Voltage');
         
                         obj.hAxes1 = axes(obj.hFigure1); %#ok<LAXES> Only executed if figure deleted or not instantiated
                     end
                     if isempty(obj.hFigure2) || ~isvalid(obj.hFigure2)
                         obj.hFigure2 = figure('NumberTitle','off',...
-                            'Name','Faraday Cup Current vs 1/V_E_x_B^2');
+                            'Name','Faraday Cup Current vs 1/V^2');
         
                         obj.hAxes2 = axes(obj.hFigure2); %#ok<LAXES> Only executed if figure deleted or not instantiated
                     end
