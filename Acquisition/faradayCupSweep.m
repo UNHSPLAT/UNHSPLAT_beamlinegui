@@ -1,21 +1,25 @@
-classdef faradayCupVsExbSweep < acquisition
-    %FARADAYCUPVSEXBSWEEP Configures and runs a sweep of Faraday cup current vs ExB voltage
+classdef faradayCupSweep < acquisition
+    %FARADAYCUPSWEEP Configures and runs a sweep of Faraday cup current vs selectable voltage supply
 
     properties (Constant)
-        Type string = "Faraday cup vs ExB Sweep" % Acquisition type identifier string
+        Type string = "Faraday cup Sweep" % Acquisition type identifier string
         MinDefault double = 100 % Default minimum voltage
         MaxDefault double = 2500 % Default maximum voltage
         StepsDefault double = 40 % Default number of steps
         DwellDefault double = 5 % Default dwell time
+        PSList string = ["ExB","ESA","Defl","Ysteer"] % List of sweep supplies
     end
 
     properties
-        hExb % Handle to ExB power supply
+        PSTag string % String identifying user-selected HVPS
+        hHVPS % Handle to desired power supply
         hConfFigure % Handle to configuration GUI figure
         hFigure1 % Handle to I-V data plot
         hFigure2 % Handle to I-1/V^2 data plot
         hAxes1 % Handle to I-V data axes
         hAxes2 % Handle to I-1/V^2 data axes
+        hSupplyText % Handle to sweep supply label
+        hSupplyEdit % Handle to sweep supply field
         hMinText % Handle to minimum voltage label
         hMinEdit % Handle to minimum voltage field
         hStepsText % Handle to number of steps label
@@ -31,7 +35,7 @@ classdef faradayCupVsExbSweep < acquisition
     end
 
     methods
-        function obj = faradayCupVsExbSweep(hGUI)
+        function obj = faradayCupSweep(hGUI)
             %FARADAYCUPVSEXBSWEEP Construct an instance of this class
 
             obj@acquisition(hGUI);
@@ -47,20 +51,32 @@ classdef faradayCupVsExbSweep < acquisition
             set(obj.hBeamlineGUI.hRunBtn,'Enable','off');
             set(obj.hBeamlineGUI.hRunBtn,'String','Test in progress...');
             
-            % Find ExB power supply
-            obj.hExb = obj.hBeamlineGUI.Hardware(contains([obj.hBeamlineGUI.Hardware.Tag],'ExB','IgnoreCase',true)&strcmpi([obj.hBeamlineGUI.Hardware.Type],'Power Supply'));
-            if length(obj.hExb)~=1
-                error('faradayCupVsExbSweep:invalidTags','Invalid tags! Must be exactly one power supply available with tag containing ''ExB''...');
-            end
-            
             % Create figure
             obj.hConfFigure = figure('MenuBar','none',...
                 'ToolBar','none',...
                 'Resize','off',...
-                'Position',[400,160,300,185],...
+                'Position',[400,160,300,220],...
                 'NumberTitle','off',...
-                'Name','ExB Sweep Config',...
+                'Name','Sweep Config',...
                 'DeleteFcn',@obj.closeGUI);
+
+            % Set positions
+            ystart = 190;
+            ysize = 20;
+            xpos = 150;
+            xtextsize = 100;
+            xeditsize = 60;
+
+            obj.hSupplyText = uicontrol(obj.hConfFigure,'Style','text',...
+                'Position',[xpos-xtextsize,ystart,xtextsize,ysize],...
+                'String','Sweep Supply: ',...
+                'FontSize',10,...
+                'HorizontalAlignment','right');
+
+            obj.hSupplyEdit = uicontrol(obj.hConfFigure,'Style','popupmenu',...
+                'Position',[xpos,ystart,xeditsize,ysize],...
+                'String',obj.PSList,...
+                'HorizontalAlignment','right');
             
             % Set positions
             ystart = 155;
@@ -170,10 +186,17 @@ classdef faradayCupVsExbSweep < acquisition
             try
     
                 % Retrieve config values
+                psTag = obj.PSList(obj.hSupplyEdit.Value);
                 minVal = str2double(obj.hMinEdit.String);
                 maxVal = str2double(obj.hMaxEdit.String);
                 stepsVal = str2double(obj.hStepsEdit.String);
                 dwellVal = str2double(obj.hDwellEdit.String);
+            
+                % Find desired power supply
+                obj.hHVPS = obj.hBeamlineGUI.Hardware(contains([obj.hBeamlineGUI.Hardware.Tag],psTag,'IgnoreCase',true)&strcmpi([obj.hBeamlineGUI.Hardware.Type],'Power Supply'));
+                if length(obj.hHVPS)~=1
+                    error('faradayCupSweep:invalidTags','Invalid tags! Must be exactly one power supply available with tag containing ''%s''...',psTag);
+                end
     
                 % Error checking
                 if isnan(minVal) || isnan(maxVal) || isnan(stepsVal) || isnan(dwellVal)
@@ -182,8 +205,8 @@ classdef faradayCupVsExbSweep < acquisition
                 elseif minVal > maxVal || minVal < 0 || maxVal < 0
                     errordlg('Invalid min and max voltages! Must be increasing positive values.','User input error!');
                     return
-                elseif maxVal > obj.hExb.VMax || minVal < obj.hExb.VMin
-                    errordlg(['Invalid min and max voltages! Cannot exceed power supply range of ',num2str(obj.hExb.VMin),' to ',num2str(obj.hExb.VMax),' V'],'User input error!');
+                elseif maxVal > obj.hHVPS.VMax || minVal < obj.hHVPS.VMin
+                    errordlg(['Invalid min and max voltages! Cannot exceed power supply range of ',num2str(obj.hHVPS.VMin),' to ',num2str(obj.hHVPS.VMax),' V'],'User input error!');
                     return
                 elseif dwellVal <= 0
                     errordlg('Invalid dwell time! Must be a positive value.','User input error!');
@@ -257,11 +280,11 @@ classdef faradayCupVsExbSweep < acquisition
 
                     % Set ExB voltage
                     fprintf('Setting voltage to %.2f V...\n',obj.VPoints(iV));
-                    obj.hExb.setVSet(obj.VPoints(iV));
+                    obj.hHVPS.setVSet(obj.VPoints(iV));
                     % Pause for dwell time
                     pause(obj.DwellTime);
                     % Obtain readings
-                    fname = fullfile(obj.hBeamlineGUI.DataDir,[strrep(sprintf('ExB_%.2fV',obj.VPoints(iV)),'.','p'),'.mat']);
+                    fname = fullfile(obj.hBeamlineGUI.DataDir,[strrep(sprintf('%s_%.2fV',psTag,obj.VPoints(iV)),'.','p'),'.mat']);
                     readings = obj.hBeamlineGUI.updateReadings([],[],fname);
                     % Assign variables
                     T(iV) = datestr(readings.T,"yyyy-mm-dd HH:MM:SS");
@@ -276,13 +299,25 @@ classdef faradayCupVsExbSweep < acquisition
                     Pgas(iV) = readings.PGas;
                     Prou(iV) = readings.PRough;
                     % Plot data
-                    plot(obj.hAxes1,Vexb(1:iV),Ifar(1:iV));
+                    switch lower(psTag)
+                        case 'exb'
+                            plot(obj.hAxes1,Vexb(1:iV),Ifar(1:iV));
+                            plot(obj.hAxes2,1./Vexb(1:iV).^2,Ifar(1:iV));
+                        case 'esa'
+                            plot(obj.hAxes1,Vesa(1:iV),Ifar(1:iV));
+                            plot(obj.hAxes2,1./Vesa(1:iV).^2,Ifar(1:iV));
+                        case 'defl'
+                            plot(obj.hAxes1,Vdef(1:iV),Ifar(1:iV));
+                            plot(obj.hAxes2,1./Vdef(1:iV).^2,Ifar(1:iV));
+                        case 'ysteer'
+                            plot(obj.hAxes1,Vyst(1:iV),Ifar(1:iV));
+                            plot(obj.hAxes2,1./Vyst(1:iV).^2,Ifar(1:iV));
+                    end
                     set(obj.hAxes1,'YScale','log');
-                    xlabel(obj.hAxes1,'V_E_x_B [V]');
-                    ylabel(obj.hAxes1,'I_F_a_r_a_d_a_y [A]');
-                    plot(obj.hAxes2,1./Vexb(1:iV).^2,Ifar(1:iV));
+                    xlabel(obj.hAxes1,['V_{',char(psTag),'} [V]']);
+                    ylabel(obj.hAxes1,'I_{Faraday} [A]');
                     set(obj.hAxes2,'Yscale','log');
-                    xlabel(obj.hAxes2,'1/V_E_x_B^2 [1/V^2]');
+                    xlabel(obj.hAxes2,['1/V^2_{',char(psTag),'} [1/V^2]');
                     ylabel(obj.hAxes2,'I_F_a_r_a_d_a_y [A]');
                 end
 
