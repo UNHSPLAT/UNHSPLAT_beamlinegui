@@ -14,6 +14,7 @@ classdef beamlineMonitor < acquisition
         hFigureV % Handle to voltage readings figure
         hAxesV % Handle to voltage readings axes
         Readings struct % Structure containing all readings
+        ReadingsListener % Listener for beamlineGUI readings
     end
 
     methods
@@ -47,7 +48,7 @@ classdef beamlineMonitor < acquisition
                 obj.hAxesV = axes(obj.hFigureV);
 
                 % Add listener to update data when new readings are taken by main beamlineGUI
-                addlistener(obj.hBeamlineGUI,'LastRead','PostSet',@obj.updateFigures);
+                obj.ReadingsListener = addlistener(obj.hBeamlineGUI,'LastRead','PostSet',@obj.updateFigures);
     
                 % Initialize Readings with LastRead from beamlineGUI
                 obj.Readings = obj.hBeamlineGUI.LastRead;
@@ -63,7 +64,7 @@ classdef beamlineMonitor < acquisition
             catch MExc
 
                 % Delete figure if error, triggering closeGUI callback
-                delete(obj.hFigure);
+                delete(obj.hFigureP);
 
                 % Rethrow caught exception
                 rethrow(MExc);
@@ -84,27 +85,27 @@ classdef beamlineMonitor < acquisition
         function closeFigure(obj,~,~)
             %CLOSEFIGURE Re-enable beamline GUI run test button, close remaining figures, and delete obj when figure is closed
             
+            % Enable beamline GUI run test button if still valid
+            if isvalid(obj.hBeamlineGUI)
+                set(obj.hBeamlineGUI.hRunBtn,'String','RUN TEST');
+                set(obj.hBeamlineGUI.hRunBtn,'Enable','on');
+            end
+
             % Get handle to figure being closed
             h = gcbo;
 
             if ~strcmp(h.Name,'Pressure Monitor')
                 if isvalid(obj.hFigureP)
-                    delete(obj.hFigureP);
+                    set(obj.hFigureP,'Visible','off');
                 end
             elseif ~strcmp(h.Name,'Current Monitor')
                 if isvalid(obj.hFigureI)
-                    delete(obj.hFigureI);
+                    set(obj.hFigureI,'Visible','off');
                 end
             elseif ~strcmp(h.Name,'Voltage Monitor')
                 if isvalid(obj.hFigureV)
-                    delete(obj.hFigureV);
+                    set(obj.hFigureV,'Visible','off');
                 end
-            end
-
-            % Enable beamline GUI run test button if still valid
-            if isvalid(obj.hBeamlineGUI)
-                set(obj.hBeamlineGUI.hRunBtn,'String','RUN TEST');
-                set(obj.hBeamlineGUI.hRunBtn,'Enable','on');
             end
     
             % Plot pressure data
@@ -142,6 +143,7 @@ classdef beamlineMonitor < acquisition
             legend(hAxV,'Extraction','Einzel','ExB','ESA','Defl','y-steer','Location','northwest');
 
             % Delete obj
+            delete(obj.ReadingsListener);
             delete(obj);
 
         end

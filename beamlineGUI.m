@@ -112,6 +112,9 @@ classdef beamlineGUI < handle
             %UPDATEREADINGS Read and update all beamline status reading fields
 
             % Gather readings
+            if isempty(obj.LastRead)
+                obj.LastRead = struct;
+            end
             [extraction,einzel,mass] = obj.readDMM;
             obj.LastRead.VExtraction = extraction*4000;
             obj.LastRead.VEinzel = einzel*1000;
