@@ -35,7 +35,7 @@ classdef beamlineMonitor < acquisition
 
             % Create figures
             obj.hFigure = figure('NumberTitle','off',...
-                'Name','Beamline Monitor',...
+                'Name','Beamline Monitor - Close Window to Exit Test',...
                 'Position',[100,100,1680,480],...
                 'DeleteFcn',@obj.closeFigure);
 
@@ -163,7 +163,7 @@ classdef beamlineMonitor < acquisition
                     set(obj.hAxesP,'YScale','log');
                     datetick(obj.hAxesP,'x','HH:MM:SS');
                     ylabel(obj.hAxesP,'Pressure [torr]');
-                    title(obj.hAxesP,'PRESSURE MONITOR (LAST 100 READINGS) - CLOSE WINDOW TO EXIT TEST');
+                    title(obj.hAxesP,'PRESSURE MONITOR (LAST 100 READINGS)');
                     legend(obj.hAxesP,'Rough Vac','Gas Line','Beamline','Chamber','Location','northwest');
     
                     % Update current monitor
@@ -174,7 +174,7 @@ classdef beamlineMonitor < acquisition
                     end
                     datetick(obj.hAxesI,'x','HH:MM:SS');
                     ylabel(obj.hAxesI,'I_{Faraday} [A]');
-                    title(obj.hAxesI,'CURRENT MONITOR (LAST 100 READINGS) - CLOSE WINDOW TO EXIT TEST');
+                    title(obj.hAxesI,'CURRENT MONITOR (LAST 100 READINGS)');
     
                     % Update voltage monitor
                     if length(obj.Readings)>=100
@@ -194,7 +194,7 @@ classdef beamlineMonitor < acquisition
                     end
                     datetick(obj.hAxesV,'x','HH:MM:SS');
                     ylabel(obj.hAxesV,'Voltage [V]');
-                    title(obj.hAxesV,'VOLTAGE MONITOR (LAST 100 READINGS) - CLOSE WINDOW TO EXIT TEST');
+                    title(obj.hAxesV,'VOLTAGE MONITOR (LAST 100 READINGS)');
                     legend(obj.hAxesV,'Extraction','Einzel','ExB','ESA','Defl','y-steer','Location','northwest');
 
                     % Append new data to file
