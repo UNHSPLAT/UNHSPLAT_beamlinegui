@@ -125,6 +125,7 @@ classdef beamlineGUI < handle
             obj.LastRead.VYsteer = obj.readHVPS('Ysteer');
             obj.LastRead.IFaraday = obj.readFaraday;
             obj.LastRead.PBeamline = obj.readPressureSensor('Beamline');
+            obj.LastRead.PChamber = obj.readPressureSensor('Chamber');
             obj.LastRead.PGas = obj.readPressureSensor('Gas');
             obj.LastRead.PRough = obj.readPressureSensor('Rough');
             obj.LastRead.T = now;
@@ -146,6 +147,8 @@ classdef beamlineGUI < handle
             obj.hMassReadField.String = num2str(obj.LastRead.VMass,'%.3f');
 
             obj.hP1ReadField.String = num2str(obj.LastRead.PBeamline,'%.2e');
+
+            obj.hP2ReadField.String = num2str(obj.LastRead.PChamber,'%.2e');
 
             obj.hP4ReadField.String = num2str(obj.LastRead.PGas,'%.2e');
 
@@ -205,7 +208,7 @@ classdef beamlineGUI < handle
             obj.Hardware(end+1) = leyboldCenter2("ASRL7::INSTR");
             obj.Hardware(end).Tag = "Gas,Rough";
             obj.Hardware(end+1) = leyboldGraphix3("ASRL8::INSTR");
-            obj.Hardware(end).Tag = "Beamline";
+            obj.Hardware(end).Tag = "Beamline,Chamber";
 
             % Configure picoammeter
             hFaraday = obj.Hardware(strcmpi([obj.Hardware.Type],'Picoammeter')&strcmpi([obj.Hardware.ModelNum],'6485'));
@@ -384,7 +387,7 @@ classdef beamlineGUI < handle
 
             obj.hP2Text = uicontrol(obj.hStatusGrp,'Style','text',...
                 'Position',[xpos,ypos,xsize,ysize],...
-                'String','Pressure 2',...
+                'String','Chamber',...
                 'FontWeight','bold',...
                 'FontSize',9,...
                 'HorizontalAlignment','right');
@@ -1129,7 +1132,7 @@ classdef beamlineGUI < handle
             switch lower(tag)
                 case {'beamline','gas'}
                     sensorNum = 1;
-                case {'p2','rough'}
+                case {'chamber','rough'}
                     sensorNum = 2;
                 case 'p3'
                     sensorNum = 3;

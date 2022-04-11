@@ -98,12 +98,13 @@ classdef beamlineMonitor < acquisition
             hAxP = axes(hFigP);
             plot(hAxP,[obj.Readings.T],[obj.Readings.PRough],'r-',...
                 [obj.Readings.T],[obj.Readings.PGas],'g-',...
-                [obj.Readings.T],[obj.Readings.PBeamline],'b-');
+                [obj.Readings.T],[obj.Readings.PBeamline],'b-',...
+                [obj.Readings.T],[obj.Readings.PChamber],'c-');
             set(hAxP,'YScale','log');
             datetick(hAxP,'x','HH:MM:SS');
             ylabel(hAxP,'Pressure [torr]');
             title(hAxP,'Pressure vs Time');
-            legend(hAxP,'Rough Vac','Gas Line','Beamline','Location','northwest');
+            legend(hAxP,'Rough Vac','Gas Line','Beamline','Chamber','Location','northwest');
 
             % Plot current data
             hFigI = figure('NumberTitle','off','Name','Current Data');
@@ -151,17 +152,19 @@ classdef beamlineMonitor < acquisition
                     if length(obj.Readings)>=100
                         plot(obj.hAxesP,[obj.Readings(end-99:end).T],[obj.Readings(end-99:end).PRough],'r-',...
                             [obj.Readings(end-99:end).T],[obj.Readings(end-99:end).PGas],'g-',...
-                            [obj.Readings(end-99:end).T],[obj.Readings(end-99:end).PBeamline],'b-');
+                            [obj.Readings(end-99:end).T],[obj.Readings(end-99:end).PBeamline],'b-',...
+                            [obj.Readings(end-99:end).T],[obj.Readings(end-99:end).PChamber],'c-');
                     else
                         plot(obj.hAxesP,[obj.Readings.T],[obj.Readings.PRough],'r-',...
                             [obj.Readings.T],[obj.Readings.PGas],'g-',...
-                            [obj.Readings.T],[obj.Readings.PBeamline],'b-');
+                            [obj.Readings.T],[obj.Readings.PBeamline],'b-',...
+                            [obj.Readings.T],[obj.Readings.PChamber],'c-');
                     end
                     set(obj.hAxesP,'YScale','log');
                     datetick(obj.hAxesP,'x','HH:MM:SS');
                     ylabel(obj.hAxesP,'Pressure [torr]');
                     title(obj.hAxesP,'PRESSURE MONITOR (LAST 100 READINGS) - CLOSE WINDOW TO EXIT TEST');
-                    legend(obj.hAxesP,'Rough Vac','Gas Line','Beamline','Location','northwest');
+                    legend(obj.hAxesP,'Rough Vac','Gas Line','Beamline','Chamber','Location','northwest');
     
                     % Update current monitor
                     if length(obj.Readings)>=100
@@ -170,7 +173,7 @@ classdef beamlineMonitor < acquisition
                         plot(obj.hAxesI,[obj.Readings.T],[obj.Readings.IFaraday],'r-');
                     end
                     datetick(obj.hAxesI,'x','HH:MM:SS');
-                    ylabel(obj.hAxesI,'I_F_a_r_a_d_a_y [A]');
+                    ylabel(obj.hAxesI,'I_{Faraday} [A]');
                     title(obj.hAxesI,'CURRENT MONITOR (LAST 100 READINGS) - CLOSE WINDOW TO EXIT TEST');
     
                     % Update voltage monitor
