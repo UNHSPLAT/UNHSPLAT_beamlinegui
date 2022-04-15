@@ -67,6 +67,8 @@ classdef beamlineGUI < handle
         hP5ReadText % Handle to pressure 5 reading label
         hP5ReadField % Handle to pressure 5 reading field
         hFileMenu % Handle to file top menu dropdown
+        hEditMenu % Handle to edit top menu dropdown
+        hCopyTS % Handle to copy test sequence menu button
         hSequenceText % Handle to test sequence label
         hSequenceEdit % Handle to test sequence field
         hDateText % Handle to test date label
@@ -763,6 +765,13 @@ classdef beamlineGUI < handle
             % Create file menu
             obj.hFileMenu = uimenu(obj.hFigure,'Text','File');
 
+            % Create edit menu
+            obj.hEditMenu = uimenu(obj.hFigure,'Text','Edit');
+
+            % Create copy test sequence menu button
+            obj.hCopyTS = uimenu(obj.hEditMenu,'Text','Copy Test Sequence',...
+                'MenuSelectedFcn',@obj.copyTSCallback);
+
             % Turn off dock controls (defaults to on when first uimenu created)
             set(obj.hFigure,'DockControls','off');
 
@@ -876,14 +885,29 @@ classdef beamlineGUI < handle
             obj.hTimer = timer('Name','readTimer',...
                 'Period',5,...
                 'ExecutionMode','fixedDelay',...
-                'TimerFcn',@obj.updateReadings);
+                'TimerFcn',@obj.updateReadings,...
+                'ErrorFcn',@obj.restartTimer);
 
             % Start timer
             start(obj.hTimer);
 
         end
 
+        function restartTimer(obj,~,~)
+            %RESTARTTIMER Restarts timer if error
+
+            % Stop timer if still running
+            if strcmp(obj.hTimer.Running,'on')
+                stop(obj.hTimer);
+            end
+
+            % Restart timer
+            start(obj.hTimer);
+
+        end
+
         function exbBtnCallback(obj,~,~)
+            %EXBBTNCALLBACK Sets ExB HVPS voltage based on user input
 
             setVal = str2double(obj.hExbSetField.String);
 
@@ -909,6 +933,7 @@ classdef beamlineGUI < handle
         end
 
         function esaBtnCallback(obj,~,~)
+            %ESABTNCALLBACK Sets ESA HVPS voltage based on user input
 
             setVal = str2double(obj.hEsaSetField.String);
 
@@ -934,6 +959,7 @@ classdef beamlineGUI < handle
         end
 
         function deflBtnCallback(obj,~,~)
+            %DEFLBTNCALLBACK Sets Defl HVPS voltage based on user input
 
             setVal = str2double(obj.hDeflSetField.String);
 
@@ -959,6 +985,7 @@ classdef beamlineGUI < handle
         end
 
         function ysteerBtnCallback(obj,~,~)
+            %YSTEERBTNCALLBACK Sets Y-steer HVPS voltage based on user input
 
             setVal = str2double(obj.hYsteerSetField.String);
 
@@ -984,6 +1011,7 @@ classdef beamlineGUI < handle
         end
 
         function massBtnCallback(obj,~,~)
+            %MASSBTNCALLBACK Sets mass flow controller voltage based on user input
 
             setVal = str2double(obj.hMassSetField.String);
 
@@ -1005,6 +1033,13 @@ classdef beamlineGUI < handle
 
             hMass.setVSet(setVal,1);
             set(obj.hMassSetField,'String','');
+
+        end
+
+        function copyTSCallback(obj,~,~)
+            %COPYTSCALLBACK Copies test sequence to clipboard
+
+            clipboard('copy',num2str(obj.TestSequence));
 
         end
 
@@ -1086,6 +1121,7 @@ classdef beamlineGUI < handle
         end
 
         function [extraction,einzel,mass] = readDMM(obj)
+            %READDMM Reads DMM values for extraction, einzel, and mass flow controller
 
             % Find DMM
             hDMM = obj.Hardware(contains([obj.Hardware.Tag],'extraction','IgnoreCase',true)&contains([obj.Hardware.Tag],'einzel','IgnoreCase',true)&contains([obj.Hardware.Tag],'mass','IgnoreCase',true)&strcmpi([obj.Hardware.Type],'Multimeter'));
@@ -1103,6 +1139,7 @@ classdef beamlineGUI < handle
         end
 
         function readVal = readHVPS(obj,tag)
+            %READHVPS Reads HVPS value based on tag input
 
             % Find power supply matching tags
             hHVPS = obj.Hardware(contains([obj.Hardware.Tag],tag,'IgnoreCase',true)&strcmpi([obj.Hardware.Type],'Power Supply'));
@@ -1115,6 +1152,7 @@ classdef beamlineGUI < handle
         end
 
         function readVal = readFaraday(obj)
+            %READFARADAY Reads Faraday cup current value
 
             % Find picoammeter
             hFaraday = obj.Hardware(contains([obj.Hardware.Tag],'Faraday','IgnoreCase',true)&strcmpi([obj.Hardware.Type],'Picoammeter'));
@@ -1128,6 +1166,7 @@ classdef beamlineGUI < handle
         end
 
         function readVal = readPressureSensor(obj,tag)
+            %READPRESSURESENSOR Reads pressure sensor value based on tag input
 
             switch lower(tag)
                 case {'beamline','gas'}
