@@ -1,6 +1,5 @@
 classdef beamlineGUI < handle
     %BEAMLINEGUI - Defines a GUI used to interface with the Peabody Scientific beamline in lab 145
-    % TODO: Add Exb- GUI row (label, reading, set button)
     
     properties
         Hardware % Object handle array to contain all hardware connected to beamline PC
@@ -13,60 +12,80 @@ classdef beamlineGUI < handle
         hTimer % Handle to timer used to update beamline status read fields
         hFigure % Handle to GUI figure
         hStatusGrp % Handle to beamline status uicontrol group
+        
         hExtractionText % Handle to extraction row label
         hExtractionReadText % Handle to extraction voltage reading label
         hExtractionReadField % Handle to extraction voltage reading field
         hEinzelText % Handle to einzel row label
         hEinzelReadText % Handle to einzel voltage reading label
         hEinzelReadField % Handle to einzel voltage reading field
-        hExbText % Handle to ExB row label
-        hExbReadText % Handle to ExB voltage reading label
-        hExbReadField % Handle to ExB voltage reading field
-        hExbSetText % Handle to ExB voltage setting label
-        hExbSetField % Handle to ExB voltage setting field
-        hExbSetBtn % Handle to ExB voltage setting button
+        
+        hExbpText % Handle to Exbp row label
+        hExbpReadText % Handle to Exbp voltage reading label
+        hExbpReadField % Handle to Exbp voltage reading field
+        hExbpSetText % Handle to Exbp voltage setting label
+        hExbpSetField % Handle to Exbp voltage setting field
+        hExbpSetBtn % Handle to Exbp voltage setting button
+        
+        hExbnText % Handle to Exbn row label
+        hExbnReadText % Handle to Exbn voltage reading label
+        hExbnReadField % Handle to Exbn voltage reading field
+        hExbnSetText % Handle to Exbn voltage setting label
+        hExbnSetField % Handle to Exbn voltage setting field
+        hExbnSetBtn % Handle to Exbn voltage setting button
+
         hEsaText % Handle to ESA row label
         hEsaReadText % Handle to ESA voltage reading label
         hEsaReadField % Handle to ESA voltage reading field
         hEsaSetText % Handle to ESA voltage setting label
         hEsaSetField % Handle to ESA voltage setting field
         hEsaSetBtn % Handle to ESA voltage setting button
+        
         hDeflText % Handle to Defl row label
         hDeflReadText % Handle to Defl voltage reading label
         hDeflReadField % Handle to Defl voltage reading field
         hDeflSetText % Handle to Defl voltage setting label
         hDeflSetField % Handle to Defl voltage setting field
         hDeflSetBtn % Handle to Defl voltage setting button
+        
         hYsteerText % Handle to y-steer row label
         hYsteerReadText % Handle to y-steer voltage reading label
         hYsteerReadField % Handle to y-steer voltage reading field
         hYsteerSetText % Handle to y-steer voltage setting label
         hYsteerSetField % Handle to y-steer voltage setting field
         hYsteerSetBtn % Handle to y-steer voltage setting button
+        
         hFaradayText % Handle to faraday cup row label
         hFaradayReadText % Handle to faraday cup current reading label
         hFaradayReadField % Handle to faraday cup current reading field
+        
         hMassText % Handle to mass flow row label
         hMassReadText % Handle to mass flow reading label
         hMassReadField % Handle to mass flow reading field
         hMassSetText % Handle to mass flow setting label
         hMassSetField % Handle to mass flow setting field
         hMassSetBtn % Handle to mass flow setting button
+        
         hP1Text % Handle to pressure 1 row label
         hP1ReadText % Handle to pressure 1 reading label
         hP1ReadField % Handle to pressure 1 reading field
+        
         hP2Text % Handle to pressure 2 row label
         hP2ReadText % Handle to pressure 2 reading label
         hP2ReadField % Handle to pressure 2 reading field
+        
         hP3Text % Handle to pressure 3 row label
         hP3ReadText % Handle to pressure 3 reading label
         hP3ReadField % Handle to pressure 3 reading field
+        
         hP4Text % Handle to pressure 4 row label
         hP4ReadText % Handle to pressure 4 reading label
         hP4ReadField % Handle to pressure 4 reading field
+        
         hP5Text % Handle to pressure 5 row label
         hP5ReadText % Handle to pressure 5 reading label
         hP5ReadField % Handle to pressure 5 reading field
+        
         hFileMenu % Handle to file top menu dropdown
         hEditMenu % Handle to edit top menu dropdown
         hCopyTS % Handle to copy test sequence menu button
@@ -74,15 +93,19 @@ classdef beamlineGUI < handle
         hSequenceEdit % Handle to test sequence field
         hDateText % Handle to test date label
         hDateEdit % Handle to test date field
+        
         hOperatorText % Handle to test operator label
         hOperatorEdit % Handle to test operator popupmenu
         OperatorList cell = {'Jonathan Bower','Daniel Abel','Skylar Vogler','Colin van Ysseldyk','Philip Valek','Nathan Schwadron','Zack Smith','David Heirtzler'} % Test operators available for selection
+        
         hGasText % Handle to gas type label
         hGasEdit % Handle to gas type popupmenu
         GasList cell = {'Air','Argon','Nitrogen','Helium','Deuterium','Oxygen','Magic gas'} % Gas types available for selection
+        
         hAcquisitionText % Handle to acquisition type label
         hAcquisitionEdit % Handle to acquisition type popupmenu
         AcquisitionList cell = {'Faraday cup sweep','Beamline Monitor'} % Acquisition types available for selection
+        
         hRunBtn % Handle to run test button
     end
 
@@ -122,7 +145,8 @@ classdef beamlineGUI < handle
             obj.LastRead.VExtraction = extraction*4000;
             obj.LastRead.VEinzel = einzel*1000;
             obj.LastRead.VMass = mass;
-            obj.LastRead.VExb = obj.readHVPS('Exb');
+            obj.LastRead.VExbp = obj.readHVPS('Exbp');
+            obj.LastRead.VExbn = obj.readHVPS('Exbn');
             obj.LastRead.VEsa = obj.readHVPS('Esa');
             obj.LastRead.VDefl = obj.readHVPS('Defl');
             obj.LastRead.VYsteer = obj.readHVPS('Ysteer');
@@ -137,7 +161,8 @@ classdef beamlineGUI < handle
 
             obj.hEinzelReadField.String = num2str(obj.LastRead.VEinzel,'%.1f');
 
-            obj.hExbReadField.String = num2str(obj.LastRead.VExb,'%.1f');
+            obj.hExbpReadField.String = num2str(obj.LastRead.VExbp,'%.1f');
+            obj.hExbnReadField.String = num2str(obj.LastRead.VExbn,'%.1f');
 
             obj.hEsaReadField.String = num2str(obj.LastRead.VEsa,'%.1f');
 
@@ -239,11 +264,15 @@ classdef beamlineGUI < handle
             end
             hFaraday.devRW(':SYST:LOC');
             
-            % Set ExB power supply to 0V and set tag
-            hExb = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::15::INSTR'));
-            hExb.setVSet(0);
-            hExb.Tag = "Exb";
-            % TODO: Exb+ and add section for Exb-
+            % Set Exbp power supply to 0V and set tag
+            hExbp = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::15::INSTR'));
+            hExbp.setVSet(0);
+            hExbp.Tag = "Exbp";
+
+            % Set Exbn power supply to 0V and set tag
+            hExbn = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::14::INSTR'));
+            hExbn.setVSet(0);
+            hExbn.Tag = "Exbn";
 
             % Set ESA power supply to 0V and set tag
             hEsa = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::16::INSTR'));
@@ -280,27 +309,31 @@ classdef beamlineGUI < handle
         function createGUI(obj)
             %CREATEGUI Create beamline GUI components
 
+            %define relative posiiton so we only need to change one number when adding/removing buttons
+            yBorderBuffer = 60 
+
             % Create figure
             obj.hFigure = figure('MenuBar','none',...
                 'ToolBar','none',...
                 'Resize','off',...
-                'Position',[100,100,900,480],...
+                'Position',[100,100,925,500],...
                 'NumberTitle','off',...
                 'Name','Beamline GUI',...
                 'DeleteFcn',@obj.closeGUI);
             
+
             % Create beamline status uicontrol group
             obj.hStatusGrp = uipanel(obj.hFigure,...
                 'Title','Beamline Status',...
                 'FontWeight','bold',...
                 'FontSize',12,...
                 'Units','pixels',...
-                'Position',[40,40,480,420]);
+                'Position',[40,40,490,obj.hFigure.Position(4)-yBorderBuffer]);
             
             % Set positions for components
             ysize = 22;
             ygap = 6;
-            ystart = 360;
+            ystart = obj.hStatusGrp.Position(4)-yBorderBuffer;
             ypos = ystart;
             xgap = 20;
             xstart = 10;
@@ -326,9 +359,18 @@ classdef beamlineGUI < handle
 
             ypos = ypos-ysize-ygap;
 
-            obj.hExbText = uicontrol(obj.hStatusGrp,'Style','text',...
+            obj.hExbpText = uicontrol(obj.hStatusGrp,'Style','text',...
                 'Position',[xpos,ypos,xsize,ysize],...
-                'String','ExB',...
+                'String','+ExB',...
+                'FontWeight','bold',...
+                'FontSize',9,...
+                'HorizontalAlignment','right');
+
+            ypos = ypos-ysize-ygap;
+
+            obj.hExbnText = uicontrol(obj.hStatusGrp,'Style','text',...
+                'Position',[xpos,ypos,xsize,ysize],...
+                'String','-ExB',...
                 'FontWeight','bold',...
                 'FontSize',9,...
                 'HorizontalAlignment','right');
@@ -443,7 +485,16 @@ classdef beamlineGUI < handle
 
             ypos = ypos-ysize-ygap;
 
-            obj.hExbReadText = uicontrol(obj.hStatusGrp,'Style','text',...
+            obj.hExbpReadText = uicontrol(obj.hStatusGrp,'Style','text',...
+                'Position',[xpos,ypos,xsize,ysize],...
+                'String','Voltage [V]: ',...
+                'FontSize',9,...
+                'HorizontalAlignment','right');
+
+            ypos = ypos-ysize-ygap;
+
+
+            obj.hExbnReadText = uicontrol(obj.hStatusGrp,'Style','text',...
                 'Position',[xpos,ypos,xsize,ysize],...
                 'String','Voltage [V]: ',...
                 'FontSize',9,...
@@ -549,7 +600,15 @@ classdef beamlineGUI < handle
 
             ypos = ypos-ysize-ygap;
 
-            obj.hExbReadField = uicontrol(obj.hStatusGrp,'Style','edit',...
+            obj.hExbpReadField = uicontrol(obj.hStatusGrp,'Style','edit',...
+                'Position',[xpos,ypos,xsize,ysize],...
+                'Enable','inactive',...
+                'FontSize',9,...
+                'HorizontalAlignment','right');
+
+            ypos = ypos-ysize-ygap;
+
+            obj.hExbnReadField = uicontrol(obj.hStatusGrp,'Style','edit',...
                 'Position',[xpos,ypos,xsize,ysize],...
                 'Enable','inactive',...
                 'FontSize',9,...
@@ -638,7 +697,15 @@ classdef beamlineGUI < handle
             ypos = ystart-ysize*2-ygap*2;
             xpos = xpos+xsize+xgap;
 
-            obj.hExbSetText = uicontrol(obj.hStatusGrp,'Style','text',...
+            obj.hExbpSetText = uicontrol(obj.hStatusGrp,'Style','text',...
+                'Position',[xpos,ypos,xsize,ysize],...
+                'String','Vset [V]: ',...
+                'FontSize',9,...
+                'HorizontalAlignment','right');
+
+            ypos = ypos-ysize-ygap;
+
+            obj.hExbnSetText = uicontrol(obj.hStatusGrp,'Style','text',...
                 'Position',[xpos,ypos,xsize,ysize],...
                 'String','Vset [V]: ',...
                 'FontSize',9,...
@@ -679,7 +746,14 @@ classdef beamlineGUI < handle
             ypos = ystart-ysize*2-ygap*2+2;
             xpos = xpos+xsize;
 
-            obj.hExbSetField = uicontrol(obj.hStatusGrp,'Style','edit',...
+            obj.hExbpSetField = uicontrol(obj.hStatusGrp,'Style','edit',...
+                'Position',[xpos,ypos,xsize,ysize],...
+                'FontSize',9,...
+                'HorizontalAlignment','right');
+
+            ypos = ypos-ysize-ygap;
+
+            obj.hExbnSetField = uicontrol(obj.hStatusGrp,'Style','edit',...
                 'Position',[xpos,ypos,xsize,ysize],...
                 'FontSize',9,...
                 'HorizontalAlignment','right');
@@ -716,13 +790,23 @@ classdef beamlineGUI < handle
             xpos = xpos+xsize+10;
             xsize = 50;
 
-            obj.hExbSetBtn = uicontrol(obj.hStatusGrp,'Style','pushbutton',...
+            obj.hExbpSetBtn = uicontrol(obj.hStatusGrp,'Style','pushbutton',...
                 'Position',[xpos,ypos,xsize,ysize],...
                 'String','SET',...
                 'FontWeight','bold',...
                 'FontSize',9,...
                 'HorizontalAlignment','center',...
-                'Callback',@obj.exbBtnCallback);
+                'Callback',@obj.ExbpBtnCallback);
+
+            ypos = ypos-ysize-ygap;
+
+            obj.hExbnSetBtn = uicontrol(obj.hStatusGrp,'Style','pushbutton',...
+                'Position',[xpos,ypos,xsize,ysize],...
+                'String','SET',...
+                'FontWeight','bold',...
+                'FontSize',9,...
+                'HorizontalAlignment','center',...
+                'Callback',@obj.ExbnBtnCallback);
 
             ypos = ypos-ysize-ygap;
 
@@ -908,29 +992,55 @@ classdef beamlineGUI < handle
 
         end
 
-        function exbBtnCallback(obj,~,~)
-            %EXBBTNCALLBACK Sets ExB HVPS voltage based on user input
+        function ExbpBtnCallback(obj,~,~)
+            %ExbpBTNCALLBACK Sets Exbp HVPS voltage based on user input
 
-            setVal = str2double(obj.hExbSetField.String);
+            setVal = str2double(obj.hExbpSetField.String);
 
-            % Find ExB power supply
-            hExb = obj.Hardware(contains([obj.Hardware.Tag],'ExB','IgnoreCase',true)&strcmpi([obj.Hardware.Type],'Power Supply'));
-            if length(hExb)~=1
-                error('beamlineGUI:invalidTags','Invalid tags! Must be exactly one power supply available with tag containing ''ExB''...');
+            % Find Exbp power supply
+            hExbp = obj.Hardware(contains([obj.Hardware.Tag],'Exbp','IgnoreCase',true)&strcmpi([obj.Hardware.Type],'Power Supply'));
+            if length(hExbp)~=1
+                error('beamlineGUI:invalidTags','Invalid tags! Must be exactly one power supply available with tag containing ''Exbp''...');
             end
 
             if isnan(setVal)
                 errordlg('A valid voltage value must be entered!','Invalid input!');
-                set(obj.hExbSetField,'String','');
+                set(obj.hExbpSetField,'String','');
                 return
-            elseif setVal > hExb.VMax || setVal < hExb.VMin
-                errordlg(['ExB voltage setpoint must be between ',num2str(hExb.VMin),' and ',num2str(hExb.VMax),' V!'],'Invalid input!');
-                set(obj.hExbSetField,'String','');
+            elseif setVal > hExbp.VMax || setVal < hExbp.VMin
+                errordlg(['+ExB voltage setpoint must be between ',num2str(hExbp.VMin),' and ',num2str(hExbp.VMax),' V!'],'Invalid input!');
+                set(obj.hExbpSetField,'String','');
                 return
             end
 
-            hExb.setVSet(setVal);
-            set(obj.hExbSetField,'String','');
+            hExbp.setVSet(setVal);
+            set(obj.hExbpSetField,'String','');
+
+        end
+
+        function ExbnBtnCallback(obj,~,~)
+            %ExbnBTNCALLBACK Sets Exbn HVPS voltage based on user input
+
+            setVal = str2double(obj.hExbnSetField.String);
+
+            % Find Exbn power supply
+            hExbn = obj.Hardware(contains([obj.Hardware.Tag],'Exbn','IgnoreCase',true)&strcmpi([obj.Hardware.Type],'Power Supply'));
+            if length(hExbn)~=1
+                error('beamlineGUI:invalidTags','Invalid tags! Must be exactly one power supply available with tag containing ''Exbn''...');
+            end
+
+            if isnan(setVal)
+                errordlg('A valid voltage value must be entered!','Invalid input!');
+                set(obj.hExbnSetField,'String','');
+                return
+            elseif setVal > hExbn.VMax || setVal < hExbn.VMin
+                errordlg(['+ExB voltage setpoint must be between ',num2str(hExbn.VMin),' and ',num2str(hExbn.VMax),' V!'],'Invalid input!');
+                set(obj.hExbnSetField,'String','');
+                return
+            end
+
+            hExbn.setVSet(setVal);
+            set(obj.hExbnSetField,'String','');
 
         end
 
