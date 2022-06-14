@@ -1,5 +1,6 @@
 classdef beamlineGUI < handle
     %BEAMLINEGUI - Defines a GUI used to interface with the Peabody Scientific beamline in lab 145
+    % TODO: Add Exb- GUI row (label, reading, set button)
     
     properties
         Hardware % Object handle array to contain all hardware connected to beamline PC
@@ -100,13 +101,13 @@ classdef beamlineGUI < handle
             obj.genTestSequence;
 
             % Gather and populate required hardware
-            obj.gatherHardware;
+%             obj.gatherHardware;
 
             % Create GUI components
             obj.createGUI;
 
             % Create and start beamline status update timer
-            obj.createTimer;
+%             obj.createTimer;
 
         end
 
@@ -242,6 +243,7 @@ classdef beamlineGUI < handle
             hExb = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::15::INSTR'));
             hExb.setVSet(0);
             hExb.Tag = "Exb";
+            % TODO: Exb+ and add section for Exb-
 
             % Set ESA power supply to 0V and set tag
             hEsa = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::16::INSTR'));
