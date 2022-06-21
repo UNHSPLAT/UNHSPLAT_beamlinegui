@@ -124,13 +124,14 @@ classdef beamlineGUI < handle
             obj.genTestSequence;
 
             % Gather and populate required hardware
-%             obj.gatherHardware;
+            %obj.gatherHardware;
+            obj.Hardware = struct2cell(setupInstruments)
 
             % Create GUI components
             obj.createGUI;
 
             % Create and start beamline status update timer
-%             obj.createTimer;
+            %obj.createTimer;
 
         end
 
@@ -264,15 +265,15 @@ classdef beamlineGUI < handle
             end
             hFaraday.devRW(':SYST:LOC');
             
-            % Set Exbp power supply to 0V and set tag
-            hExbp = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::15::INSTR'));
-            hExbp.setVSet(0);
-            hExbp.Tag = "Exbp";
-
             % Set Exbn power supply to 0V and set tag
             hExbn = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::14::INSTR'));
             hExbn.setVSet(0);
             hExbn.Tag = "Exbn";
+
+            % Set Exbp power supply to 0V and set tag
+            hExbp = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::15::INSTR'));
+            hExbp.setVSet(0);
+            hExbp.Tag = "Exbp";
 
             % Set ESA power supply to 0V and set tag
             hEsa = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::16::INSTR'));
@@ -1232,6 +1233,8 @@ classdef beamlineGUI < handle
             
         end
 
+
+        %Should define sets of these functions as monitors. 
         function [extraction,einzel,mass] = readDMM(obj)
             %READDMM Reads DMM values for extraction, einzel, and mass flow controller
 
@@ -1259,8 +1262,11 @@ classdef beamlineGUI < handle
                 error('beamlineGUI:invalidTags','Invalid tag! No power supply with tag %s found...',tag);
             end
 
-            readVal = hHVPS.measV;
-
+            if hHVPS.connected
+                readVal = hHVPS.measV;
+            else
+                readVal = NaN
+            end
         end
 
         function readVal = readFaraday(obj)
@@ -1272,7 +1278,11 @@ classdef beamlineGUI < handle
                 error('beamlineGUI:invalidHardware','Invalid hardware configuration! Must be exactly one picoammeter with tag containing ''Faraday''...');
             end
 
-            readVal = hFaraday.read;
+            if hFaraday.connected
+                readVal = hFaraday.read;
+            else
+                readVal = NaN
+            end
             hFaraday.devRW(':SYST:LOC');
 
         end
@@ -1294,8 +1304,12 @@ classdef beamlineGUI < handle
             if length(hPressure)~=1
                 error('beamlineGUI:invalidTags','Invalid tag! No pressure sensor with tag %s found...',tag);
             end
-
-            readVal = hPressure.readPressure(sensorNum);
+            if hPressure.connected
+                readVal = hPressure.readPressure(sensorNum);
+            else
+                readVal = NaN
+            end
+            
 
         end
 
