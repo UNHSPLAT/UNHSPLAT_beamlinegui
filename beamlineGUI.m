@@ -30,9 +30,6 @@ classdef beamlineGUI < handle
         hExbnText % Handle to Exbn row label
         hExbnReadText % Handle to Exbn voltage reading label
         hExbnReadField % Handle to Exbn voltage reading field
-        hExbnSetText % Handle to Exbn voltage setting label
-        hExbnSetField % Handle to Exbn voltage setting field
-        hExbnSetBtn % Handle to Exbn voltage setting button
 
         hEsaText % Handle to ESA row label
         hEsaReadText % Handle to ESA voltage reading label
@@ -704,13 +701,7 @@ classdef beamlineGUI < handle
                 'HorizontalAlignment','right');
 
             ypos = ypos-ysize-ygap;
-
-            obj.hExbnSetText = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','Vset [V]: ',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
+            %space for empty exbn
             ypos = ypos-ysize-ygap;
 
             obj.hEsaSetText = uicontrol(obj.hStatusGrp,'Style','text',...
@@ -753,10 +744,7 @@ classdef beamlineGUI < handle
 
             ypos = ypos-ysize-ygap;
 
-            obj.hExbnSetField = uicontrol(obj.hStatusGrp,'Style','edit',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
+            %space for Exbn spot
 
             ypos = ypos-ysize-ygap;
 
@@ -800,14 +788,7 @@ classdef beamlineGUI < handle
 
             ypos = ypos-ysize-ygap;
 
-            obj.hExbnSetBtn = uicontrol(obj.hStatusGrp,'Style','pushbutton',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','SET',...
-                'FontWeight','bold',...
-                'FontSize',9,...
-                'HorizontalAlignment','center',...
-                'Callback',@obj.ExbnBtnCallback);
-
+            %space for exbn values
             ypos = ypos-ysize-ygap;
 
             obj.hEsaSetBtn = uicontrol(obj.hStatusGrp,'Style','pushbutton',...
@@ -1016,31 +997,13 @@ classdef beamlineGUI < handle
             hExbp.setVSet(setVal);
             set(obj.hExbpSetField,'String','');
 
-        end
-
-        function ExbnBtnCallback(obj,~,~)
-            %ExbnBTNCALLBACK Sets Exbn HVPS voltage based on user input
-
-            setVal = str2double(obj.hExbnSetField.String);
-
+            % set the negative ExB supply voltage too
             % Find Exbn power supply
             hExbn = obj.Hardware(contains([obj.Hardware.Tag],'Exbn','IgnoreCase',true)&strcmpi([obj.Hardware.Type],'Power Supply'));
             if length(hExbn)~=1
                 error('beamlineGUI:invalidTags','Invalid tags! Must be exactly one power supply available with tag containing ''Exbn''...');
-            end
-
-            if isnan(setVal)
-                errordlg('A valid voltage value must be entered!','Invalid input!');
-                set(obj.hExbnSetField,'String','');
-                return
-            elseif setVal > hExbn.VMax || setVal < hExbn.VMin
-                errordlg(['+ExB voltage setpoint must be between ',num2str(hExbn.VMin),' and ',num2str(hExbn.VMax),' V!'],'Invalid input!');
-                set(obj.hExbnSetField,'String','');
-                return
-            end
-
-            hExbn.setVSet(setVal);
-            set(obj.hExbnSetField,'String','');
+            end  
+            hExbn.setVSet(-setVal);
 
         end
 
