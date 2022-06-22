@@ -121,13 +121,13 @@ classdef beamlineGUI < handle
             obj.genTestSequence;
 
             % Gather and populate required hardware
-%             obj.gatherHardware;
+             obj.gatherHardware;
 
             % Create GUI components
             obj.createGUI;
 
             % Create and start beamline status update timer
-%             obj.createTimer;
+             obj.createTimer;
 
         end
 
@@ -267,7 +267,7 @@ classdef beamlineGUI < handle
             hExbp.Tag = "Exbp";
 
             % Set Exbn power supply to 0V and set tag
-            hExbn = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::14::INSTR'));
+            hExbn = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::19::INSTR'));
             hExbn.setVSet(0);
             hExbn.Tag = "Exbn";
 

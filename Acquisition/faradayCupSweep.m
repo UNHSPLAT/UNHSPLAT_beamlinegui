@@ -7,7 +7,7 @@ classdef faradayCupSweep < acquisition
         MaxDefault double = 2500 % Default maximum voltage
         StepsDefault double = 40 % Default number of steps
         DwellDefault double = 5 % Default dwell time
-        PSList string = ["ExB","ESA","Defl","Ysteer"] % List of sweep supplies
+        PSList string = ["ExBp","ESA","Defl","Ysteer"] % List of sweep supplies
     end
 
     properties
@@ -30,13 +30,13 @@ classdef faradayCupSweep < acquisition
         hDwellText % Handle to dwell time label
         hDwellEdit % Handle to dwell time field
         hSweepBtn % Handle to run sweep button
-        VPoints double % Array of ExB voltage setpoints
+        VPoints double % Array of ExBp voltage setpoints
         DwellTime double % Dwell time setting
     end
 
     methods
         function obj = faradayCupSweep(hGUI)
-            %FARADAYCUPVSEXBSWEEP Construct an instance of this class
+            %FARADAYCUPVSEXBpSWEEP Construct an instance of this class
 
             obj@acquisition(hGUI);
             
@@ -252,7 +252,7 @@ classdef faradayCupSweep < acquisition
 
                 % Preallocate arrays
                 T = strings(1,length(obj.VPoints));
-                Vexb = zeros(1,length(obj.VPoints));
+                Vexbp = zeros(1,length(obj.VPoints));
                 Ifar = zeros(1,length(obj.VPoints));
                 Vext = zeros(1,length(obj.VPoints));
                 Vesa = zeros(1,length(obj.VPoints));
@@ -288,7 +288,7 @@ classdef faradayCupSweep < acquisition
                     readings = obj.hBeamlineGUI.updateReadings([],[],fname);
                     % Assign variables
                     T(iV) = datestr(readings.T,"yyyy-mm-dd HH:MM:SS");
-                    Vexb(iV) = readings.VExb;
+                    Vexbp(iV) = readings.VExbp;
                     Ifar(iV) = readings.IFaraday;
                     Vext(iV) = readings.VExtraction;
                     Vesa(iV) = readings.VEsa;
@@ -300,9 +300,9 @@ classdef faradayCupSweep < acquisition
                     Prou(iV) = readings.PRough;
                     % Plot data
                     switch lower(psTag)
-                        case 'exb'
-                            plot(obj.hAxes1,Vexb(1:iV),Ifar(1:iV));
-                            plot(obj.hAxes2,1./Vexb(1:iV).^2,Ifar(1:iV));
+                        case 'exbp'
+                            plot(obj.hAxes1,Vexbp(1:iV),Ifar(1:iV));
+                            plot(obj.hAxes2,1./Vexbp(1:iV).^2,Ifar(1:iV));
                         case 'esa'
                             plot(obj.hAxes1,Vesa(1:iV),Ifar(1:iV));
                             plot(obj.hAxes2,1./Vesa(1:iV).^2,Ifar(1:iV));
@@ -323,11 +323,11 @@ classdef faradayCupSweep < acquisition
 
                 % Save results .mat file
                 fname = 'results.mat';
-                save(fullfile(obj.hBeamlineGUI.DataDir,fname),'Vexb','Ifar','Vext','Vesa','Vdef','Vyst','Vmfc','Pbml','Pgas','Prou','T');
+                save(fullfile(obj.hBeamlineGUI.DataDir,fname),'Vexbp','Ifar','Vext','Vesa','Vdef','Vyst','Vmfc','Pbml','Pgas','Prou','T');
 
                 % Save results .csv file
                 fname = strrep(fname,'.mat','.csv');
-                t = table(T',Vexb',Ifar',Vext',Vesa',Vdef',Vyst',Vmfc',Pbml',Pgas',Prou','VariableNames',{'t','Vexb','Ifar','Vext','Vesa','Vdef','Vyst','Vmfc','Pbml','Pgas','Prou'});
+                t = table(T',Vexbp',Ifar',Vext',Vesa',Vdef',Vyst',Vmfc',Pbml',Pgas',Prou','VariableNames',{'t','Vexbp','Ifar','Vext','Vesa','Vdef','Vyst','Vmfc','Pbml','Pgas','Prou'});
                 writetable(t,fullfile(obj.hBeamlineGUI.DataDir,fname));
 
                 fprintf('\nTest complete!\n');
