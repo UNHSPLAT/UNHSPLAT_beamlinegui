@@ -3,6 +3,7 @@ classdef beamlineGUI < handle
     
     properties
         Hardware % Object handle array to contain all hardware connected to beamline PC
+        Monitors % Object handle array to contain all hardware connected to beamline PC
         TestSequence double % Unique test sequence identifier number
         TestDate string % Test date derived from TestSequence
         DataDir string % Data directory derived from TestSequence
@@ -12,79 +13,6 @@ classdef beamlineGUI < handle
         hTimer % Handle to timer used to update beamline status read fields
         hFigure % Handle to GUI figure
         hStatusGrp % Handle to beamline status uicontrol group
-        
-        hExtractionText % Handle to extraction row label
-        hExtractionReadText % Handle to extraction voltage reading label
-        hExtractionReadField % Handle to extraction voltage reading field
-        hEinzelText % Handle to einzel row label
-        hEinzelReadText % Handle to einzel voltage reading label
-        hEinzelReadField % Handle to einzel voltage reading field
-        
-        hExbpText % Handle to Exbp row label
-        hExbpReadText % Handle to Exbp voltage reading label
-        hExbpReadField % Handle to Exbp voltage reading field
-        hExbpSetText % Handle to Exbp voltage setting label
-        hExbpSetField % Handle to Exbp voltage setting field
-        hExbpSetBtn % Handle to Exbp voltage setting button
-        
-        hExbnText % Handle to Exbn row label
-        hExbnReadText % Handle to Exbn voltage reading label
-        hExbnReadField % Handle to Exbn voltage reading field
-        hExbnSetText % Handle to Exbn voltage setting label
-        hExbnSetField % Handle to Exbn voltage setting field
-        hExbnSetBtn % Handle to Exbn voltage setting button
-
-        hEsaText % Handle to ESA row label
-        hEsaReadText % Handle to ESA voltage reading label
-        hEsaReadField % Handle to ESA voltage reading field
-        hEsaSetText % Handle to ESA voltage setting label
-        hEsaSetField % Handle to ESA voltage setting field
-        hEsaSetBtn % Handle to ESA voltage setting button
-        
-        hDeflText % Handle to Defl row label
-        hDeflReadText % Handle to Defl voltage reading label
-        hDeflReadField % Handle to Defl voltage reading field
-        hDeflSetText % Handle to Defl voltage setting label
-        hDeflSetField % Handle to Defl voltage setting field
-        hDeflSetBtn % Handle to Defl voltage setting button
-        
-        hYsteerText % Handle to y-steer row label
-        hYsteerReadText % Handle to y-steer voltage reading label
-        hYsteerReadField % Handle to y-steer voltage reading field
-        hYsteerSetText % Handle to y-steer voltage setting label
-        hYsteerSetField % Handle to y-steer voltage setting field
-        hYsteerSetBtn % Handle to y-steer voltage setting button
-        
-        hFaradayText % Handle to faraday cup row label
-        hFaradayReadText % Handle to faraday cup current reading label
-        hFaradayReadField % Handle to faraday cup current reading field
-        
-        hMassText % Handle to mass flow row label
-        hMassReadText % Handle to mass flow reading label
-        hMassReadField % Handle to mass flow reading field
-        hMassSetText % Handle to mass flow setting label
-        hMassSetField % Handle to mass flow setting field
-        hMassSetBtn % Handle to mass flow setting button
-        
-        hP1Text % Handle to pressure 1 row label
-        hP1ReadText % Handle to pressure 1 reading label
-        hP1ReadField % Handle to pressure 1 reading field
-        
-        hP2Text % Handle to pressure 2 row label
-        hP2ReadText % Handle to pressure 2 reading label
-        hP2ReadField % Handle to pressure 2 reading field
-        
-        hP3Text % Handle to pressure 3 row label
-        hP3ReadText % Handle to pressure 3 reading label
-        hP3ReadField % Handle to pressure 3 reading field
-        
-        hP4Text % Handle to pressure 4 row label
-        hP4ReadText % Handle to pressure 4 reading label
-        hP4ReadField % Handle to pressure 4 reading field
-        
-        hP5Text % Handle to pressure 5 row label
-        hP5ReadText % Handle to pressure 5 reading label
-        hP5ReadField % Handle to pressure 5 reading field
         
         hFileMenu % Handle to file top menu dropdown
         hEditMenu % Handle to edit top menu dropdown
@@ -124,14 +52,14 @@ classdef beamlineGUI < handle
             obj.genTestSequence;
 
             % Gather and populate required hardware
-            %obj.gatherHardware;
-            obj.Hardware = struct2cell(setupInstruments)
+            obj.gatherHardware;
+            % obj.Hardware = struct2cell(setupInstruments)
 
             % Create GUI components
             obj.createGUI;
 
             % Create and start beamline status update timer
-            %obj.createTimer;
+            obj.createTimer;
 
         end
 
@@ -142,46 +70,19 @@ classdef beamlineGUI < handle
             if isempty(obj.LastRead)
                 obj.LastRead = struct;
             end
-            [extraction,einzel,mass] = obj.readDMM;
-            obj.LastRead.VExtraction = extraction*4000;
-            obj.LastRead.VEinzel = einzel*1000;
-            obj.LastRead.VMass = mass;
-            obj.LastRead.VExbp = obj.readHVPS('Exbp');
-            obj.LastRead.VExbn = obj.readHVPS('Exbn');
-            obj.LastRead.VEsa = obj.readHVPS('Esa');
-            obj.LastRead.VDefl = obj.readHVPS('Defl');
-            obj.LastRead.VYsteer = obj.readHVPS('Ysteer');
-            obj.LastRead.IFaraday = obj.readFaraday;
-            obj.LastRead.PBeamline = obj.readPressureSensor('Beamline');
-            obj.LastRead.PChamber = obj.readPressureSensor('Chamber');
-            obj.LastRead.PGas = obj.readPressureSensor('Gas');
-            obj.LastRead.PRough = obj.readPressureSensor('Rough');
+
+            %Read the stuff from the hardware
+            readList = structfun(@(x)x.read(),obj.Monitors);
+
+            %Share the monitor values with the last reading 
+            fields = fieldnames(obj.Monitors);
+            for i = 1:numel(fields)
+                lab = fields{i};
+                val = obj.Monitors.(fields{i}).lastRead;
+                setfield(obj.LastRead,lab,val);
+                set(obj.Monitors.(lab).guiHand.statusGrpRead,'String',num2str(val,'%.1f'));
+            end
             obj.LastRead.T = now;
-
-            obj.hExtractionReadField.String = num2str(obj.LastRead.VExtraction,'%.1f');
-
-            obj.hEinzelReadField.String = num2str(obj.LastRead.VEinzel,'%.1f');
-
-            obj.hExbpReadField.String = num2str(obj.LastRead.VExbp,'%.1f');
-            obj.hExbnReadField.String = num2str(obj.LastRead.VExbn,'%.1f');
-
-            obj.hEsaReadField.String = num2str(obj.LastRead.VEsa,'%.1f');
-
-            obj.hDeflReadField.String = num2str(obj.LastRead.VDefl,'%.1f');
-
-            obj.hYsteerReadField.String = num2str(obj.LastRead.VYsteer,'%.1f');
-
-            obj.hFaradayReadField.String = num2str(obj.LastRead.IFaraday,'%.2e');
-
-            obj.hMassReadField.String = num2str(obj.LastRead.VMass,'%.3f');
-
-            obj.hP1ReadField.String = num2str(obj.LastRead.PBeamline,'%.2e');
-
-            obj.hP2ReadField.String = num2str(obj.LastRead.PChamber,'%.2e');
-
-            obj.hP4ReadField.String = num2str(obj.LastRead.PGas,'%.2e');
-
-            obj.hP5ReadField.String = num2str(obj.LastRead.PRough,'%.2e');
 
             readings = obj.LastRead;
 
@@ -228,82 +129,84 @@ classdef beamlineGUI < handle
         end
         
         function gatherHardware(obj)
+            obj.Hardware = setupInstruments()
+            obj.Monitors = setupMonitors(obj.Hardware)
             %GATHERHARDWARE Detect, instantiate, and configure required hardware objects, set hardware tags, and populate respective obj properties
             
             % Auto-detect hardware
-            obj.Hardware = initializeInstruments;
+            % obj.Hardware = initializeInstruments;
 
-            % Connect serial port hardware
-            obj.Hardware(end+1) = leyboldCenter2("ASRL7::INSTR");
-            obj.Hardware(end).Tag = "Gas,Rough";
-            obj.Hardware(end+1) = leyboldGraphix3("ASRL8::INSTR");
-            obj.Hardware(end).Tag = "Beamline,Chamber";
+            % % Connect serial port hardware
+            % obj.Hardware(end+1) = leyboldCenter2("ASRL7::INSTR");
+            % obj.Hardware(end).Tag = "Gas,Rough";
+            % obj.Hardware(end+1) = leyboldGraphix3("ASRL8::INSTR");
+            % obj.Hardware(end).Tag = "Beamline,Chamber";
 
-            % Configure picoammeter
-            hFaraday = obj.Hardware(strcmpi([obj.Hardware.Type],'Picoammeter')&strcmpi([obj.Hardware.ModelNum],'6485'));
-            hFaraday.Tag = "Faraday";
-            hFaraday.devRW(':SYST:ZCH OFF');
-            dataOut = strtrim(hFaraday.devRW(':SYST:ZCH?'));
-            while ~strcmp(dataOut,'0')
-                warning('beamlineGUI:keithleyNonresponsive','Keithley not listening! Zcheck did not shut off as expected...');
-                hFaraday.devRW(':SYST:ZCH OFF');
-                dataOut = strtrim(hFaraday.devRW(':SYST:ZCH?'));
-            end
-            hFaraday.devRW('ARM:COUN 1');
-            dataOut = strtrim(hFaraday.devRW('ARM:COUN?'));
-            while ~strcmp(dataOut,'1')
-                warning('beamlineGUI:keithleyNonresponsive','Keithley not listening! Arm count did not set to 1 as expected...');
-                hFaraday.devRW('ARM:COUN 1');
-                dataOut = strtrim(hFaraday.devRW('ARM:COUN?'));
-            end
-            hFaraday.devRW('FORM:ELEM READ');
-            dataOut = strtrim(hFaraday.devRW('FORM:ELEM?'));
-            while ~strcmp(dataOut,'READ')
-                warning('beamlineGUI:keithleyNonresponsive','Keithley not listening! Output format not set to ''READ'' as expected...');
-                hFaraday.devRW('FORM:ELEM READ');
-                dataOut = strtrim(hFaraday.devRW('FORM:ELEM?'));
-            end
-            hFaraday.devRW(':SYST:LOC');
+            % % Configure picoammeter
+            % hFaraday = obj.Hardware(strcmpi([obj.Hardware.Type],'Picoammeter')&strcmpi([obj.Hardware.ModelNum],'6485'));
+            % hFaraday.Tag = "Faraday";
+            % hFaraday.devRW(':SYST:ZCH OFF');
+            % dataOut = strtrim(hFaraday.devRW(':SYST:ZCH?'));
+            % while ~strcmp(dataOut,'0')
+            %     warning('beamlineGUI:keithleyNonresponsive','Keithley not listening! Zcheck did not shut off as expected...');
+            %     hFaraday.devRW(':SYST:ZCH OFF');
+            %     dataOut = strtrim(hFaraday.devRW(':SYST:ZCH?'));
+            % end
+            % hFaraday.devRW('ARM:COUN 1');
+            % dataOut = strtrim(hFaraday.devRW('ARM:COUN?'));
+            % while ~strcmp(dataOut,'1')
+            %     warning('beamlineGUI:keithleyNonresponsive','Keithley not listening! Arm count did not set to 1 as expected...');
+            %     hFaraday.devRW('ARM:COUN 1');
+            %     dataOut = strtrim(hFaraday.devRW('ARM:COUN?'));
+            % end
+            % hFaraday.devRW('FORM:ELEM READ');
+            % dataOut = strtrim(hFaraday.devRW('FORM:ELEM?'));
+            % while ~strcmp(dataOut,'READ')
+            %     warning('beamlineGUI:keithleyNonresponsive','Keithley not listening! Output format not set to ''READ'' as expected...');
+            %     hFaraday.devRW('FORM:ELEM READ');
+            %     dataOut = strtrim(hFaraday.devRW('FORM:ELEM?'));
+            % end
+            % hFaraday.devRW(':SYST:LOC');
             
-            % Set Exbn power supply to 0V and set tag
-            hExbn = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::14::INSTR'));
-            hExbn.setVSet(0);
-            hExbn.Tag = "Exbn";
+            % % Set Exbn power supply to 0V and set tag
+            % hExbn = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::14::INSTR'));
+            % hExbn.setVSet(0);
+            % hExbn.Tag = "Exbn";
 
-            % Set Exbp power supply to 0V and set tag
-            hExbp = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::15::INSTR'));
-            hExbp.setVSet(0);
-            hExbp.Tag = "Exbp";
+            % % Set Exbp power supply to 0V and set tag
+            % hExbp = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::15::INSTR'));
+            % hExbp.setVSet(0);
+            % hExbp.Tag = "Exbp";
 
-            % Set ESA power supply to 0V and set tag
-            hEsa = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::16::INSTR'));
-            hEsa.setVSet(0);
-            hEsa.Tag = "Esa";
+            % % Set ESA power supply to 0V and set tag
+            % hEsa = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::16::INSTR'));
+            % hEsa.setVSet(0);
+            % hEsa.Tag = "Esa";
 
-            % Set defl power supply to 0V and set tag
-            hDefl = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::17::INSTR'));
-            hDefl.setVSet(0);
-            hDefl.Tag = "Defl";
+            % % Set defl power supply to 0V and set tag
+            % hDefl = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::17::INSTR'));
+            % hDefl.setVSet(0);
+            % hDefl.Tag = "Defl";
 
-            % Set y-steer power supply to 0V and set tag
-            hYsteer = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::18::INSTR'));
-            hYsteer.setVSet(0);
-            hYsteer.Tag = "Ysteer";
+            % % Set y-steer power supply to 0V and set tag
+            % hYsteer = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::18::INSTR'));
+            % hYsteer.setVSet(0);
+            % hYsteer.Tag = "Ysteer";
 
-            % Set mass flow power supply tag
-            hMass = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'E36313A')&strcmpi([obj.Hardware.Address],'GPIB0::5::INSTR'));
-            hMass.Tag = "Mass";
+            % % Set mass flow power supply tag
+            % hMass = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'E36313A')&strcmpi([obj.Hardware.Address],'GPIB0::5::INSTR'));
+            % hMass.Tag = "Mass";
 
-            % Set multimeter tag and configure route
-            hDMM = obj.Hardware(strcmpi([obj.Hardware.Type],'Multimeter')&strcmpi([obj.Hardware.ModelNum],'DAQ6510'));
-            if length(hDMM)~=1
-                error('beamlineGUI:deviceNotFound','Device not found! Device with specified properties not found...');
-            end
-            hDMM.Tag = "Extraction,Einzel,Mass";
-            hDMM.devRW('SENS:FUNC "VOLT", (@101:103)');
-            hDMM.devRW('SENS:VOLT:INP MOHM10, (@101:103)');
-            hDMM.devRW('SENS:VOLT:NPLC 1, (@101:103)');
-            hDMM.devRW('ROUT:SCAN:CRE (@101:103)');
+            % % Set multimeter tag and configure route
+            % hDMM = obj.Hardware(strcmpi([obj.Hardware.Type],'Multimeter')&strcmpi([obj.Hardware.ModelNum],'DAQ6510'));
+            % if length(hDMM)~=1
+            %     error('beamlineGUI:deviceNotFound','Device not found! Device with specified properties not found...');
+            % end
+            % hDMM.Tag = "Extraction,Einzel,Mass";
+            % hDMM.devRW('SENS:FUNC "VOLT", (@101:103)');
+            % hDMM.devRW('SENS:VOLT:INP MOHM10, (@101:103)');
+            % hDMM.devRW('SENS:VOLT:NPLC 1, (@101:103)');
+            % hDMM.devRW('ROUT:SCAN:CRE (@101:103)');
 
         end
 
@@ -330,524 +233,73 @@ classdef beamlineGUI < handle
                 'FontSize',12,...
                 'Units','pixels',...
                 'Position',[40,40,490,obj.hFigure.Position(4)-yBorderBuffer]);
-            
+
+
             % Set positions for components
             ysize = 22;
             ygap = 6;
             ystart = obj.hStatusGrp.Position(4)-yBorderBuffer;
             ypos = ystart;
-            xgap = 20;
+            xgap = 15;
             xstart = 10;
-            xpos = xstart;
-            xsize = 80;
+            xCol1 = xstart;
+            xsize1 = 180;
 
+            xCol2 = xCol1+xsize1+xgap
+            xsize2 = 60
+
+            xCol3 = xCol2+xsize2+xgap
+            xsize3 = 40
+
+            xCol4 = xCol3+xsize3+xgap
+            xsize4 = 60
+
+            xCol5 = xCol4+xsize4+xgap
+            xsize5 = 60
             % Create beamline status components
-            obj.hExtractionText = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','Extraction',...
+            % BeamStatus labels
+            function x = guiStatusGrpSet(x)
+                x.guiHand.statusGrpText=uicontrol(obj.hStatusGrp,'Style','text',...
+                'Position',[xCol1,ypos,xsize1,ysize],...
+                'String',sprintf('%s [%s]',x.textLabel,x.unit),...
                 'FontWeight','bold',...
                 'FontSize',9,...
                 'HorizontalAlignment','right');
 
-            ypos = ypos-ysize-ygap;
 
-            obj.hEinzelText = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','Einzel',...
-                'FontWeight','bold',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hExbpText = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','+ExB',...
-                'FontWeight','bold',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hExbnText = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','-ExB',...
-                'FontWeight','bold',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hEsaText = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','ESA',...
-                'FontWeight','bold',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hDeflText = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','Defl',...
-                'FontWeight','bold',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hYsteerText = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','y-steer',...
-                'FontWeight','bold',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hFaradayText = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','Faraday cup',...
-                'FontWeight','bold',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hMassText = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','Mass flow',...
-                'FontWeight','bold',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hP1Text = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','Beamline',...
-                'FontWeight','bold',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hP2Text = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','Chamber',...
-                'FontWeight','bold',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hP3Text = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','Pressure 3',...
-                'FontWeight','bold',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hP4Text = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','Gas Line',...
-                'FontWeight','bold',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hP5Text = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','Rough Vac',...
-                'FontWeight','bold',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ystart;
-            xpos = xpos+xsize+xgap*1.5;
-            xsize = 90;
-
-            obj.hExtractionReadText = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','Voltage [V]: ',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hEinzelReadText = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','Voltage [V]: ',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hExbpReadText = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','Voltage [V]: ',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-
-            obj.hExbnReadText = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','Voltage [V]: ',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hEsaReadText = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','Voltage [V]: ',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hDeflReadText = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','Voltage [V]: ',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hYsteerReadText = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','Voltage [V]: ',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hFaradayReadText = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','Current [A]: ',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hMassReadText = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','Vset [V]: ',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hP1ReadText = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','Pressure [torr]: ',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hP2ReadText = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','Pressure [torr]: ',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hP3ReadText = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','Pressure [torr]: ',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hP4ReadText = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','Pressure [torr]: ',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hP5ReadText = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','Pressure [torr]: ',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ystart+2;
-            xpos = xpos+xsize;
-            xsize = 60;
-
-            obj.hExtractionReadField = uicontrol(obj.hStatusGrp,'Style','edit',...
-                'Position',[xpos,ypos,xsize,ysize],...
+                x.guiHand.statusGrpRead = uicontrol(obj.hStatusGrp,'Style','edit',...
+                'Position',[xCol2,ypos,xsize2,ysize],...
                 'Enable','inactive',...
                 'FontSize',9,...
                 'HorizontalAlignment','right');
 
-            ypos = ypos-ysize-ygap;
+                if x.active
+                    x.guiHand.statusGrpSetText = uicontrol(obj.hStatusGrp,'Style','text',...
+                        'Position',[xCol3,ypos,xsize3,ysize],...
+                        'String',sprintf('set [%s]: ',x.unit),...
+                        'FontSize',9,...
+                        'HorizontalAlignment','right');
 
-            obj.hEinzelReadField = uicontrol(obj.hStatusGrp,'Style','edit',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'Enable','inactive',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
+                    x.guiHand.statusGrpSetField = uicontrol(obj.hStatusGrp,'Style','edit',...
+                        'Position',[xCol4,ypos,xsize4,ysize],...
+                        'FontSize',9,...
+                        'HorizontalAlignment','right');
 
-            ypos = ypos-ysize-ygap;
+                    x.guiHand.statusGrpSetBtn = uicontrol(obj.hStatusGrp,'Style','pushbutton',...
+                        'Position',[xCol5,ypos,xsize5,ysize],...
+                        'String','SET',...
+                        'FontWeight','bold',...
+                        'FontSize',9,...
+                        'HorizontalAlignment','center',...
+                        'Callback',@x.guiSetCallback);
 
-            obj.hExbpReadField = uicontrol(obj.hStatusGrp,'Style','edit',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'Enable','inactive',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
+                end
+                ypos = ypos-ysize-ygap;
+            end
 
-            ypos = ypos-ysize-ygap;
-
-            obj.hExbnReadField = uicontrol(obj.hStatusGrp,'Style','edit',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'Enable','inactive',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hEsaReadField = uicontrol(obj.hStatusGrp,'Style','edit',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'Enable','inactive',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hDeflReadField = uicontrol(obj.hStatusGrp,'Style','edit',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'Enable','inactive',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hYsteerReadField = uicontrol(obj.hStatusGrp,'Style','edit',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'Enable','inactive',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hFaradayReadField = uicontrol(obj.hStatusGrp,'Style','edit',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'Enable','inactive',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hMassReadField = uicontrol(obj.hStatusGrp,'Style','edit',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'Enable','inactive',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hP1ReadField = uicontrol(obj.hStatusGrp,'Style','edit',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'Enable','inactive',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hP2ReadField = uicontrol(obj.hStatusGrp,'Style','edit',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'Enable','inactive',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hP3ReadField = uicontrol(obj.hStatusGrp,'Style','edit',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'Enable','inactive',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hP4ReadField = uicontrol(obj.hStatusGrp,'Style','edit',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'Enable','inactive',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hP5ReadField = uicontrol(obj.hStatusGrp,'Style','edit',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'Enable','inactive',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ystart-ysize*2-ygap*2;
-            xpos = xpos+xsize+xgap;
-
-            obj.hExbpSetText = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','Vset [V]: ',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hExbnSetText = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','Vset [V]: ',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hEsaSetText = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','Vset [V]: ',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hDeflSetText = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','Vset [V]: ',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hYsteerSetText = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','Vset [V]: ',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize*2-ygap*2;
-
-            obj.hMassSetText = uicontrol(obj.hStatusGrp,'Style','text',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','Vset [V]: ',...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ystart-ysize*2-ygap*2+2;
-            xpos = xpos+xsize;
-
-            obj.hExbpSetField = uicontrol(obj.hStatusGrp,'Style','edit',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hExbnSetField = uicontrol(obj.hStatusGrp,'Style','edit',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hEsaSetField = uicontrol(obj.hStatusGrp,'Style','edit',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hDeflSetField = uicontrol(obj.hStatusGrp,'Style','edit',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hYsteerSetField = uicontrol(obj.hStatusGrp,'Style','edit',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ypos-ysize*2-ygap*2;
-
-            obj.hMassSetField = uicontrol(obj.hStatusGrp,'Style','edit',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'FontSize',9,...
-                'HorizontalAlignment','right');
-
-            ypos = ystart-ysize*2-ygap*2+2;
-            xpos = xpos+xsize+10;
-            xsize = 50;
-
-            obj.hExbpSetBtn = uicontrol(obj.hStatusGrp,'Style','pushbutton',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','SET',...
-                'FontWeight','bold',...
-                'FontSize',9,...
-                'HorizontalAlignment','center',...
-                'Callback',@obj.ExbpBtnCallback);
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hExbnSetBtn = uicontrol(obj.hStatusGrp,'Style','pushbutton',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','SET',...
-                'FontWeight','bold',...
-                'FontSize',9,...
-                'HorizontalAlignment','center',...
-                'Callback',@obj.ExbnBtnCallback);
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hEsaSetBtn = uicontrol(obj.hStatusGrp,'Style','pushbutton',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','SET',...
-                'FontWeight','bold',...
-                'FontSize',9,...
-                'HorizontalAlignment','center',...
-                'Callback',@obj.esaBtnCallback);
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hDeflSetBtn = uicontrol(obj.hStatusGrp,'Style','pushbutton',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','SET',...
-                'FontWeight','bold',...
-                'FontSize',9,...
-                'HorizontalAlignment','center',...
-                'Callback',@obj.deflBtnCallback);
-
-            ypos = ypos-ysize-ygap;
-
-            obj.hYsteerSetBtn = uicontrol(obj.hStatusGrp,'Style','pushbutton',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','SET',...
-                'FontWeight','bold',...
-                'FontSize',9,...
-                'HorizontalAlignment','center',...
-                'Callback',@obj.ysteerBtnCallback);
-
-            ypos = ypos-ysize*2-ygap*2;
-
-            obj.hMassSetBtn = uicontrol(obj.hStatusGrp,'Style','pushbutton',...
-                'Position',[xpos,ypos,xsize,ysize],...
-                'String','SET',...
-                'FontWeight','bold',...
-                'FontSize',9,...
-                'HorizontalAlignment','center',...
-                'Callback',@obj.massBtnCallback);
+            %apply status group set function to all defined monitors
+            % obj.Monitors = cell2struct(structfun(@guiStatusGrpSet,obj.Monitors),fieldnames(obj.Monitors))
+            structfun(@guiStatusGrpSet,obj.Monitors)
 
             % Create file menu
             obj.hFileMenu = uimenu(obj.hFigure,'Text','File');
@@ -961,8 +413,6 @@ classdef beamlineGUI < handle
                 'FontWeight','bold',...
                 'HorizontalAlignment','center',...
                 'Callback',@obj.runTestCallback);
-
-
         end
 
         function createTimer(obj)
@@ -990,162 +440,6 @@ classdef beamlineGUI < handle
 
             % Restart timer
             start(obj.hTimer);
-
-        end
-
-        function ExbpBtnCallback(obj,~,~)
-            %ExbpBTNCALLBACK Sets Exbp HVPS voltage based on user input
-
-            setVal = str2double(obj.hExbpSetField.String);
-
-            % Find Exbp power supply
-            hExbp = obj.Hardware(contains([obj.Hardware.Tag],'Exbp','IgnoreCase',true)&strcmpi([obj.Hardware.Type],'Power Supply'));
-            if length(hExbp)~=1
-                error('beamlineGUI:invalidTags','Invalid tags! Must be exactly one power supply available with tag containing ''Exbp''...');
-            end
-
-            if isnan(setVal)
-                errordlg('A valid voltage value must be entered!','Invalid input!');
-                set(obj.hExbpSetField,'String','');
-                return
-            elseif setVal > hExbp.VMax || setVal < hExbp.VMin
-                errordlg(['+ExB voltage setpoint must be between ',num2str(hExbp.VMin),' and ',num2str(hExbp.VMax),' V!'],'Invalid input!');
-                set(obj.hExbpSetField,'String','');
-                return
-            end
-
-            hExbp.setVSet(setVal);
-            set(obj.hExbpSetField,'String','');
-
-        end
-
-        function ExbnBtnCallback(obj,~,~)
-            %ExbnBTNCALLBACK Sets Exbn HVPS voltage based on user input
-
-            setVal = str2double(obj.hExbnSetField.String);
-
-            % Find Exbn power supply
-            hExbn = obj.Hardware(contains([obj.Hardware.Tag],'Exbn','IgnoreCase',true)&strcmpi([obj.Hardware.Type],'Power Supply'));
-            if length(hExbn)~=1
-                error('beamlineGUI:invalidTags','Invalid tags! Must be exactly one power supply available with tag containing ''Exbn''...');
-            end
-
-            if isnan(setVal)
-                errordlg('A valid voltage value must be entered!','Invalid input!');
-                set(obj.hExbnSetField,'String','');
-                return
-            elseif setVal > hExbn.VMax || setVal < hExbn.VMin
-                errordlg(['+ExB voltage setpoint must be between ',num2str(hExbn.VMin),' and ',num2str(hExbn.VMax),' V!'],'Invalid input!');
-                set(obj.hExbnSetField,'String','');
-                return
-            end
-
-            hExbn.setVSet(setVal);
-            set(obj.hExbnSetField,'String','');
-
-        end
-
-        function esaBtnCallback(obj,~,~)
-            %ESABTNCALLBACK Sets ESA HVPS voltage based on user input
-
-            setVal = str2double(obj.hEsaSetField.String);
-
-            % Find ESA power supply
-            hEsa = obj.Hardware(contains([obj.Hardware.Tag],'ESA','IgnoreCase',true)&strcmpi([obj.Hardware.Type],'Power Supply'));
-            if length(hEsa)~=1
-                error('beamlineGUI:invalidTags','Invalid tags! Must be exactly one power supply available with tag containing ''ESA''...');
-            end
-
-            if isnan(setVal)
-                errordlg('A valid voltage value must be entered!','Invalid input!');
-                set(obj.hEsaSetField,'String','');
-                return
-            elseif setVal > hEsa.VMax || setVal < hEsa.VMin
-                errordlg(['ESA voltage setpoint must be between ',num2str(hEsa.VMin),' and ',num2str(hEsa.VMax),' V!'],'Invalid input!');
-                set(obj.hEsaSetField,'String','');
-                return
-            end
-
-            hEsa.setVSet(setVal);
-            set(obj.hEsaSetField,'String','');
-
-        end
-
-        function deflBtnCallback(obj,~,~)
-            %DEFLBTNCALLBACK Sets Defl HVPS voltage based on user input
-
-            setVal = str2double(obj.hDeflSetField.String);
-
-            % Find Defl power supply
-            hDefl = obj.Hardware(contains([obj.Hardware.Tag],'Defl','IgnoreCase',true)&strcmpi([obj.Hardware.Type],'Power Supply'));
-            if length(hDefl)~=1
-                error('beamlineGUI:invalidTags','Invalid tags! Must be exactly one power supply available with tag containing ''defl''...');
-            end
-
-            if isnan(setVal)
-                errordlg('A valid voltage value must be entered!','Invalid input!');
-                set(obj.hDeflSetField,'String','');
-                return
-            elseif setVal > hDefl.VMax || setVal < hDefl.VMin
-                errordlg(['Defl voltage setpoint must be between ',num2str(hDefl.VMin),' and ',num2str(hDefl.VMax),' V!'],'Invalid input!');
-                set(obj.hDeflSetField,'String','');
-                return
-            end
-
-            hDefl.setVSet(setVal);
-            set(obj.hDeflSetField,'String','');
-
-        end
-
-        function ysteerBtnCallback(obj,~,~)
-            %YSTEERBTNCALLBACK Sets Y-steer HVPS voltage based on user input
-
-            setVal = str2double(obj.hYsteerSetField.String);
-
-            % Find y-steer power supply
-            hYsteer = obj.Hardware(contains([obj.Hardware.Tag],'Ysteer','IgnoreCase',true)&strcmpi([obj.Hardware.Type],'Power Supply'));
-            if length(hYsteer)~=1
-                error('beamlineGUI:invalidTags','Invalid tags! Must be exactly one power supply available with tag containing ''ysteer''...');
-            end
-
-            if isnan(setVal)
-                errordlg('A valid voltage value must be entered!','Invalid input!');
-                set(obj.hYsteerSetField,'String','');
-                return
-            elseif setVal > hYsteer.VMax || setVal < hYsteer.VMin
-                errordlg(['y-steer voltage setpoint must be between ',num2str(hYsteer.VMin),' and ',num2str(hYsteer.VMax),' V!'],'Invalid input!');
-                set(obj.hYsteerSetField,'String','');
-                return
-            end
-
-            hYsteer.setVSet(setVal);
-            set(obj.hYsteerSetField,'String','');
-
-        end
-
-        function massBtnCallback(obj,~,~)
-            %MASSBTNCALLBACK Sets mass flow controller voltage based on user input
-
-            setVal = str2double(obj.hMassSetField.String);
-
-            % Find mass flow power supply
-            hMass = obj.Hardware(contains([obj.Hardware.Tag],'Mass','IgnoreCase',true)&strcmpi([obj.Hardware.Type],'Power Supply'));
-            if length(hMass)~=1
-                error('beamlineGUI:invalidTags','Invalid tags! Must be exactly one power supply available with tag containing ''mass''...');
-            end
-
-            if isnan(setVal)
-                errordlg('A valid set value must be entered!','Invalid input!');
-                set(obj.hMassSetField,'String','');
-                return
-            elseif setVal > 5 || setVal < 0
-                errordlg('Mass flow setpoint must be between 0 and 5V!','Invalid input!');
-                set(obj.hMassSetField,'String','');
-                return
-            end
-
-            hMass.setVSet(setVal,1);
-            set(obj.hMassSetField,'String','');
 
         end
 
@@ -1231,86 +525,6 @@ classdef beamlineGUI < handle
             myAcq = hFcn(obj);
             myAcq.runSweep;
             
-        end
-
-
-        %Should define sets of these functions as monitors. 
-        function [extraction,einzel,mass] = readDMM(obj)
-            %READDMM Reads DMM values for extraction, einzel, and mass flow controller
-
-            % Find DMM
-            hDMM = obj.Hardware(contains([obj.Hardware.Tag],'extraction','IgnoreCase',true)&contains([obj.Hardware.Tag],'einzel','IgnoreCase',true)&contains([obj.Hardware.Tag],'mass','IgnoreCase',true)&strcmpi([obj.Hardware.Type],'Multimeter'));
-            if length(hDMM)~=1
-                error('beamlineGUI:invalidTags','Invalid tag! No multimeter with ''Extraction'', ''Einzel'', & ''Mass'' tags found...');
-            end
-
-            dataOut = hDMM.performScan(1,3);
-
-            % Parse dataOut for voltages and turn into readings
-            extraction = dataOut(1);
-            einzel = dataOut(2);
-            mass = dataOut(3);
-
-        end
-
-        function readVal = readHVPS(obj,tag)
-            %READHVPS Reads HVPS value based on tag input
-
-            % Find power supply matching tags
-            hHVPS = obj.Hardware(contains([obj.Hardware.Tag],tag,'IgnoreCase',true)&strcmpi([obj.Hardware.Type],'Power Supply'));
-            if length(hHVPS)~=1
-                error('beamlineGUI:invalidTags','Invalid tag! No power supply with tag %s found...',tag);
-            end
-
-            if hHVPS.connected
-                readVal = hHVPS.measV;
-            else
-                readVal = NaN
-            end
-        end
-
-        function readVal = readFaraday(obj)
-            %READFARADAY Reads Faraday cup current value
-
-            % Find picoammeter
-            hFaraday = obj.Hardware(contains([obj.Hardware.Tag],'Faraday','IgnoreCase',true)&strcmpi([obj.Hardware.Type],'Picoammeter'));
-            if length(hFaraday)~=1
-                error('beamlineGUI:invalidHardware','Invalid hardware configuration! Must be exactly one picoammeter with tag containing ''Faraday''...');
-            end
-
-            if hFaraday.connected
-                readVal = hFaraday.read;
-            else
-                readVal = NaN
-            end
-            hFaraday.devRW(':SYST:LOC');
-
-        end
-
-        function readVal = readPressureSensor(obj,tag)
-            %READPRESSURESENSOR Reads pressure sensor value based on tag input
-
-            switch lower(tag)
-                case {'beamline','gas'}
-                    sensorNum = 1;
-                case {'chamber','rough'}
-                    sensorNum = 2;
-                case 'p3'
-                    sensorNum = 3;
-            end
-
-            % Find correct gauge controller
-            hPressure = obj.Hardware(contains([obj.Hardware.Tag],tag,'IgnoreCase',true)&strcmpi([obj.Hardware.Type],'Pressure Sensor'));
-            if length(hPressure)~=1
-                error('beamlineGUI:invalidTags','Invalid tag! No pressure sensor with tag %s found...',tag);
-            end
-            if hPressure.connected
-                readVal = hPressure.readPressure(sensorNum);
-            else
-                readVal = NaN
-            end
-            
-
         end
 
         function closeGUI(obj,~,~)
