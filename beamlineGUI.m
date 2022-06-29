@@ -80,7 +80,7 @@ classdef beamlineGUI < handle
                 lab = fields{i};
                 val = obj.Monitors.(fields{i}).lastRead;
                 setfield(obj.LastRead,lab,val);
-                set(obj.Monitors.(lab).guiHand.statusGrpRead,'String',num2str(val,'%.1f'));
+                set(obj.Monitors.(lab).guiHand.statusGrpRead,'String',num2str(val,'%.2e'));
             end
             obj.LastRead.T = now;
 
@@ -245,17 +245,17 @@ classdef beamlineGUI < handle
             xCol1 = xstart;
             xsize1 = 180;
 
-            xCol2 = xCol1+xsize1+xgap
-            xsize2 = 60
+            xCol2 = xCol1+xsize1+xgap;
+            xsize2 = 80;
 
-            xCol3 = xCol2+xsize2+xgap
-            xsize3 = 40
+            xCol3 = xCol2+xsize2+xgap;
+            xsize3 = 40;
 
-            xCol4 = xCol3+xsize3+xgap
-            xsize4 = 60
+            xCol4 = xCol3+xsize3+xgap;
+            xsize4 = 60;
 
-            xCol5 = xCol4+xsize4+xgap
-            xsize5 = 60
+            xCol5 = xCol4+xsize4+xgap;
+            xsize5 = 60;
             % Create beamline status components
             % BeamStatus labels
             function x = guiStatusGrpSet(x)

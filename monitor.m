@@ -30,12 +30,18 @@ classdef monitor < handle
         end
 
         function val = read(obj) 
-            val = obj.readFunc(obj);
+            if all([obj.parent.Connected])
+                val = obj.readFunc(obj);
+            else
+                val = nan;
+            end
             obj.lastRead = val;
         end
 
         function set(obj,val)
-            obj.setFunc(obj,val);
+            if all([obj.parent.Connected])
+                obj.setFunc(obj,val);
+            end
         end
 
 
@@ -49,7 +55,7 @@ classdef monitor < handle
         end
 
         function setfield(obj,field,val)
-            obj.(field) = val
+            obj.(field) = val;
         end
 
     end
