@@ -286,25 +286,41 @@ classdef beamlineGUI < handle
         function createGUI(obj)
             %CREATEGUI Create beamline GUI components
 
+            % GUI Background Image and Dimensions
+            gui_bkg = imread('gui_bkg.png');
+            gui_bkg_width = size(gui_bkg,1);
+            gui_bkg_height = size(gui_bkg,2);   
+
+            % GUI Dimensions
+            gui_width = 1100;
+            gui_height = 622;
             % Create figure
             obj.hFigure = figure('MenuBar','none',...
                 'ToolBar','none',...
                 'Resize','off',...
-                'Position',[50,50,1100,622],...
+                'Position',[40,40,gui_width,gui_height],...
                 'NumberTitle','off',...
+                'Color','#f5f5f5',...
                 'Name','Beamline GUI',...
                 'DeleteFcn',@obj.closeGUI);
 
             % Sets bkg image to beamline + chamber layout
             % axes function, [left bottom width height]
-            obj.hAxes = axes('units', 'normalized',...
-                'position', [0 0 1 1]);
-            uistack(obj.hAxes, 'bottom');
-            gui_bkg = imread('gui_bkg.png');
-            obj.hImage = imagesc(gui_bkg);
-            colormap gray
-            set(obj.hAxes,'handlevisibility','off', ...
-                'visible','off')
+% %             obj.hAxes = axes('units', 'normalized',...
+% %                 'position', [0 0 1 1]);
+% %             uistack(obj.hAxes, 'bottom');
+% %             obj.hImage = imagesc(gui_bkg);
+% %             colormap gray
+% %             set(obj.hAxes,'handlevisibility','off', ...
+% %                'visible','off')
+            obj.hAxes = axes('units','pixels',...
+                'position',[320,190,gui_width-320,gui_height-190]);
+            uistack(obj.hAxes,'bottom');
+            system_layout = imread('system_layout.png');
+            obj.hImage = imagesc(system_layout);
+            colormap gray;
+            set(obj.hAxes,'handlevisibility','off',...
+                'visible','off');
             
             % Create beamline status uicontrol group
             obj.hStatusGrp = uipanel(obj.hFigure,...
