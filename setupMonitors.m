@@ -1,5 +1,10 @@
 function monitors = setupMonitors(instruments)
+    % Function initializing and defining properties of measured values
 
+
+    % =======================================================================
+    % define read functions monitors will call to manipulate instrument output 
+    % =======================================================================
     function val = read_srsHVPS(self)
         val = self.parent.measV;
     end
@@ -20,12 +25,25 @@ function monitors = setupMonitors(instruments)
         HvExbn = self.parent(2);
         val = HvExbp.measV()-HvExbn.measV();
     end
+
+    % =======================================================================
+    % define set functions monitors will use to set parameters
+    % =======================================================================
     function set_voltEXB(self,volt)
         HvExbp = self.parent(1);
         HvExbn = self.parent(2);
         HvExbp.setVSet(volt/2);
         HvExbn.setVSet(-volt/2);
     end
+
+    % =======================================================================
+    % Define monitors and set parameters 
+    %   monitors that dont have parent instruments (such as a datetime measurement)
+    %   to pull parameters from should assign 
+    %       - parent = struct("Type",'local','Connected',true)
+    %   to bypass instrument connection checks correctly
+    % =======================================================================
+
     monitors = struct(...       
                  'voltDefl',monitor('readFunc',@read_srsHVPS,...
                                      'setFunc',@set_srsHVPS,...
@@ -109,10 +127,17 @@ function monitors = setupMonitors(instruments)
                                      'textLabel','Beam Rough Pressure',...
                                      'unit','T',...
                                      'parent',instruments.leyboldPressure1...
+                                     ),...
+                  'datetime',monitor('readFunc',@(x) datetime(now(),'ConvertFrom','datenum'),...
+                                     'textLabel','Date Time',...
+                                     'unit','D-M-Y H:M:S',...
+                                     'parent',struct("Type",'local','Connected',true),...
+                                     'formatSpec',"%s"...
                                      )...
                  );
 
-    %assign tags to instrument structures
+    %assign tags to instrument tag parameters, may just want to have these and the 
+    %   instrument structs setup as lists
      fields = fieldnames(monitors);
      for i=1:numel(fields)
          monitors.(fields{i}).setfield('Tag',fields{i});

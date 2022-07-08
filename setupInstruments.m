@@ -1,4 +1,5 @@
 function instruments = setupInstruments
+
     instruments = struct("leyboldPressure1",leyboldCenter2("ASRL7::INSTR"),...
                          "leyboldPressure2",leyboldGraphix3("ASRL8::INSTR"),...
                          "picoFaraday",keithley6485('GPIB0::14::INSTR'),...
@@ -12,7 +13,10 @@ function instruments = setupInstruments
                          );
     %assign tags to instrument structures
     fields = fieldnames(instruments);
+    visaList = get_visadevlist()
     for i=1:numel(fields)
         setfield(getfield(instruments,fields{i}),'Tag',fields{i});
+        setfield(getfield(instruments,fields{i}),"resourcelist",visaList);
+        getfield(instruments,fields{i}).connectDevice
     end
 end

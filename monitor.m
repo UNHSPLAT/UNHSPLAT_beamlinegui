@@ -2,18 +2,14 @@ classdef monitor < handle
 
     properties
         Tag string =""%
-        textLabel string = ''% 
-        unit string = ''%
+        textLabel string = ""% 
+        unit string = ""%
         parent % 
         readFunc = @(x) NaN%function which takes the relevant instrument structure and outputs val of desired format
         setFunc = @(x) NaN%
+        formatSpec = '%.2e'
         lastRead %
-        guiHand = struct('statusGrpText',[],...
-                         'statusGrpRead',[],...
-                         'statusGrpSetText',[],...
-                         'statusGrpSetField',[],...
-                         'statusGrpSetBtn',[]...
-                         ) %
+        guiHand = struct %
         active = false %tag indicating if the monitor can be set (like a highvoltage power supply) or cant be set (like a pressure monitor)
     end
 
@@ -43,7 +39,6 @@ classdef monitor < handle
                 obj.setFunc(obj,val);
             end
         end
-
 
         function guiSetCallback(obj,~,~)
             %DEFLBTNCALLBACK Sets Defl HVPS voltage based on user input
