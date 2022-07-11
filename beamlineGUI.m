@@ -255,11 +255,11 @@ classdef beamlineGUI < handle
             function x = guiHWConnStatusGrpSet(x)    
                 colInd = 1;
                 xColStart = xstart;
-                uicontrol(obj.hHWConnStatusGrp,'Style','radiobutton',...
+                button = uicontrol(obj.hHWConnStatusGrp,'Style','radiobutton',...
                 'Position',[xColStart,ypos,colSize(colInd),ysize],...
                 'String',sprintf('%s',x.Tag),...
                 'FontWeight','bold','Value',x.Connected);
-
+                set(button,'enable','off');
                 ypos = ypos+ysize+ygap;
                 obj.hHWConnStatusGrp.Position(4) = ypos+yBorderBuffer;
             end
@@ -276,7 +276,7 @@ classdef beamlineGUI < handle
             xgap = 15;
             xstart = 10;
 
-            colSize = [180,80,40,60,60];
+            colSize = [180,140,40,60,60];
 
             obj.hStatusGrp = uipanel(obj.hFigure,...
                 'Title','Beamline Status',...
