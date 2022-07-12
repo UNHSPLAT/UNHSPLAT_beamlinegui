@@ -7,7 +7,7 @@ classdef faradayCupSweep < acquisition
         MaxDefault double = 2500 % Default maximum voltage
         StepsDefault double = 40 % Default number of steps
         DwellDefault double = 5 % Default dwell time
-        PSList string = ["ExB","ESA","Defl","Ysteer"] % List of sweep supplies
+        % PSList string = ["ExB","ESA","Defl","Ysteer"] % List of sweep supplies
     end
 
     properties
@@ -32,6 +32,7 @@ classdef faradayCupSweep < acquisition
         hSweepBtn % Handle to run sweep button
         VPoints double % Array of ExB voltage setpoints
         DwellTime double % Dwell time setting
+        PSList %
     end
 
     methods
@@ -48,8 +49,8 @@ classdef faradayCupSweep < acquisition
             %RUNSWEEP Establishes configuration GUI, with run sweep button triggering actual sweep execution
 
             % Disable and relabel beamline GUI run test button
-            set(obj.hBeamlineGUI.hRunBtn,'Enable','off');
-            set(obj.hBeamlineGUI.hRunBtn,'String','Test in progress...');
+            % set(obj.hBeamlineGUI.hRunBtn,'Enable','off');
+            % set(obj.hBeamlineGUI.hRunBtn,'String','Test in progress...');
             
             % Create figure
             obj.hConfFigure = figure('MenuBar','none',...
@@ -73,6 +74,14 @@ classdef faradayCupSweep < acquisition
                 'FontSize',9,...
                 'HorizontalAlignment','right');
 
+
+            function tag = get_active(mon)
+                if mon.active
+                    obj.PSList(end+1) = mon.Tag;
+                end
+            end
+            obj.PSList = [""]
+            structfun(@get_active,obj.hBeamlineGUI.Monitors);
             obj.hSupplyEdit = uicontrol(obj.hConfFigure,'Style','popupmenu',...
                 'Position',[xpos,ystart,xeditsize,ysize],...
                 'String',obj.PSList,...
@@ -193,28 +202,28 @@ classdef faradayCupSweep < acquisition
                 dwellVal = str2double(obj.hDwellEdit.String);
             
                 % Find desired power supply
-                obj.hHVPS = obj.hBeamlineGUI.Hardware(contains([obj.hBeamlineGUI.Hardware.Tag],psTag,'IgnoreCase',true)&strcmpi([obj.hBeamlineGUI.Hardware.Type],'Power Supply'));
-                if length(obj.hHVPS)~=1
-                    error('faradayCupSweep:invalidTags','Invalid tags! Must be exactly one power supply available with tag containing ''%s''...',psTag);
-                end
+                % obj.hHVPS = obj.hBeamlineGUI.Hardware(contains([obj.hBeamlineGUI.Hardware.Tag],psTag,'IgnoreCase',true)&strcmpi([obj.hBeamlineGUI.Hardware.Type],'Power Supply'));
+                % if length(obj.hHVPS)~=1
+                %     error('faradayCupSweep:invalidTags','Invalid tags! Must be exactly one power supply available with tag containing ''%s''...',psTag);
+                % end
     
-                % Error checking
-                if isnan(minVal) || isnan(maxVal) || isnan(stepsVal) || isnan(dwellVal)
-                    errordlg('All fields must be filled with a valid numeric entry!','User input error!');
-                    return
-                elseif minVal > maxVal || minVal < 0 || maxVal < 0
-                    errordlg('Invalid min and max voltages! Must be increasing positive values.','User input error!');
-                    return
-                elseif maxVal > obj.hHVPS.VMax || minVal < obj.hHVPS.VMin
-                    errordlg(['Invalid min and max voltages! Cannot exceed power supply range of ',num2str(obj.hHVPS.VMin),' to ',num2str(obj.hHVPS.VMax),' V'],'User input error!');
-                    return
-                elseif dwellVal <= 0
-                    errordlg('Invalid dwell time! Must be a positive value.','User input error!');
-                    return
-                elseif uint64(stepsVal) ~= stepsVal || ~stepsVal
-                    errordlg('Invalid number of steps! Must be a positive integer.','User input error!');
-                    return
-                end
+                % % Error checking
+                % if isnan(minVal) || isnan(maxVal) || isnan(stepsVal) || isnan(dwellVal)
+                %     errordlg('All fields must be filled with a valid numeric entry!','User input error!');
+                %     return
+                % elseif minVal > maxVal || minVal < 0 || maxVal < 0
+                %     errordlg('Invalid min and max voltages! Must be increasing positive values.','User input error!');
+                %     return
+                % elseif maxVal > obj.hHVPS.VMax || minVal < obj.hHVPS.VMin
+                %     errordlg(['Invalid min and max voltages! Cannot exceed power supply range of ',num2str(obj.hHVPS.VMin),' to ',num2str(obj.hHVPS.VMax),' V'],'User input error!');
+                %     return
+                % elseif dwellVal <= 0
+                %     errordlg('Invalid dwell time! Must be a positive value.','User input error!');
+                %     return
+                % elseif uint64(stepsVal) ~= stepsVal || ~stepsVal
+                %     errordlg('Invalid number of steps! Must be a positive integer.','User input error!');
+                %     return
+                % end
     
                 % Determine log vs linear spacing
                 logSpacing = logical(obj.hSpacingEdit.Value);
@@ -280,7 +289,7 @@ classdef faradayCupSweep < acquisition
 
                     % Set ExB voltage
                     fprintf('Setting voltage to %.2f V...\n',obj.VPoints(iV));
-                    obj.hHVPS.setVSet(obj.VPoints(iV));
+                    obj.Monitors.(psTag).set(obj.VPoints(iV));
                     % Pause for dwell time
                     pause(obj.DwellTime);
                     % Obtain readings
