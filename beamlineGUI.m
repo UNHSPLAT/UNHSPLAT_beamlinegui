@@ -15,7 +15,8 @@ classdef beamlineGUI < handle
         hFigure % Handle to GUI figure
         hStatusGrp % Handle to beamline status uicontrol group
         hTestGrp %
-        hHWConnStatusGrp
+        hHWConnStatusGrp%
+        hHWConnBtn%
 
         hFileMenu % Handle to file top menu dropdown
         hEditMenu % Handle to edit top menu dropdown
@@ -261,10 +262,21 @@ classdef beamlineGUI < handle
                 'FontWeight','bold','Value',x.Connected);
                 set(button,'enable','off');
                 ypos = ypos+ysize+ygap;
-                obj.hHWConnStatusGrp.Position(4) = ypos+yBorderBuffer;
             end
 
             structfun(@guiHWConnStatusGrpSet,obj.Hardware,'UniformOutput',false)
+
+           % colInd = 1;
+           % xColStart = xstart;
+            %obj.hHWConnBtn = uicontrol(obj.hHWConnStatusGrp,'Style','pushbutton',...
+            %    'Position',[xColStart,ypos,colSize(colInd),ysize],...
+             %   'String','Refresh',...
+              %  'FontSize',12,...
+            %    'FontWeight','bold',...
+           %     'HorizontalAlignment','center',...
+           %     'Callback',@obj.HwRefreshCallback);
+            %ypos = ypos+ysize+ygap;
+            obj.hHWConnStatusGrp.Position(4) = ypos+yBorderBuffer;
             %===================================================================================
             % Create beamline status uicontrol group
 
@@ -597,6 +609,23 @@ classdef beamlineGUI < handle
             myAcq = hFcn(obj);
             myAcq.runSweep;
             
+        end
+
+        function HwRefreshCallback(obj,~,~)
+            
+            hwStats = obj.hHWConnStatusGrp.Children;
+            devices = visadevlist;
+            tags = fieldnames(obj.Hardware);
+            for i = 1:numel(hwStats)
+                nam = hwStats(i).String;
+                if any(strcmp(tags,nam))
+                    set(hwStats(i),'enable','on');
+                    obj.Hardware.(nam).resourcelist = devices;
+                    obj.Hardware.(nam).connectDevice();
+                    set(hwStats(i),'Value',obj.Hardware.(nam).Connected)
+                    set(hwStats(i),'enable','off');
+                end
+            end
         end
 
         function closeGUI(obj,~,~)
