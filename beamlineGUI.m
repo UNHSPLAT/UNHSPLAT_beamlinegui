@@ -266,16 +266,16 @@ classdef beamlineGUI < handle
 
             structfun(@guiHWConnStatusGrpSet,obj.Hardware,'UniformOutput',false)
 
-           % colInd = 1;
-           % xColStart = xstart;
-            %obj.hHWConnBtn = uicontrol(obj.hHWConnStatusGrp,'Style','pushbutton',...
-            %    'Position',[xColStart,ypos,colSize(colInd),ysize],...
-             %   'String','Refresh',...
-              %  'FontSize',12,...
-            %    'FontWeight','bold',...
-           %     'HorizontalAlignment','center',...
-           %     'Callback',@obj.HwRefreshCallback);
-            %ypos = ypos+ysize+ygap;
+            colInd = 1;
+            xColStart = xstart;
+            obj.hHWConnBtn = uicontrol(obj.hHWConnStatusGrp,'Style','pushbutton',...
+               'Position',[xColStart,ypos,colSize(colInd),ysize],...
+               'String','Refresh',...
+               'FontSize',12,...
+               'FontWeight','bold',...
+                'HorizontalAlignment','center',...
+                'Callback',@obj.HwRefreshCallback);
+            ypos = ypos+ysize+ygap;
             obj.hHWConnStatusGrp.Position(4) = ypos+yBorderBuffer;
             %===================================================================================
             % Create beamline status uicontrol group
@@ -614,16 +614,14 @@ classdef beamlineGUI < handle
         function HwRefreshCallback(obj,~,~)
             
             hwStats = obj.hHWConnStatusGrp.Children;
-            devices = visadevlist;
+            devices = get_visadevlist();
             tags = fieldnames(obj.Hardware);
             for i = 1:numel(hwStats)
                 nam = hwStats(i).String;
                 if any(strcmp(tags,nam))
-                    set(hwStats(i),'enable','on');
                     obj.Hardware.(nam).resourcelist = devices;
                     obj.Hardware.(nam).connectDevice();
                     set(hwStats(i),'Value',obj.Hardware.(nam).Connected)
-                    set(hwStats(i),'enable','off');
                 end
             end
         end
