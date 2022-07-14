@@ -200,30 +200,21 @@ classdef faradayCupSweep < acquisition
                 maxVal = str2double(obj.hMaxEdit.String);
                 stepsVal = str2double(obj.hStepsEdit.String);
                 dwellVal = str2double(obj.hDwellEdit.String);
-            
-                % Find desired power supply
-                % obj.hHVPS = obj.hBeamlineGUI.Hardware(contains([obj.hBeamlineGUI.Hardware.Tag],psTag,'IgnoreCase',true)&strcmpi([obj.hBeamlineGUI.Hardware.Type],'Power Supply'));
-                % if length(obj.hHVPS)~=1
-                %     error('faradayCupSweep:invalidTags','Invalid tags! Must be exactly one power supply available with tag containing ''%s''...',psTag);
-                % end
     
                 % % Error checking
-                % if isnan(minVal) || isnan(maxVal) || isnan(stepsVal) || isnan(dwellVal)
-                %     errordlg('All fields must be filled with a valid numeric entry!','User input error!');
-                %     return
-                % elseif minVal > maxVal || minVal < 0 || maxVal < 0
-                %     errordlg('Invalid min and max voltages! Must be increasing positive values.','User input error!');
-                %     return
-                % elseif maxVal > obj.hHVPS.VMax || minVal < obj.hHVPS.VMin
-                %     errordlg(['Invalid min and max voltages! Cannot exceed power supply range of ',num2str(obj.hHVPS.VMin),' to ',num2str(obj.hHVPS.VMax),' V'],'User input error!');
-                %     return
-                % elseif dwellVal <= 0
-                %     errordlg('Invalid dwell time! Must be a positive value.','User input error!');
-                %     return
-                % elseif uint64(stepsVal) ~= stepsVal || ~stepsVal
-                %     errordlg('Invalid number of steps! Must be a positive integer.','User input error!');
-                %     return
-                % end
+                if isnan(minVal) || isnan(maxVal) || isnan(stepsVal) || isnan(dwellVal)
+                    errordlg('All fields must be filled with a valid numeric entry!','User input error!');
+                    return
+                elseif minVal > maxVal || minVal < 0 || maxVal < 0
+                    errordlg('Invalid min and max voltages! Must be increasing positive values.','User input error!');
+                    return
+                elseif dwellVal <= 0
+                    errordlg('Invalid dwell time! Must be a positive value.','User input error!');
+                    return
+                elseif uint64(stepsVal) ~= stepsVal || ~stepsVal
+                    errordlg('Invalid number of steps! Must be a positive integer.','User input error!');
+                    return
+                end
     
                 % Determine log vs linear spacing
                 logSpacing = logical(obj.hSpacingEdit.Value);
@@ -256,21 +247,21 @@ classdef faradayCupSweep < acquisition
                 % Create figures and axes
                 obj.hFigure1 = figure('NumberTitle','off','Name','Faraday Cup Current vs Voltage');
                 obj.hAxes1 = axes(obj.hFigure1);
-                obj.hFigure2 = figure('NumberTitle','off','Name','Faraday Cup Current vs 1/V^2');
-                obj.hAxes2 = axes(obj.hFigure2);
 
                 % Preallocate arrays
-                T = strings(1,length(obj.VPoints));
-                Vexb = zeros(1,length(obj.VPoints));
-                Ifar = zeros(1,length(obj.VPoints));
-                Vext = zeros(1,length(obj.VPoints));
-                Vesa = zeros(1,length(obj.VPoints));
-                Vdef = zeros(1,length(obj.VPoints));
-                Vyst = zeros(1,length(obj.VPoints));
-                Vmfc = zeros(1,length(obj.VPoints));
-                Pbml = zeros(1,length(obj.VPoints));
-                Pgas = zeros(1,length(obj.VPoints));
-                Prou = zeros(1,length(obj.VPoints));
+                scan_mon = struct();
+                fields = fieldnames(obj.hBeamlineGUI.Monitors);
+                disp(fields);
+                for i=1:numel(fields)
+                    tag = fields{i};
+                    disp(tag);
+                    monitor = obj.hBeamlineGUI.Monitors.(tag);
+                    if contains(monitor.formatSpec,'%s')
+                        scan_mon.(tag)=strings(1,length(obj.VPoints));
+                    else
+                        scan_mon.(tag) = zeros(1,length(obj.VPoints));
+                    end
+                end
     
                 % Run sweep
                 for iV = 1:length(obj.VPoints)
@@ -280,65 +271,43 @@ classdef faradayCupSweep < acquisition
         
                         obj.hAxes1 = axes(obj.hFigure1); %#ok<LAXES> Only executed if figure deleted or not instantiated
                     end
-                    if isempty(obj.hFigure2) || ~isvalid(obj.hFigure2)
-                        obj.hFigure2 = figure('NumberTitle','off',...
-                            'Name','Faraday Cup Current vs 1/V^2');
-        
-                        obj.hAxes2 = axes(obj.hFigure2); %#ok<LAXES> Only executed if figure deleted or not instantiated
-                    end
 
                     % Set ExB voltage
                     fprintf('Setting voltage to %.2f V...\n',obj.VPoints(iV));
-                    obj.Monitors.(psTag).set(obj.VPoints(iV));
+                    obj.hBeamlineGUI.Monitors.(psTag).set(obj.VPoints(iV));
                     % Pause for dwell time
                     pause(obj.DwellTime);
                     % Obtain readings
                     fname = fullfile(obj.hBeamlineGUI.DataDir,[strrep(sprintf('%s_%.2fV',psTag,obj.VPoints(iV)),'.','p'),'.mat']);
                     readings = obj.hBeamlineGUI.updateReadings([],[],fname);
                     % Assign variables
-                    T(iV) = datestr(readings.T,"yyyy-mm-dd HH:MM:SS");
-                    Vexb(iV) = readings.VExb;
-                    Ifar(iV) = readings.IFaraday;
-                    Vext(iV) = readings.VExtraction;
-                    Vesa(iV) = readings.VEsa;
-                    Vdef(iV) = readings.VDefl;
-                    Vyst(iV) = readings.VYsteer;
-                    Vmfc(iV) = readings.VMass;
-                    Pbml(iV) = readings.PBeamline;
-                    Pgas(iV) = readings.PGas;
-                    Prou(iV) = readings.PRough;
-                    % Plot data
-                    switch lower(psTag)
-                        case 'exb'
-                            plot(obj.hAxes1,Vexb(1:iV),Ifar(1:iV));
-                            plot(obj.hAxes2,1./Vexb(1:iV).^2,Ifar(1:iV));
-                        case 'esa'
-                            plot(obj.hAxes1,Vesa(1:iV),Ifar(1:iV));
-                            plot(obj.hAxes2,1./Vesa(1:iV).^2,Ifar(1:iV));
-                        case 'defl'
-                            plot(obj.hAxes1,Vdef(1:iV),Ifar(1:iV));
-                            plot(obj.hAxes2,1./Vdef(1:iV).^2,Ifar(1:iV));
-                        case 'ysteer'
-                            plot(obj.hAxes1,Vyst(1:iV),Ifar(1:iV));
-                            plot(obj.hAxes2,1./Vyst(1:iV).^2,Ifar(1:iV));
+                    fields = fieldnames(obj.hBeamlineGUI.Monitors);
+                    for i=1:numel(fields)
+                        tag = fields{i};
+                        scan_mon.(tag)(iV) = obj.hBeamlineGUI.Monitors.(tag).lastRead;
                     end
+                    plot(obj.hAxes1,scan_mon.(psTag)(1:iV),scan_mon.Ifaraday(1:iV));
+
                     set(obj.hAxes1,'YScale','log');
-                    xlabel(obj.hAxes1,['V_{',char(psTag),'} [V]']);
-                    ylabel(obj.hAxes1,'I_{Faraday} [A]');
-                    set(obj.hAxes2,'Yscale','log');
-                    xlabel(obj.hAxes2,['1/V^2_{',char(psTag),'} [1/V^2]']);
-                    ylabel(obj.hAxes2,'I_F_a_r_a_d_a_y [A]');
+                    xlabel(obj.hAxes1,obj.hBeamlineGUI.Monitors.(psTag).sPrint());
+                    ylabel(obj.hAxes1,obj.hBeamlineGUI.Monitors.Ifaraday.sPrint());
                 end
+%                     set(obj.hAxes2,'Yscale','log');
+%                     xlabel(obj.hAxes2,['1/V^2_{',char(psTag),'} [1/V^2]']);
+%                     ylabel(obj.hAxes2,'I_F_a_r_a_d_a_y [A]');
+%                 end
 
                 % Save results .mat file
-                fname = 'results.mat';
-                save(fullfile(obj.hBeamlineGUI.DataDir,fname),'Vexb','Ifar','Vext','Vesa','Vdef','Vyst','Vmfc','Pbml','Pgas','Prou','T');
+%                 fname = 'results.mat';
+%                 save(fullfile(obj.hBeamlineGUI.DataDir,fname),'Vexb','Ifar','Vext','Vesa','Vdef','Vyst','Vmfc','Pbml','Pgas','Prou','T');
 
                 % Save results .csv file
-                fname = strrep(fname,'.mat','.csv');
-                t = table(T',Vexb',Ifar',Vext',Vesa',Vdef',Vyst',Vmfc',Pbml',Pgas',Prou','VariableNames',{'t','Vexb','Ifar','Vext','Vesa','Vdef','Vyst','Vmfc','Pbml','Pgas','Prou'});
-                writetable(t,fullfile(obj.hBeamlineGUI.DataDir,fname));
-
+%                 fname = strrep(fname,'.mat','.csv');
+                fname = 'results.csv';
+                writetable(struct2table(scan_mon), fullfile(obj.hBeamlineGUI.DataDir,fname))
+%                 t = table(T',Vexb',Ifar',Vext',Vesa',Vdef',Vyst',Vmfc',Pbml',Pgas',Prou','VariableNames',{'t','Vexb','Ifar','Vext','Vesa','Vdef','Vyst','Vmfc','Pbml','Pgas','Prou'});
+%                 writetable(t,fullfile(obj.hBeamlineGUI.DataDir,fname));
+                
                 fprintf('\nTest complete!\n');
                 delete(obj.hConfFigure);
 

@@ -83,7 +83,7 @@ classdef beamlineGUI < handle
             for i = 1:numel(fields)
                 lab = fields{i};
                 val = obj.Monitors.(fields{i}).lastRead;
-                setfield(obj.LastRead,lab,val);
+                obj.LastRead.(lab)=val;
                 %
                 set(obj.Monitors.(lab).guiHand.statusGrpRead,...
                         'String',sprintf(obj.Monitors.(lab).formatSpec,val));
@@ -135,84 +135,9 @@ classdef beamlineGUI < handle
         end
         
         function gatherHardware(obj)
+            %GATHERHARDWARE Detect, instantiate, and configure required hardware objects, set hardware tags, and populate respective obj properties
             obj.Hardware = setupInstruments();
             obj.Monitors = setupMonitors(obj.Hardware);
-            %GATHERHARDWARE Detect, instantiate, and configure required hardware objects, set hardware tags, and populate respective obj properties
-            
-            % Auto-detect hardware
-            % obj.Hardware = initializeInstruments;
-
-            % % Connect serial port hardware
-            % obj.Hardware(end+1) = leyboldCenter2("ASRL7::INSTR");
-            % obj.Hardware(end).Tag = "Gas,Rough";
-            % obj.Hardware(end+1) = leyboldGraphix3("ASRL8::INSTR");
-            % obj.Hardware(end).Tag = "Beamline,Chamber";
-
-            % % Configure picoammeter
-            % hFaraday = obj.Hardware(strcmpi([obj.Hardware.Type],'Picoammeter')&strcmpi([obj.Hardware.ModelNum],'6485'));
-            % hFaraday.Tag = "Faraday";
-            % hFaraday.devRW(':SYST:ZCH OFF');
-            % dataOut = strtrim(hFaraday.devRW(':SYST:ZCH?'));
-            % while ~strcmp(dataOut,'0')
-            %     warning('beamlineGUI:keithleyNonresponsive','Keithley not listening! Zcheck did not shut off as expected...');
-            %     hFaraday.devRW(':SYST:ZCH OFF');
-            %     dataOut = strtrim(hFaraday.devRW(':SYST:ZCH?'));
-            % end
-            % hFaraday.devRW('ARM:COUN 1');
-            % dataOut = strtrim(hFaraday.devRW('ARM:COUN?'));
-            % while ~strcmp(dataOut,'1')
-            %     warning('beamlineGUI:keithleyNonresponsive','Keithley not listening! Arm count did not set to 1 as expected...');
-            %     hFaraday.devRW('ARM:COUN 1');
-            %     dataOut = strtrim(hFaraday.devRW('ARM:COUN?'));
-            % end
-            % hFaraday.devRW('FORM:ELEM READ');
-            % dataOut = strtrim(hFaraday.devRW('FORM:ELEM?'));
-            % while ~strcmp(dataOut,'READ')
-            %     warning('beamlineGUI:keithleyNonresponsive','Keithley not listening! Output format not set to ''READ'' as expected...');
-            %     hFaraday.devRW('FORM:ELEM READ');
-            %     dataOut = strtrim(hFaraday.devRW('FORM:ELEM?'));
-            % end
-            % hFaraday.devRW(':SYST:LOC');
-            
-            % % Set Exbn power supply to 0V and set tag
-            % hExbn = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::14::INSTR'));
-            % hExbn.setVSet(0);
-            % hExbn.Tag = "Exbn";
-
-            % % Set Exbp power supply to 0V and set tag
-            % hExbp = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::15::INSTR'));
-            % hExbp.setVSet(0);
-            % hExbp.Tag = "Exbp";
-
-            % % Set ESA power supply to 0V and set tag
-            % hEsa = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::16::INSTR'));
-            % hEsa.setVSet(0);
-            % hEsa.Tag = "Esa";
-
-            % % Set defl power supply to 0V and set tag
-            % hDefl = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::17::INSTR'));
-            % hDefl.setVSet(0);
-            % hDefl.Tag = "Defl";
-
-            % % Set y-steer power supply to 0V and set tag
-            % hYsteer = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'PS350')&strcmpi([obj.Hardware.Address],'GPIB0::18::INSTR'));
-            % hYsteer.setVSet(0);
-            % hYsteer.Tag = "Ysteer";
-
-            % % Set mass flow power supply tag
-            % hMass = obj.Hardware(strcmpi([obj.Hardware.ModelNum],'E36313A')&strcmpi([obj.Hardware.Address],'GPIB0::5::INSTR'));
-            % hMass.Tag = "Mass";
-
-            % % Set multimeter tag and configure route
-            % hDMM = obj.Hardware(strcmpi([obj.Hardware.Type],'Multimeter')&strcmpi([obj.Hardware.ModelNum],'DAQ6510'));
-            % if length(hDMM)~=1
-            %     error('beamlineGUI:deviceNotFound','Device not found! Device with specified properties not found...');
-            % end
-            % hDMM.Tag = "Extraction,Einzel,Mass";
-            % hDMM.devRW('SENS:FUNC "VOLT", (@101:103)');
-            % hDMM.devRW('SENS:VOLT:INP MOHM10, (@101:103)');
-            % hDMM.devRW('SENS:VOLT:NPLC 1, (@101:103)');
-            % hDMM.devRW('ROUT:SCAN:CRE (@101:103)');
 
         end
 
@@ -229,7 +154,7 @@ classdef beamlineGUI < handle
             obj.hFigure = figure('MenuBar','none',...
                 'ToolBar','none',...
                 'Resize','off',...
-                'Position',[0,0,1200,700],...
+                'Position',[0,0,1300,500],...
                 'NumberTitle','off',...
                 'Name','Beamline GUI',...
                 'DeleteFcn',@obj.closeGUI);
@@ -612,7 +537,6 @@ classdef beamlineGUI < handle
         end
 
         function HwRefreshCallback(obj,~,~)
-            
             hwStats = obj.hHWConnStatusGrp.Children;
             devices = get_visadevlist();
             tags = fieldnames(obj.Hardware);

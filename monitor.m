@@ -53,5 +53,8 @@ classdef monitor < handle
             obj.(field) = val;
         end
 
+        function printStr = sPrint(obj)
+            printStr = sprintf('%s [%s]',obj.textLabel,obj.unit);
+        end
     end
 end
