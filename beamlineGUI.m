@@ -68,6 +68,7 @@ classdef beamlineGUI < handle
         end
 
         function readings = updateReadings(obj,~,~,fname)
+            obj.updateHWStatus()
             %UPDATEREADINGS Read and update all beamline status reading fields
 
             % Gather readings
@@ -154,7 +155,7 @@ classdef beamlineGUI < handle
             obj.hFigure = figure('MenuBar','none',...
                 'ToolBar','none',...
                 'Resize','off',...
-                'Position',[0,0,1300,500],...
+                'Position',[0,0,1300,650],...
                 'NumberTitle','off',...
                 'Name','Beamline GUI',...
                 'DeleteFcn',@obj.closeGUI);
@@ -535,8 +536,26 @@ classdef beamlineGUI < handle
             myAcq.runSweep;
             
         end
+        
+
+        function updateHWStatus(obj)
+            hwStats = obj.hHWConnStatusGrp.Children;
+            tags = fieldnames(obj.Hardware);
+            for i = 1:numel(hwStats)
+                nam = hwStats(i).String;
+                if any(strcmp(tags,nam))
+                    set(hwStats(i),'Value',obj.Hardware.(nam).Connected);
+                end
+            end
+        end
 
         function HwRefreshCallback(obj,~,~)
+            % Stop timer if running
+
+            set(obj.hHWConnBtn,'String','Refreshing');
+            if strcmp(obj.hTimer.Running,'on')
+                stop(obj.hTimer);
+            end
             hwStats = obj.hHWConnStatusGrp.Children;
             devices = get_visadevlist();
             tags = fieldnames(obj.Hardware);
@@ -545,9 +564,14 @@ classdef beamlineGUI < handle
                 if any(strcmp(tags,nam))
                     obj.Hardware.(nam).resourcelist = devices;
                     obj.Hardware.(nam).connectDevice();
-                    set(hwStats(i),'Value',obj.Hardware.(nam).Connected)
+                    set(hwStats(i),'Value',obj.Hardware.(nam).Connected);
+                    fprintf("%s:%d\n",nam,obj.Hardware.(nam).Connected);
                 end
             end
+%             Start timer
+            start(obj.hTimer);
+            disp('Refresh Complete');
+            set(obj.hHWConnBtn,'String','Refresh');
         end
 
         function closeGUI(obj,~,~)
