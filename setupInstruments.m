@@ -1,4 +1,4 @@
-function instruments = setupInstruments
+ function instruments = setupInstruments
 
     % Define configuration funcitons to be executed on connection
 
