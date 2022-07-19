@@ -20,11 +20,13 @@ function monitors = setupMonitors(instruments)
         end    
 
         %check the voltage being applied and ramp the voltage in steps if need be
-        minstep = 50
+        minstep = 50;
         if volt-self.lastRead>minstep
-            multivolt = linspace(self.lastRead,volt,ceil((volt-self.lastRead)/minstep))
+            multivolt = linspace(self.lastRead,volt,ceil((volt-self.lastRead)/minstep));
             for i = 1:numel(multivolt)
                 self.parent.setVSet(multivolt(i));
+                pause(1);
+            end
         else
             self.parent.setVSet(volt);
         end
@@ -42,10 +44,21 @@ function monitors = setupMonitors(instruments)
     function set_voltEXB(self,volt)
         HvExbp = self.parent(1);
         HvExbn = self.parent(2);
-        set_srsHVPS(HvExbp,volt/2);
-        set_srsHVPS(HvExbn,-volt/2);
-        % HvExbp.setVSet(volt/2);
-        % HvExbn.setVSet(-volt/2);
+
+        %check the voltage being applied and ramp the voltage in steps if need be
+        minstep = 50;
+        if volt-self.lastRead/2>minstep
+            multivolt = linspace(self.lastRead,volt,ceil((volt-self.lastRead)/minstep));
+            for i = 1:numel(multivolt)
+                HvExbp.setVSet(multivolt(i)/2);
+                HvExbn.setVSet(-multivolt(i)/2);
+                pause(1);
+            end
+        else
+            HvExbp.setVSet(volt/2);
+            HvExbn.setVSet(-volt/2);
+        end
+
     end
 
     % =======================================================================
