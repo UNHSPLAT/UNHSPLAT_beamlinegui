@@ -18,7 +18,6 @@ classdef beamlineMonitor < acquisition
     methods
         function obj = beamlineMonitor(hGUI)
             %BEAMLINEMONITOR Construct an instance of this class
-
             obj@acquisition(hGUI);
 
             % Add listener to delete configuration GUI figure if main beamline GUI deleted
@@ -38,9 +37,7 @@ classdef beamlineMonitor < acquisition
                 'Name','Beamline Monitor - Close Window to Exit Test',...
                 'Position',[100,100,1680,480],...
                 'DeleteFcn',@obj.closeFigure);
-
             try
-
                 % Create axes
                 obj.hAxesP = axes(obj.hFigure);
                 subplot(1,3,1,obj.hAxesP);
@@ -48,6 +45,14 @@ classdef beamlineMonitor < acquisition
                 subplot(1,3,2,obj.hAxesI);
                 obj.hAxesV = axes(obj.hFigure);
                 subplot(1,3,3,obj.hAxesV);
+
+
+
+                set(obj.hAxesP,'YScale','log');
+                datetick(obj.hAxesP,'x','HH:MM:SS');
+                ylabel(obj.hAxesP,'Pressure [torr]');
+                title(obj.hAxesP,'PRESSURE MONITOR (LAST 100 READINGS)');
+                % legend(obj.hAxesP,'Rough Vac','Gas Line','Beamline','Chambe
 
                 % Add listener to update data when new readings are taken by main beamlineGUI
                 obj.ReadingsListener = addlistener(obj.hBeamlineGUI,'LastRead','PostSet',@obj.updateFigures);
@@ -94,39 +99,39 @@ classdef beamlineMonitor < acquisition
             end
     
             % Plot pressure data
-            hFigP = figure('NumberTitle','off','Name','Pressure Data');
-            hAxP = axes(hFigP);
-            plot(hAxP,[obj.Readings.T],[obj.Readings.PRough],'r-',...
-                [obj.Readings.T],[obj.Readings.PGas],'g-',...
-                [obj.Readings.T],[obj.Readings.PBeamline],'b-',...
-                [obj.Readings.T],[obj.Readings.PChamber],'c-');
-            set(hAxP,'YScale','log');
-            datetick(hAxP,'x','HH:MM:SS');
-            ylabel(hAxP,'Pressure [torr]');
-            title(hAxP,'Pressure vs Time');
-            legend(hAxP,'Rough Vac','Gas Line','Beamline','Chamber','Location','northwest');
+            % hFigP = figure('NumberTitle','off','Name','Pressure Data');
+            % hAxP = axes(hFigP);
+            % plot(hAxP,[obj.Readings.T],[obj.Readings.PRough],'r-',...
+            %     [obj.Readings.T],[obj.Readings.PGas],'g-',...
+            %     [obj.Readings.T],[obj.Readings.PBeamline],'b-',...
+            %     [obj.Readings.T],[obj.Readings.PChamber],'c-');
+            % set(hAxP,'YScale','log');
+            % datetick(hAxP,'x','HH:MM:SS');
+            % ylabel(hAxP,'Pressure [torr]');
+            % title(hAxP,'Pressure vs Time');
+            % legend(hAxP,'Rough Vac','Gas Line','Beamline','Chamber','Location','northwest');
 
-            % Plot current data
-            hFigI = figure('NumberTitle','off','Name','Current Data');
-            hAxI = axes(hFigI);
-            plot(hAxI,[obj.Readings.T],[obj.Readings.IFaraday],'r-');
-            datetick(hAxI,'x','HH:MM:SS');
-            ylabel(hAxI,'I_F_a_r_a_d_a_y [A]');
-            title(hAxI,'Current vs Time');
+            % % Plot current data
+            % hFigI = figure('NumberTitle','off','Name','Current Data');
+            % hAxI = axes(hFigI);
+            % plot(hAxI,[obj.Readings.T],[obj.Readings.IFaraday],'r-');
+            % datetick(hAxI,'x','HH:MM:SS');
+            % ylabel(hAxI,'I_F_a_r_a_d_a_y [A]');
+            % title(hAxI,'Current vs Time');
 
-            % Plot voltage data
-            hFigV = figure('NumberTitle','off','Name','Voltage Data');
-            hAxV = axes(hFigV);
-            plot(hAxV,[obj.Readings.T],[obj.Readings.VExtraction],'r-',...
-                [obj.Readings.T],[obj.Readings.VEinzel],'g-',...
-                [obj.Readings.T],[obj.Readings.VExb],'b-',...
-                [obj.Readings.T],[obj.Readings.VEsa],'c-',...
-                [obj.Readings.T],[obj.Readings.VDefl],'m-',...
-                [obj.Readings.T],[obj.Readings.VYsteer],'k-');
-            datetick(hAxV,'x','HH:MM:SS');
-            ylabel(hAxV,'Voltage [V]');
-            title(hAxV,'Voltage vs Time');
-            legend(hAxV,'Extraction','Einzel','ExB','ESA','Defl','y-steer','Location','northwest');
+            % % Plot voltage data
+            % hFigV = figure('NumberTitle','off','Name','Voltage Data');
+            % hAxV = axes(hFigV);
+            % plot(hAxV,[obj.Readings.T],[obj.Readings.VExtraction],'r-',...
+            %     [obj.Readings.T],[obj.Readings.VEinzel],'g-',...
+            %     [obj.Readings.T],[obj.Readings.VExb],'b-',...
+            %     [obj.Readings.T],[obj.Readings.VEsa],'c-',...
+            %     [obj.Readings.T],[obj.Readings.VDefl],'m-',...
+            %     [obj.Readings.T],[obj.Readings.VYsteer],'k-');
+            % datetick(hAxV,'x','HH:MM:SS');
+            % ylabel(hAxV,'Voltage [V]');
+            % title(hAxV,'Voltage vs Time');
+            % legend(hAxV,'Extraction','Einzel','ExB','ESA','Defl','y-steer','Location','northwest');
 
             % Delete obj
             delete(obj.ReadingsListener);
@@ -149,57 +154,73 @@ classdef beamlineMonitor < acquisition
                     obj.Readings(end+1) = obj.hBeamlineGUI.LastRead;
     
                     % Update pressure monitor
-                    if length(obj.Readings)>=100
-                        plot(obj.hAxesP,[obj.Readings(end-99:end).T],[obj.Readings(end-99:end).PRough],'r-',...
-                            [obj.Readings(end-99:end).T],[obj.Readings(end-99:end).PGas],'g-',...
-                            [obj.Readings(end-99:end).T],[obj.Readings(end-99:end).PBeamline],'b-',...
-                            [obj.Readings(end-99:end).T],[obj.Readings(end-99:end).PChamber],'c-');
-                    else
-                        plot(obj.hAxesP,[obj.Readings.T],[obj.Readings.PRough],'r-',...
-                            [obj.Readings.T],[obj.Readings.PGas],'g-',...
-                            [obj.Readings.T],[obj.Readings.PBeamline],'b-',...
-                            [obj.Readings.T],[obj.Readings.PChamber],'c-');
+                    % if length(obj.Readings)>=100
+
+                    %     plot(obj.hAxesP,[obj.Readings(end-99:end).T],[obj.Readings(end-99:end).PRough],'r-',...
+                    %         [obj.Readings(end-99:end).T],[obj.Readings(end-99:end).PGas],'g-',...
+                    %         [obj.Readings(end-99:end).T],[obj.Readings(end-99:end).PBeamline],'b-',...
+                    %         [obj.Readings(end-99:end).T],[obj.Readings(end-99:end).PChamber],'c-');
+                    % else
+                    hold(obj.hAxesP,'on')
+                    fields = fieldnames(obj.hBeamlineGUI.Monitors);
+                    p_ledge =[];
+                    v_ledge = [];
+                    for i =1:numel(fields)
+                        group = obj.hBeamlineGUI.Monitors.(fields{i}).group;
+                        % disp(fields{i})
+                        if strcmp(group,"pressure")
+                            plot(obj.hAxesP,[obj.Readings.T],[obj.Readings.(fields{i})]);
+                            % p_ledge(end+1) = (fields{i});
+                        elseif strcmp(group,"HV")
+                            plot(obj.hAxesV,[obj.Readings.T],[obj.Readings.(fields{i})]);
+                            % v_ledge(end+1) = (fields{i});
+                        end
                     end
+                    hold(obj.hAxesP,'off')
+
                     set(obj.hAxesP,'YScale','log');
                     datetick(obj.hAxesP,'x','HH:MM:SS');
                     ylabel(obj.hAxesP,'Pressure [torr]');
                     title(obj.hAxesP,'PRESSURE MONITOR (LAST 100 READINGS)');
-                    legend(obj.hAxesP,'Rough Vac','Gas Line','Beamline','Chamber','Location','northwest');
-    
+                    % legend(obj.hAxesP,p_ledge,'Location','northwest');
+            
+                    % plot(obj.hAxesV,[obj.Readings.T],[obj.Readings.VExtraction],'r-',...
+                    %         [obj.Readings.T],[obj.Readings.VEinzel],'g-',...
+                    %         [obj.Readings.T],[obj.Readings.VExb],'b-',...
+                    %         [obj.Readings.T],[obj.Readings.VEsa],'c-',...
+                    %         [obj.Readings.T],[obj.Readings.VDefl],'m-',...
+                    %         [obj.Readings.T],[obj.Readings.VYsteer],'k-');
+
+                    plot(obj.hAxesI,[obj.Readings.T],[obj.Readings.Ifaraday],'r-');
+
                     % Update current monitor
-                    if length(obj.Readings)>=100
-                        plot(obj.hAxesI,[obj.Readings(end-99:end).T],[obj.Readings(end-99:end).IFaraday],'r-');
-                    else
-                        plot(obj.hAxesI,[obj.Readings.T],[obj.Readings.IFaraday],'r-');
-                    end
+                    % if length(obj.Readings)>=100
+                    %     plot(obj.hAxesI,[obj.Readings(end-99:end).T],[obj.Readings(end-99:end).IFaraday],'r-');
+                    % else
+                    % plot(obj.hAxesI,[obj.Readings.T],[obj.Readings.IFaraday],'r-');
+                    % end
                     datetick(obj.hAxesI,'x','HH:MM:SS');
                     ylabel(obj.hAxesI,'I_{Faraday} [A]');
                     title(obj.hAxesI,'CURRENT MONITOR (LAST 100 READINGS)');
     
                     % Update voltage monitor
-                    if length(obj.Readings)>=100
-                        plot(obj.hAxesV,[obj.Readings(end-99:end).T],[obj.Readings(end-99:end).VExtraction],'r-',...
-                            [obj.Readings(end-99:end).T],[obj.Readings(end-99:end).VEinzel],'g-',...
-                            [obj.Readings(end-99:end).T],[obj.Readings(end-99:end).VExb],'b-',...
-                            [obj.Readings(end-99:end).T],[obj.Readings(end-99:end).VEsa],'c-',...
-                            [obj.Readings(end-99:end).T],[obj.Readings(end-99:end).VDefl],'m-',...
-                            [obj.Readings(end-99:end).T],[obj.Readings(end-99:end).VYsteer],'k-');
-                    else
-                        plot(obj.hAxesV,[obj.Readings.T],[obj.Readings.VExtraction],'r-',...
-                            [obj.Readings.T],[obj.Readings.VEinzel],'g-',...
-                            [obj.Readings.T],[obj.Readings.VExb],'b-',...
-                            [obj.Readings.T],[obj.Readings.VEsa],'c-',...
-                            [obj.Readings.T],[obj.Readings.VDefl],'m-',...
-                            [obj.Readings.T],[obj.Readings.VYsteer],'k-');
-                    end
+                    % if length(obj.Readings)>=100
+                    %     plot(obj.hAxesV,[obj.Readings(end-99:end).T],[obj.Readings(end-99:end).VExtraction],'r-',...
+                    %         [obj.Readings(end-99:end).T],[obj.Readings(end-99:end).VEinzel],'g-',...
+                    %         [obj.Readings(end-99:end).T],[obj.Readings(end-99:end).VExb],'b-',...
+                    %         [obj.Readings(end-99:end).T],[obj.Readings(end-99:end).VEsa],'c-',...
+                    %         [obj.Readings(end-99:end).T],[obj.Readings(end-99:end).VDefl],'m-',...
+                    %         [obj.Readings(end-99:end).T],[obj.Readings(end-99:end).VYsteer],'k-');
+                    % else
+                    % end
                     datetick(obj.hAxesV,'x','HH:MM:SS');
                     ylabel(obj.hAxesV,'Voltage [V]');
                     title(obj.hAxesV,'VOLTAGE MONITOR (LAST 100 READINGS)');
-                    legend(obj.hAxesV,'Extraction','Einzel','ExB','ESA','Defl','y-steer','Location','northwest');
+                    % legend(obj.hAxesV,'Extraction','Einzel','ExB','ESA','Defl','y-steer','Location','northwest');
 
                     % Append new data to file
                     readings = obj.Readings;
-                    save(fullfile(obj.hBeamlineGUI.DataDir,'beamlineMonitor.mat'),'readings');
+                    % save(fullfile(obj.hBeamlineGUI.DataDir,'beamlineMonitor.mat'),'readings');
     
                 catch MExc
     

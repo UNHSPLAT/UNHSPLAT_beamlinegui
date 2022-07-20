@@ -68,7 +68,6 @@ classdef beamlineGUI < handle
         end
 
         function readings = updateReadings(obj,~,~,fname)
-            obj.updateHWStatus()
             %UPDATEREADINGS Read and update all beamline status reading fields
 
             % Gather readings
@@ -85,7 +84,6 @@ classdef beamlineGUI < handle
                 lab = fields{i};
                 val = obj.Monitors.(fields{i}).lastRead;
                 obj.LastRead.(lab)=val;
-                %
                 set(obj.Monitors.(lab).guiHand.statusGrpRead,...
                         'String',sprintf(obj.Monitors.(lab).formatSpec,val));
             end
@@ -136,10 +134,8 @@ classdef beamlineGUI < handle
         end
         
         function gatherHardware(obj)
-            %GATHERHARDWARE Detect, instantiate, and configure required hardware objects, set hardware tags, and populate respective obj properties
             obj.Hardware = setupInstruments();
             obj.Monitors = setupMonitors(obj.Hardware);
-
         end
 
         function createGUI(obj)
@@ -155,7 +151,7 @@ classdef beamlineGUI < handle
             obj.hFigure = figure('MenuBar','none',...
                 'ToolBar','none',...
                 'Resize','off',...
-                'Position',[0,0,1300,650],...
+                'Position',[0,0,1200,700],...
                 'NumberTitle','off',...
                 'Name','Beamline GUI',...
                 'DeleteFcn',@obj.closeGUI);
@@ -205,7 +201,6 @@ classdef beamlineGUI < handle
             obj.hHWConnStatusGrp.Position(4) = ypos+yBorderBuffer;
             %===================================================================================
             % Create beamline status uicontrol group
-
             % Set positions for components
             ysize = 22;
             ygap = 6;
@@ -277,7 +272,6 @@ classdef beamlineGUI < handle
             structfun(@guiStatusGrpSet,obj.Monitors);
 
             %====================================================================================
-
             % Create file menu
             obj.hFileMenu = uimenu(obj.hFigure,'Text','File');
 
@@ -293,7 +287,6 @@ classdef beamlineGUI < handle
 
             %====================================================================================
             %Test Panel group
-
             % Set positions for right-side GUI components
             ysize = 22;
             ygap = 20;
@@ -536,26 +529,9 @@ classdef beamlineGUI < handle
             myAcq.runSweep;
             
         end
-        
-
-        function updateHWStatus(obj)
-            hwStats = obj.hHWConnStatusGrp.Children;
-            tags = fieldnames(obj.Hardware);
-            for i = 1:numel(hwStats)
-                nam = hwStats(i).String;
-                if any(strcmp(tags,nam))
-                    set(hwStats(i),'Value',obj.Hardware.(nam).Connected);
-                end
-            end
-        end
 
         function HwRefreshCallback(obj,~,~)
-            % Stop timer if running
-
-            set(obj.hHWConnBtn,'String','Refreshing');
-            if strcmp(obj.hTimer.Running,'on')
-                stop(obj.hTimer);
-            end
+            
             hwStats = obj.hHWConnStatusGrp.Children;
             devices = get_visadevlist();
             tags = fieldnames(obj.Hardware);
@@ -564,19 +540,13 @@ classdef beamlineGUI < handle
                 if any(strcmp(tags,nam))
                     obj.Hardware.(nam).resourcelist = devices;
                     obj.Hardware.(nam).connectDevice();
-                    set(hwStats(i),'Value',obj.Hardware.(nam).Connected);
-                    fprintf("%s:%d\n",nam,obj.Hardware.(nam).Connected);
+                    set(hwStats(i),'Value',obj.Hardware.(nam).Connected)
                 end
             end
-%             Start timer
-            start(obj.hTimer);
-            disp('Refresh Complete');
-            set(obj.hHWConnBtn,'String','Refresh');
         end
 
         function closeGUI(obj,~,~)
             %CLOSEGUI Stop timer and delete obj when figure is closed
-
             % Stop timer if running
             if strcmp(obj.hTimer.Running,'on')
                 stop(obj.hTimer);
