@@ -88,13 +88,19 @@ classdef beamlineGUI < handle
                         'String',sprintf(obj.Monitors.(lab).formatSpec,val));
             end
             obj.LastRead.T = now;
-
-            readings = obj.LastRead;
+            
+            readings = struct(['r',num2str(round(now*1e6))],obj.LastRead);
 
             if ~exist('fname','var')
-                fname = fullfile(obj.DataDir,['readings_',num2str(round(now*1e6)),'.mat']);
+                fname = fullfile(obj.DataDir,['readings_',num2str(obj.TestSequence),'.mat']);
             end
-            save(fname,'readings');
+
+            if isfile(fname)
+                save(fname,'-struct','readings','-append');
+            else
+                save(fname,'-struct','readings');
+            end
+
 
         end
 
@@ -150,7 +156,6 @@ classdef beamlineGUI < handle
             % Create figure
             obj.hFigure = figure('MenuBar','none',...
                 'ToolBar','none',...
-                'Resize','off',...
                 'Position',[0,0,1200,700],...
                 'NumberTitle','off',...
                 'Name','Beamline GUI',...

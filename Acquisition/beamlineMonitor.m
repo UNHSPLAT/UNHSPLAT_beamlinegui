@@ -91,41 +91,8 @@ classdef beamlineMonitor < acquisition
                 set(obj.hBeamlineGUI.hRunBtn,'String','RUN TEST');
                 set(obj.hBeamlineGUI.hRunBtn,'Enable','on');
             end
-    
-            % Plot pressure data
-            % hFigP = figure('NumberTitle','off','Name','Pressure Data');
-            % hAxP = axes(hFigP);
-            % plot(hAxP,[obj.Readings.T],[obj.Readings.PRough],'r-',...
-            %     [obj.Readings.T],[obj.Readings.PGas],'g-',...
-            %     [obj.Readings.T],[obj.Readings.PBeamline],'b-',...
-            %     [obj.Readings.T],[obj.Readings.PChamber],'c-');
-            % set(hAxP,'YScale','log');
-            % datetick(hAxP,'x','HH:MM:SS');
-            % ylabel(hAxP,'Pressure [torr]');
-            % title(hAxP,'Pressure vs Time');
-            % legend(hAxP,'Rough Vac','Gas Line','Beamline','Chamber','Location','northwest');
-
-            % % Plot current data
-            % hFigI = figure('NumberTitle','off','Name','Current Data');
-            % hAxI = axes(hFigI);
-            % plot(hAxI,[obj.Readings.T],[obj.Readings.IFaraday],'r-');
-            % datetick(hAxI,'x','HH:MM:SS');
-            % ylabel(hAxI,'I_F_a_r_a_d_a_y [A]');
-            % title(hAxI,'Current vs Time');
-
-            % % Plot voltage data
-            % hFigV = figure('NumberTitle','off','Name','Voltage Data');
-            % hAxV = axes(hFigV);
-            % plot(hAxV,[obj.Readings.T],[obj.Readings.VExtraction],'r-',...
-            %     [obj.Readings.T],[obj.Readings.VEinzel],'g-',...
-            %     [obj.Readings.T],[obj.Readings.VExb],'b-',...
-            %     [obj.Readings.T],[obj.Readings.VEsa],'c-',...
-            %     [obj.Readings.T],[obj.Readings.VDefl],'m-',...
-            %     [obj.Readings.T],[obj.Readings.VYsteer],'k-');
-            % datetick(hAxV,'x','HH:MM:SS');
-            % ylabel(hAxV,'Voltage [V]');
-            % title(hAxV,'Voltage vs Time');
-            % legend(hAxV,'Extraction','Einzel','ExB','ESA','Defl','y-steer','Location','northwest');
+            obj.mkFigure();
+            obj.plotVals();
 
             % Delete obj
             delete(obj.ReadingsListener);
@@ -136,7 +103,21 @@ classdef beamlineMonitor < acquisition
     end
 
     methods (Access = private)
+        function mkFigure(obj,~,~)
 
+                 obj.hFigure = figure('NumberTitle','off',...
+                'Name','Beamline Monitor - Close Window to Exit Test',...
+                'Position',[100,100,900,600],...
+                'DeleteFcn',@obj.closeFigure);
+                % Create axes
+                obj.hAxesP = axes(obj.hFigure);
+                subplot(2,2,[1 2],obj.hAxesP);
+                obj.hAxesI = axes(obj.hFigure);
+                subplot(2,2,3,obj.hAxesI);
+                obj.hAxesV = axes(obj.hFigure);
+                subplot(2,2,4,obj.hAxesV);
+        end
+        
         function plotVals(obj,~,~)
             hold(obj.hAxesP,'on');
             hold(obj.hAxesV,'on');
@@ -147,10 +128,10 @@ classdef beamlineMonitor < acquisition
                 group = obj.hBeamlineGUI.Monitors.(fields{i}).group;
                 if strcmp(group,"pressure")
                     plot(obj.hAxesP,[obj.Readings.T],[obj.Readings.(fields{i})]);
-                    p_ledge{end+1} = fields{i};
+                    p_ledge{end+1} = strrep(fields{i},'pressure','');
                 elseif strcmp(group,"HV")
                     plot(obj.hAxesV,[obj.Readings.T],[obj.Readings.(fields{i})]);
-                    v_ledge{end+1} = fields{i};
+                    v_ledge{end+1} = strrep(fields{i},'volt','');
                 end
             end
             hold(obj.hAxesP,'off');
