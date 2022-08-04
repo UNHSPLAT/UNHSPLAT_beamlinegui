@@ -49,8 +49,8 @@ classdef faradayCupSweep < acquisition
             %RUNSWEEP Establishes configuration GUI, with run sweep button triggering actual sweep execution
 
             % Disable and relabel beamline GUI run test button
-            % set(obj.hBeamlineGUI.hRunBtn,'Enable','off');
-            % set(obj.hBeamlineGUI.hRunBtn,'String','Test in progress...');
+            set(obj.hBeamlineGUI.hRunBtn,'Enable','off');
+            set(obj.hBeamlineGUI.hRunBtn,'String','Test in progress...');
             
             % Create figure
             obj.hConfFigure = figure('MenuBar','none',...
@@ -286,8 +286,10 @@ classdef faradayCupSweep < acquisition
                         tag = fields{i};
                         scan_mon.(tag)(iV) = obj.hBeamlineGUI.Monitors.(tag).lastRead;
                     end
+                    hold('on')
                     plot(obj.hAxes1,scan_mon.(psTag)(1:iV),scan_mon.Ifaraday(1:iV));
-
+                    scatter(obj.hAxes1,scan_mon.(psTag)(1:iV),scan_mon.Ifaraday(1:iV));
+                    hold('off')
                     set(obj.hAxes1,'YScale','log');
                     xlabel(obj.hAxes1,obj.hBeamlineGUI.Monitors.(psTag).sPrint());
                     ylabel(obj.hAxes1,obj.hBeamlineGUI.Monitors.Ifaraday.sPrint());

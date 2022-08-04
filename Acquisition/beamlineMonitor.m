@@ -29,8 +29,8 @@ classdef beamlineMonitor < acquisition
             %RUNSWEEP Establishes configuration GUI, with run sweep button triggering actual sweep execution
 
             % Disable and relabel beamline GUI run test button
-            set(obj.hBeamlineGUI.hRunBtn,'String','Test in progress...');
-            set(obj.hBeamlineGUI.hRunBtn,'Enable','off');
+            %set(obj.hBeamlineGUI.hRunBtn,'String','Test in progress...');
+            %set(obj.hBeamlineGUI.hRunBtn,'Enable','off');
 
             % Create figures
             obj.hFigure = figure('NumberTitle','off',...
@@ -153,6 +153,7 @@ classdef beamlineMonitor < acquisition
             datetick(obj.hAxesV,'x','HH:MM:SS');
             ylabel(obj.hAxesV,'Voltage [V]');
             title(obj.hAxesV,'VOLTAGE MONITOR (LAST 100 READINGS)');
+            set(obj.hAxesV,'YScale','log');
             
         end
 
