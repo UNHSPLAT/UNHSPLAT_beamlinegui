@@ -42,7 +42,7 @@ classdef faradayCupSweep < acquisition
             obj@acquisition(hGUI);
             
             % Add listener to delete configuration GUI figure if main beamline GUI deleted
-            addlistener(obj.hBeamlineGUI,'ObjectBeingDestroyed',@obj.beamlineGUIDeleted);
+            listener(obj.hBeamlineGUI,'ObjectBeingDestroyed',@obj.beamlineGUIDeleted);
         end
 
         function runSweep(obj)
@@ -287,7 +287,7 @@ classdef faradayCupSweep < acquisition
                         scan_mon.(tag)(iV) = obj.hBeamlineGUI.Monitors.(tag).lastRead;
                     end
                     hold('on')
-                    plot(obj.hAxes1,scan_mon.(psTag)(1:iV),scan_mon.Ifaraday(1:iV));
+                    plot(obj.hAxes1,scan_mon.(psTag)(1:iV),abs(scan_mon.Ifaraday(1:iV)));
                     scatter(obj.hAxes1,scan_mon.(psTag)(1:iV),scan_mon.Ifaraday(1:iV));
                     hold('off')
                     set(obj.hAxes1,'YScale','log');

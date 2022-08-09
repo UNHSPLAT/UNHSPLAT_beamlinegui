@@ -21,7 +21,7 @@ classdef beamlineMonitor < acquisition
             obj@acquisition(hGUI);
 
             % Add listener to delete configuration GUI figure if main beamline GUI deleted
-            addlistener(obj.hBeamlineGUI,'ObjectBeingDestroyed',@obj.beamlineGUIDeleted);
+            listener(obj.hBeamlineGUI,'ObjectBeingDestroyed',@obj.beamlineGUIDeleted);
 
         end
 
@@ -47,13 +47,12 @@ classdef beamlineMonitor < acquisition
                 subplot(2,2,4,obj.hAxesV);
 
                 % legend(obj.hAxesP,'Rough Vac','Gas Line','Beamline','Chambe
-
-                % Add listener to update data when new readings are taken by main beamlineGUI
-                obj.ReadingsListener = addlistener(obj.hBeamlineGUI,'LastRead','PostSet',@obj.updateFigures);
     
+                % Add listener to update data when new readings are taken by main beamlineGUI
+                obj.ReadingsListener = listener(obj.hBeamlineGUI,...
+                                'LastRead','PostSet',@obj.updateFigures);
                 % Initialize Readings with LastRead from beamlineGUI
                 obj.Readings = obj.hBeamlineGUI.LastRead;
-    
                 % Retrieve config info
                 operator = obj.hBeamlineGUI.TestOperator;
                 gasType = obj.hBeamlineGUI.GasType;
@@ -87,12 +86,12 @@ classdef beamlineMonitor < acquisition
             %CLOSEFIGURE Re-enable beamline GUI run test button, plot all data, and delete obj when figure is closed
             
             % Enable beamline GUI run test button if still valid
-            if isvalid(obj.hBeamlineGUI)
-                set(obj.hBeamlineGUI.hRunBtn,'String','RUN TEST');
-                set(obj.hBeamlineGUI.hRunBtn,'Enable','on');
-            end
-            obj.mkFigure();
-            obj.plotVals();
+%             if isvalid(obj.hBeamlineGUI)
+%                 set(obj.hBeamlineGUI.hRunBtn,'String','RUN TEST');
+%                 set(obj.hBeamlineGUI.hRunBtn,'Enable','on');
+%                 obj.mkFigure();
+%                 obj.plotVals();
+%             end
 
             % Delete obj
             delete(obj.ReadingsListener);
@@ -118,52 +117,61 @@ classdef beamlineMonitor < acquisition
                 subplot(2,2,4,obj.hAxesV);
         end
         
-        function plotVals(obj,~,~)
-            hold(obj.hAxesP,'on');
-            hold(obj.hAxesV,'on');
-            fields = fieldnames(obj.hBeamlineGUI.Monitors);
-            p_ledge = {};
-            v_ledge = {};
-            for i =1:numel(fields)
-                group = obj.hBeamlineGUI.Monitors.(fields{i}).group;
-                if strcmp(group,"pressure")
-                    plot(obj.hAxesP,[obj.Readings.T],[obj.Readings.(fields{i})]);
-                    p_ledge{end+1} = strrep(fields{i},'pressure','');
-                elseif strcmp(group,"HV")
-                    plot(obj.hAxesV,[obj.Readings.T],[obj.Readings.(fields{i})]);
-                    v_ledge{end+1} = strrep(fields{i},'volt','');
+        function plotVals(obj)
+            if isvalid(obj)
+                hold(obj.hAxesP,'on');
+                hold(obj.hAxesV,'on');
+                fields = fieldnames(obj.hBeamlineGUI.Monitors);
+                p_ledge = {};
+                v_ledge = {};
+                time = [obj.Readings.dateTime];
+                %define time range to plot 
+                % (plot range can be extended with the fractional day value
+                %   being subtracted)
+                log_plot = time>max(time)-.01;
+                for i =1:numel(fields)
+                    group = obj.hBeamlineGUI.Monitors.(fields{i}).group;
+                    val = [obj.Readings.(fields{i})];
+                    if strcmp(group,"pressure")
+                        plot(obj.hAxesP,time(log_plot),...
+                                        val(log_plot));
+                        p_ledge{end+1} = strrep(fields{i},'pressure','');
+                    elseif strcmp(group,"HV")
+                        plot(obj.hAxesV,time(log_plot),...
+                                        val(log_plot))
+                        v_ledge{end+1} = strrep(fields{i},'volt','');
+                    end
                 end
+                hold(obj.hAxesP,'off');
+                hold(obj.hAxesV,'off');
+                plot(obj.hAxesI,[obj.Readings.T],...
+                                [obj.Readings.Ifaraday],'r-');
+    
+                legend(obj.hAxesP,p_ledge,'Location','northwest');
+                legend(obj.hAxesV,v_ledge,'Location','northwest');
+    
+                set(obj.hAxesP,'YScale','log');
+                %datetick(obj.hAxesP,'x','HH:MM:SS');
+                ylabel(obj.hAxesP,'Pressure [torr]');
+                title(obj.hAxesP,'System Pressure');
+    
+                %datetick(obj.hAxesI,'x','HH:MM:SS');
+                ylabel(obj.hAxesI,'I_{Faraday} [A]');
+                title(obj.hAxesI,'Beam Current');
+    
+                %datetick(obj.hAxesV,'x','HH:MM:SS');
+                ylabel(obj.hAxesV,'Voltage [V]');
+                title(obj.hAxesV,'Optics Voltage');
+                set(obj.hAxesV,'YScale','log');
             end
-            hold(obj.hAxesP,'off');
-            hold(obj.hAxesV,'off');
-            plot(obj.hAxesI,[obj.Readings.T],[obj.Readings.Ifaraday],'r-');
-
-            legend(obj.hAxesP,p_ledge,'Location','northwest');
-            legend(obj.hAxesV,v_ledge,'Location','northwest');
-
-            set(obj.hAxesP,'YScale','log');
-            datetick(obj.hAxesP,'x','HH:MM:SS');
-            ylabel(obj.hAxesP,'Pressure [torr]');
-            title(obj.hAxesP,'PRESSURE MONITOR (LAST 100 READINGS)');
-
-            datetick(obj.hAxesI,'x','HH:MM:SS');
-            ylabel(obj.hAxesI,'I_{Faraday} [A]');
-            title(obj.hAxesI,'CURRENT MONITOR (LAST 100 READINGS)');
-
-            datetick(obj.hAxesV,'x','HH:MM:SS');
-            ylabel(obj.hAxesV,'Voltage [V]');
-            title(obj.hAxesV,'VOLTAGE MONITOR (LAST 100 READINGS)');
-            set(obj.hAxesV,'YScale','log');
-            
         end
 
         function updateFigures(obj,~,~)
 
             % Check that a new timestamp was recorded
+
             if obj.Readings(end).T ~= obj.hBeamlineGUI.LastRead.T
-
                 try
-
                     % Append LastRead to Readings property
                     obj.Readings(end+1) = obj.hBeamlineGUI.LastRead;
 
@@ -172,7 +180,7 @@ classdef beamlineMonitor < acquisition
 
                     % Append new data to file
                     readings = obj.Readings;
-                    % save(fullfile(obj.hBeamlineGUI.DataDir,'beamlineMonitor.mat'),'readings');
+                    save(fullfile(obj.hBeamlineGUI.DataDir,'beamlineMonitor.mat'),'readings');
     
                 catch MExc
     

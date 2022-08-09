@@ -17,6 +17,7 @@ classdef beamlineGUI < handle
         hTestGrp %
         hHWConnStatusGrp%
         hHWConnBtn%
+        hMonitorPlt% Handle to monitor plot generated at startup
 
         hFileMenu % Handle to file top menu dropdown
         hEditMenu % Handle to edit top menu dropdown
@@ -65,11 +66,13 @@ classdef beamlineGUI < handle
             % Create and start beamline status update timer
             obj.createTimer;
 
+            % Generate monitor plot panel
+            obj.hMonitorPlt = beamlineMonitor(obj);
+            obj.hMonitorPlt.runSweep;
         end
 
         function readings = updateReadings(obj,~,~,fname)
             %UPDATEREADINGS Read and update all beamline status reading fields
-
             % Gather readings
             if isempty(obj.LastRead)
                 obj.LastRead = struct;
@@ -428,7 +431,7 @@ classdef beamlineGUI < handle
 
             % Create timer object and populate respective obj property
             obj.hTimer = timer('Name','readTimer',...
-                'Period',5,...
+                'Period',4,...
                 'ExecutionMode','fixedDelay',...
                 'TimerFcn',@obj.updateReadings,...
                 'ErrorFcn',@obj.restartTimer);
