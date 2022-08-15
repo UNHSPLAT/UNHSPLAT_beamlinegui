@@ -539,18 +539,20 @@ classdef beamlineGUI < handle
         end
 
         function HwRefreshCallback(obj,~,~)
-            
+            stop(obj.hTimer);
             hwStats = obj.hHWConnStatusGrp.Children;
             devices = get_visadevlist();
             tags = fieldnames(obj.Hardware);
             for i = 1:numel(hwStats)
                 nam = hwStats(i).String;
+                disp(nam)
                 if any(strcmp(tags,nam))
                     obj.Hardware.(nam).resourcelist = devices;
                     obj.Hardware.(nam).connectDevice();
                     set(hwStats(i),'Value',obj.Hardware.(nam).Connected)
                 end
             end
+            start(obj.hTimer);
         end
 
         function closeGUI(obj,~,~)

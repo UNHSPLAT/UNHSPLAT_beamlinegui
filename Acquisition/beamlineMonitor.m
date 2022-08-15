@@ -94,6 +94,8 @@ classdef beamlineMonitor < acquisition
 %             end
 
             % Delete obj
+%             readings = obj.Readings;
+%             save(fullfile(obj.hBeamlineGUI.DataDir,'beamlineMonitor.mat'),'readings');
             delete(obj.ReadingsListener);
             delete(obj);
 
@@ -179,8 +181,8 @@ classdef beamlineMonitor < acquisition
                     obj.plotVals()
 
                     % Append new data to file
-                    readings = obj.Readings;
-                    save(fullfile(obj.hBeamlineGUI.DataDir,'beamlineMonitor.mat'),'readings');
+%                     readings = obj.Readings;
+%                     save(fullfile(obj.hBeamlineGUI.DataDir,'beamlineMonitor.mat'),'readings');
     
                 catch MExc
     
