@@ -66,6 +66,22 @@ function monitors = setupMonitors(instruments)
     end
 
     % =======================================================================
+    % define set function for MFC
+    % =======================================================================
+    
+    function set_MFC(self,volt)
+
+        if isnan(volt)
+            errordlg('A valid voltage value must be entered!','Invalid input!');
+            return
+        elseif volt > 0.1 || volt < 0
+            errordlg('MFC voltage setpoint must be between 0 and 0.1');
+            return
+        end
+        
+    end
+
+    % =======================================================================
     % Define monitors and set parameters 
     %   monitors that dont have parent instruments (such as a datetime measurement)
     %   to pull parameters from should assign 
@@ -142,7 +158,7 @@ function monitors = setupMonitors(instruments)
                                      'parent',instruments.keithleyMultimeter1...
                                      ),...
                  'voltMFC',monitor('readFunc',@(x) x.parent(1).performScan(3,3),...
-                                     'setFunc',@(self,x) self.parent(2).setVSet(x,1),...
+                                     'setFunc',@set_MFC,...
                                      'textLabel','MFC Voltage',...
                                      'unit','V',...
                                      'active',true,...

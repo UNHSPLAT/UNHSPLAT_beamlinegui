@@ -29,7 +29,7 @@ classdef beamlineGUI < handle
         
         hOperatorText % Handle to test operator label
         hOperatorEdit % Handle to test operator popupmenu
-        OperatorList cell = {'Jonathan Bower','Daniel Abel','Skylar Vogler','Colin van Ysseldyk','Philip Valek','Nathan Schwadron','Zack Smith','David Heirtzler'} % Test operators available for selection
+        OperatorList cell = {'Jonathan Bower','Daniel Abel','Skylar Vogler','Colin van Ysseldyk','Philip Valek','Nathan Schwadron','Zack Smith','David Heirtzler', 'Isabella Householder', 'Amanda Wester', 'Ryan Murphy'} % Test operators available for selection
         
         hGasText % Handle to gas type label
         hGasEdit % Handle to gas type popupmenu
