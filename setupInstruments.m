@@ -14,52 +14,60 @@
 
     % Configure picoammeter
     function config_picoFaraday(hFaraday)
+        trynum = 3;
         if hFaraday.Connected
-            hFaraday.Tag = "Faraday";
+%             hFaraday.Tag = "Faraday";
             hFaraday.devRW(':SYST:ZCH OFF');
             dataOut = strtrim(hFaraday.devRW(':SYST:ZCH?'));
-            while ~strcmp(dataOut,'0')
+            i = 1;
+            while ~strcmp(dataOut,'0') && trynum<i
                 warning('beamlineGUI:keithleyNonresponsive','Keithley not listening! Zcheck did not shut off as expected...');
                 hFaraday.devRW(':SYST:ZCH OFF');
                 dataOut = strtrim(hFaraday.devRW(':SYST:ZCH?'));
+                trynum=trynum+1;
             end
             hFaraday.devRW('ARM:COUN 1');
             dataOut = strtrim(hFaraday.devRW('ARM:COUN?'));
-            while ~strcmp(dataOut,'1')
+            i = 1;
+            while ~strcmp(dataOut,'1') && trynum<i
                 warning('beamlineGUI:keithleyNonresponsive','Keithley not listening! Arm count did not set to 1 as expected...');
                 hFaraday.devRW('ARM:COUN 1');
                 dataOut = strtrim(hFaraday.devRW('ARM:COUN?'));
+                trynum=trynum+1;
             end
             hFaraday.devRW('FORM:ELEM READ');
             dataOut = strtrim(hFaraday.devRW('FORM:ELEM?'));
-            while ~strcmp(dataOut,'READ')
+            i = 1;
+            while ~strcmp(dataOut,'READ') && trynum<i
                 warning('beamlineGUI:keithleyNonresponsive','Keithley not listening! Output format not set to ''READ'' as expected...');
                 hFaraday.devRW('FORM:ELEM READ');
                 dataOut = strtrim(hFaraday.devRW('FORM:ELEM?'));
+                trynum=trynum+1;
             end
             hFaraday.devRW(':SYST:LOC');
         end
     end
 
+
+
     % Config Power Supplies
     function self = config_pwrsupply(self)
-        self.setVSet(0);
+        self.setVSet(2);
     end
 
     % Generate list of available hardware
-    visaList = get_visadevlist();
-    instruments = struct("leyboldPressure1",leyboldCenter2("ASRL7::INSTR",visaList),...
-                         "leyboldPressure2",leyboldGraphix3("ASRL8::INSTR",visaList),...
-                         "leyboldPressure3",leyboldGraphix3("ASRL10::INSTR",visaList),...
-                         "picoFaraday",keithley6485('GPIB0::14::INSTR',visaList,@config_picoFaraday),...
-                         "HvExbn",srsPS350('GPIB0::19::INSTR',visaList,@config_pwrsupply),...
-                         "HvExbp",srsPS350('GPIB0::15::INSTR',visaList,@config_pwrsupply),...
-                         "HvEsa",srsPS350('GPIB0::16::INSTR',visaList,@config_pwrsupply),...
-                         "HvDefl",srsPS350('GPIB0::17::INSTR',visaList,@config_pwrsupply),...
-                         "HvYsteer",srsPS350('GPIB0::18::INSTR',visaList,@config_pwrsupply),...
-                         "LvMass",keysightE36313A('GPIB0::5::INSTR',visaList),...
+    instruments = struct("leyboldPressure1",leyboldCenter2("ASRL7::INSTR"),...
+                         "leyboldPressure2",leyboldGraphix3("ASRL8::INSTR"),...
+                         "leyboldPressure3",leyboldGraphix3("ASRL10::INSTR"),...
+                         "picoFaraday",keithley6485('GPIB0::14::INSTR',@config_picoFaraday),...
+                         "HvExbn",srsPS350('GPIB0::19::INSTR',@(self)self.setVSet(-2)),...
+                         "HvExbp",srsPS350('GPIB0::15::INSTR',@config_pwrsupply),...
+                         "HvEsa",srsPS350('GPIB0::16::INSTR',@config_pwrsupply),...
+                         "HvDefl",srsPS350('GPIB0::17::INSTR',@config_pwrsupply),...
+                         "HvYsteer",srsPS350('GPIB0::18::INSTR',@config_pwrsupply),...
+                         "LvMass",keysightE36313A('GPIB0::5::INSTR'),...
                          "keithleyMultimeter1",keithleyDAQ6510('USB0::0x05E6::0x6510::04524689::0::INSTR',...
-                                                               visaList,@config_keithleyMultimeter)...
+                                                               @config_keithleyMultimeter)...
                          );
     
     %assign tags to instrument structures

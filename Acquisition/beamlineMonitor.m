@@ -130,17 +130,14 @@ classdef beamlineMonitor < acquisition
                 %define time range to plot 
                 % (plot range can be extended with the fractional day value
                 %   being subtracted)
-                log_plot = time>max(time)-.01;
                 for i =1:numel(fields)
                     group = obj.hBeamlineGUI.Monitors.(fields{i}).group;
                     val = [obj.Readings.(fields{i})];
                     if strcmp(group,"pressure")
-                        plot(obj.hAxesP,time(log_plot),...
-                                        val(log_plot));
+                        plot(obj.hAxesP,time,val);
                         p_ledge{end+1} = strrep(fields{i},'pressure','');
                     elseif strcmp(group,"HV")
-                        plot(obj.hAxesV,time(log_plot),...
-                                        val(log_plot))
+                        plot(obj.hAxesV,time,val);
                         v_ledge{end+1} = strrep(fields{i},'volt','');
                     end
                 end
@@ -171,11 +168,14 @@ classdef beamlineMonitor < acquisition
         function updateFigures(obj,~,~)
 
             % Check that a new timestamp was recorded
-
             if obj.Readings(end).T ~= obj.hBeamlineGUI.LastRead.T
                 try
                     % Append LastRead to Readings property
                     obj.Readings(end+1) = obj.hBeamlineGUI.LastRead;
+                    
+                    time = [obj.Readings.dateTime];
+                    log_time = time>max(time)-.01;
+                    obj.Readings = obj.Readings(log_time);
 
                     % Update pressure monitor
                     obj.plotVals()

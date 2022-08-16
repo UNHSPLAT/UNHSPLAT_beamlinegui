@@ -67,8 +67,9 @@ classdef beamlineGUI < handle
             obj.createTimer;
 
             % Generate monitor plot panel
+            pause(1);
             obj.hMonitorPlt = beamlineMonitor(obj);
-            obj.hMonitorPlt.runSweep;
+            obj.hMonitorPlt.runSweep();
         end
 
         function readings = updateReadings(obj,~,~,fname)
@@ -83,15 +84,15 @@ classdef beamlineGUI < handle
 
             %Share the monitor values with the last reading variable 
             fields = fieldnames(obj.Monitors);
+            newRead =struct();
             for i = 1:numel(fields)
                 lab = fields{i};
                 val = obj.Monitors.(fields{i}).lastRead;
-                obj.LastRead.(lab)=val;
+                newRead.(lab)=val;
                 set(obj.Monitors.(lab).guiHand.statusGrpRead,...
                         'String',sprintf(obj.Monitors.(lab).formatSpec,val));
             end
-            obj.LastRead.T = now;
-            
+            obj.LastRead=newRead;
             readings = struct(['r',num2str(round(now*1e6))],obj.LastRead);
 
             if ~exist('fname','var')
@@ -103,7 +104,9 @@ classdef beamlineGUI < handle
             else
                 save(fname,'-struct','readings');
             end
-
+            
+            % Update Hw connectivity status
+            obj.HwComStatusCallback();
 
         end
 
@@ -539,20 +542,26 @@ classdef beamlineGUI < handle
         end
 
         function HwRefreshCallback(obj,~,~)
-            stop(obj.hTimer);
             hwStats = obj.hHWConnStatusGrp.Children;
-            devices = get_visadevlist();
             tags = fieldnames(obj.Hardware);
             for i = 1:numel(hwStats)
                 nam = hwStats(i).String;
                 disp(nam)
                 if any(strcmp(tags,nam))
-                    obj.Hardware.(nam).resourcelist = devices;
                     obj.Hardware.(nam).connectDevice();
+                end
+            end
+        end
+
+        function HwComStatusCallback(obj,~,~)
+            hwStats = obj.hHWConnStatusGrp.Children;
+            tags = fieldnames(obj.Hardware);
+            for i = 1:numel(hwStats)
+                nam = hwStats(i).String;
+                if any(strcmp(tags,nam))
                     set(hwStats(i),'Value',obj.Hardware.(nam).Connected)
                 end
             end
-            start(obj.hTimer);
         end
 
         function closeGUI(obj,~,~)

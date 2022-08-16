@@ -80,7 +80,7 @@ classdef faradayCupSweep < acquisition
                     obj.PSList(end+1) = mon.Tag;
                 end
             end
-            obj.PSList = [""]
+            obj.PSList = [""];
             structfun(@get_active,obj.hBeamlineGUI.Monitors);
             obj.hSupplyEdit = uicontrol(obj.hConfFigure,'Style','popupmenu',...
                 'Position',[xpos,ystart,xeditsize,ysize],...
@@ -286,10 +286,10 @@ classdef faradayCupSweep < acquisition
                         tag = fields{i};
                         scan_mon.(tag)(iV) = obj.hBeamlineGUI.Monitors.(tag).lastRead;
                     end
-                    hold('on')
+%                     hold('on')
                     plot(obj.hAxes1,scan_mon.(psTag)(1:iV),abs(scan_mon.Ifaraday(1:iV)));
-                    scatter(obj.hAxes1,scan_mon.(psTag)(1:iV),scan_mon.Ifaraday(1:iV));
-                    hold('off')
+%                     scatter(obj.hAxes1,scan_mon.(psTag)(1:iV),scan_mon.Ifaraday(1:iV));
+%                     hold('off')
                     set(obj.hAxes1,'YScale','log');
                     xlabel(obj.hAxes1,obj.hBeamlineGUI.Monitors.(psTag).sPrint());
                     ylabel(obj.hAxes1,obj.hBeamlineGUI.Monitors.Ifaraday.sPrint());
