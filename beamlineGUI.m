@@ -17,6 +17,7 @@ classdef beamlineGUI < handle
         hTestGrp %
         hHWConnStatusGrp%
         hHWConnBtn%
+        HWConnStatusListeners %
         hMonitorPlt% Handle to monitor plot generated at startup
 
         hFileMenu % Handle to file top menu dropdown
@@ -64,7 +65,13 @@ classdef beamlineGUI < handle
             obj.createGUI;
 
             % Create and start beamline status update timer
-            obj.createTimer;
+            % obj.createTimer;
+            obj.hTimer = timer('Name','readTimer',...
+                'Period',4,...
+                'ExecutionMode','fixedDelay',...
+                'TimerFcn',@obj.updateReadings,...
+                'ErrorFcn',@obj.restartTimer);
+            start(obj.hTimer);
 
             % Generate monitor plot panel
             pause(1);
@@ -89,8 +96,6 @@ classdef beamlineGUI < handle
                 lab = fields{i};
                 val = obj.Monitors.(fields{i}).lastRead;
                 newRead.(lab)=val;
-                set(obj.Monitors.(lab).guiHand.statusGrpRead,...
-                        'String',sprintf(obj.Monitors.(lab).formatSpec,val));
             end
             obj.LastRead=newRead;
             readings = struct(['r',num2str(round(now*1e6))],obj.LastRead);
@@ -104,9 +109,6 @@ classdef beamlineGUI < handle
             else
                 save(fname,'-struct','readings');
             end
-            
-            % Update Hw connectivity status
-            obj.HwComStatusCallback();
 
         end
 
@@ -167,6 +169,21 @@ classdef beamlineGUI < handle
                 'Name','Beamline GUI',...
                 'DeleteFcn',@obj.closeGUI);
 
+            %====================================================================================
+            % Create file menu
+            obj.hFileMenu = uimenu(obj.hFigure,'Text','File');
+
+            % Create edit menu
+            obj.hEditMenu = uimenu(obj.hFigure,'Text','Edit');
+
+            % Create copy test sequence menu button
+            obj.hCopyTS = uimenu(obj.hEditMenu,'Text','Copy Test Sequence',...
+                'MenuSelectedFcn',@obj.copyTSCallback);
+
+            % Turn off dock controls (defaults to on when first uimenu created)
+            set(obj.hFigure,'DockControls','off');
+
+
             %===================================================================================
             % Create instrument connection status uicontrol group
 
@@ -186,6 +203,9 @@ classdef beamlineGUI < handle
                 'Units','pixels',...
                 'Position',[xBorderBuffer,yBorderBuffer,sum(colSize)+xgap*numel(colSize),10]);
             
+
+
+            obj.HWConnStatusListeners.Panel = obj.hHWConnStatusGrp;
             function x = guiHWConnStatusGrpSet(x)    
                 colInd = 1;
                 xColStart = xstart;
@@ -195,6 +215,12 @@ classdef beamlineGUI < handle
                 'FontWeight','bold','Value',x.Connected);
                 set(button,'enable','off');
                 ypos = ypos+ysize+ygap;
+
+                %         set(hwStats(i),'Value',obj.Hardware.(nam).Connected)
+                % % Define listener to auto update status text when parameter is changed
+                obj.HWConnStatusListeners.(x.Tag) = guiListener(x,'Connected',...
+                                                                    button,...
+                                            @(self) set(self.guiHand,'Value',self.parent.Connected));
             end
 
             structfun(@guiHWConnStatusGrpSet,obj.Hardware,'UniformOutput',false)
@@ -241,11 +267,16 @@ classdef beamlineGUI < handle
 
                 xColStart = sum(colSize(1:colInd))+xgap*(colInd);
                 colInd = colInd+1;
-                x.guiHand.statusGrpRead = uicontrol(obj.hStatusGrp,'Style','edit',...
+                readingTxt = uicontrol(obj.hStatusGrp,'Style','edit',...
                 'Position',[xColStart,ypos,colSize(colInd),ysize],...
                 'Enable','inactive',...
                 'FontSize',9,...
                 'HorizontalAlignment','right');
+
+                % Define listener to auto update status text when parameter is changed
+                x.guiHand.listener = guiListener(x,'lastRead',...
+                                                     readingTxt,...
+                            @(self) set(self.guiHand,'String',sprintf(self.parent.formatSpec,self.parent.lastRead)));
 
                 if x.active
 
@@ -256,7 +287,7 @@ classdef beamlineGUI < handle
                         'String',sprintf('set [%s]: ',x.unit),...
                         'FontSize',9,...
                         'HorizontalAlignment','right');
-                
+
                     xColStart = sum(colSize(1:colInd))+xgap*(colInd);
                     colInd = colInd+1;
                     x.guiHand.statusGrpSetField = uicontrol(obj.hStatusGrp,'Style','edit',...
@@ -281,20 +312,6 @@ classdef beamlineGUI < handle
             end
             
             structfun(@guiStatusGrpSet,obj.Monitors);
-
-            %====================================================================================
-            % Create file menu
-            obj.hFileMenu = uimenu(obj.hFigure,'Text','File');
-
-            % Create edit menu
-            obj.hEditMenu = uimenu(obj.hFigure,'Text','Edit');
-
-            % Create copy test sequence menu button
-            obj.hCopyTS = uimenu(obj.hEditMenu,'Text','Copy Test Sequence',...
-                'MenuSelectedFcn',@obj.copyTSCallback);
-
-            % Turn off dock controls (defaults to on when first uimenu created)
-            set(obj.hFigure,'DockControls','off');
 
             %====================================================================================
             %Test Panel group

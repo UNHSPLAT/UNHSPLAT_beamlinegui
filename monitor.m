@@ -8,10 +8,13 @@ classdef monitor < handle
         readFunc = @(x) NaN%function which takes the relevant instrument structure and outputs val of desired format
         setFunc = @(x) NaN%
         formatSpec = '%.2e'
-        lastRead %
         guiHand = struct %
         active = false %tag indicating if the monitor can be set (like a highvoltage power supply) or cant be set (like a pressure monitor)
         group string = ""%
+        children = []%
+    end
+    properties (SetObservable) 
+        lastRead %
     end
 
     methods
