@@ -9,6 +9,9 @@ function monitors = setupMonitors(instruments)
         val = self.parent.measV;
     end
 
+    % =======================================================================
+    % define set functions monitors will use to set parameters
+    % =======================================================================
     function set_srsHVPS(self,volt)
 
         if volt ==0
@@ -36,32 +39,37 @@ function monitors = setupMonitors(instruments)
         end
     end
 
-    % =======================================================================
-    % define set functions monitors will use to set parameters
-    % =======================================================================
-    function set_voltEXB(self,volt)
-        HvExbp = self.parent(1);
-        HvExbn = self.parent(2);
-        if volt ==0
-            volt =2;
-        end
-
-        %check the voltage being applied and ramp the voltage in steps if need be
-        minstep = 50;
-        if (volt-self.lastRead/2)>minstep
-            multivolt = linspace(self.lastRead,volt,ceil((volt-self.lastRead)/minstep));
-            for i = 1:numel(multivolt)
-                HvExbp.setVSet(multivolt(i)/2);
-                pause(1);
-                HvExbn.setVSet(-multivolt(i)/2);
-                pause(1);
-            end
+    function set_MFC(self,volt)
+        if volt <.2
+            self.parent(2).setVSet(volt,1)
         else
-            HvExbp.setVSet(volt/2);
-            pause(1);
-            HvExbn.setVSet(-volt/2);
+            errordlg('A valid voltage value must be entered!','Invalid input!');
         end
     end
+%     function set_voltEXB(self,volt)
+%         HvExbp = self.parent(1);
+%         HvExbn = self.parent(2);
+%         if volt ==0
+%             volt =2;
+%         end
+% 
+%         %check the voltage being applied and ramp the voltage in steps if need be
+%         minstep = 50;
+%         if (volt-self.lastRead/2)>minstep
+%             multivolt = linspace(self.lastRead,volt,ceil((volt-self.lastRead)/minstep));
+%             for i = 1:numel(multivolt)
+%                 HvExbp.setVSet(multivolt(i)/2);
+%                 pause(1);
+%                 HvExbn.setVSet(-multivolt(i)/2);
+%                 pause(1);
+%             end
+%         else
+%             HvExbp.setVSet(volt/2);
+%             pause(1);
+%             HvExbn.setVSet(-volt/2);
+%         end
+%     end
+    
 
     % =======================================================================
     % Define level 1 monitors and set parameters 
@@ -133,14 +141,14 @@ function monitors = setupMonitors(instruments)
                                      'formatSpec','%.0f',...
                                      'parent',instruments.HvExbp...
                                      ),...
-                 'voltExt',monitor('readFunc',@(x) x.parent.performScan(1,1)*4000,...
+                 'voltExt',monitor('readFunc',@(x) abs(x.parent.performScan(1,1)*4000),...
                                      'textLabel','Extraction Voltage',...
                                      'unit','V',...
                                      'formatSpec','%.0f',...
                                      'group','HV',...
                                      'parent',instruments.keithleyMultimeter1...
                                      ),...
-                 'voltLens',monitor('readFunc',@(x) x.parent.performScan(2,2)*1000,...
+                 'voltLens',monitor('readFunc',@(x) abs(x.parent.performScan(2,2)*1000),...
                                      'textLabel','Lens Voltage',...
                                      'unit','V',...
                                      'group','HV',...
@@ -148,7 +156,7 @@ function monitors = setupMonitors(instruments)
                                      'parent',instruments.keithleyMultimeter1...
                                      ),...
                  'voltMFC',monitor('readFunc',@(x) x.parent(1).performScan(3,3),...
-                                     'setFunc',@(self,x) self.parent(2).setVSet(x,1),...
+                                     'setFunc',@set_MFC,...
                                      'textLabel','MFC Voltage',...
                                      'unit','V',...
                                      'active',true,...
@@ -259,12 +267,18 @@ function monitors = setupMonitors(instruments)
         monEXB.set(calc_C*(voltExt/M)^(1/2))
     end
 
+    function set_voltEXB(self,volt)
+        monVoltExbp = self.siblings(1);
+        monVoltExbn = self.siblings(2);
+        monVoltExbp.set(volt/2)
+        monVoltExbn.set(volt/2)
+    end
     % =======================================================================
     % Setup level 2 monitors (Derrive values from sibling monitors)
     %   - level 2 monitors may utilize sibling monitors to read or set values
     %   - because these are referential to other monitors assignment order matters
     % =======================================================================
-    monitors.voltEXB = monitor('readFunc',@read_voltEXB,...
+    monitors.voltExB = monitor('readFunc',@read_voltEXB,...
                                      'setFunc',@set_voltEXB,...
                                      'textLabel','ExB Voltage',...
                                      'unit','V',...
@@ -283,7 +297,7 @@ function monitors = setupMonitors(instruments)
                                      'formatSpec','%.3f',...
                                      'parent',[instruments.HvExbp,instruments.HvExbn,...
                                                 instruments.keithleyMultimeter1],...
-                                     'siblings',[monitors.voltExt,monitors.voltEXB,...
+                                     'siblings',[monitors.voltExt,monitors.voltExB,...
                                                 monitors.voltXsteer]...
                                      );
 
