@@ -36,12 +36,6 @@ function monitors = setupMonitors(instruments)
         end
     end
 
-    function val = read_voltEXB(self)
-        HvExbp = self.parent(1);
-        HvExbn = self.parent(2);
-        val = HvExbp.measV()-HvExbn.measV();
-    end
-
     % =======================================================================
     % define set functions monitors will use to set parameters
     % =======================================================================
@@ -54,7 +48,7 @@ function monitors = setupMonitors(instruments)
 
         %check the voltage being applied and ramp the voltage in steps if need be
         minstep = 50;
-        if abs(volt)-abs(self.lastRead)/2>minstep
+        if (volt-self.lastRead/2)>minstep
             multivolt = linspace(self.lastRead,volt,ceil((volt-self.lastRead)/minstep));
             for i = 1:numel(multivolt)
                 HvExbp.setVSet(multivolt(i)/2);
@@ -67,17 +61,15 @@ function monitors = setupMonitors(instruments)
             pause(1);
             HvExbn.setVSet(-volt/2);
         end
-
     end
 
     % =======================================================================
-    % Define monitors and set parameters 
+    % Define level 1 monitors and set parameters 
     %   monitors that dont have parent instruments (such as a datetime measurement)
     %   to pull parameters from should assign 
     %       - parent = struct("Type",'local','Connected',true)
     %   to bypass instrument connection checks correctly
     % =======================================================================
-
     monitors = struct(...       
                 'voltChicane1',monitor('readFunc',@read_srsHVPS,...
                                      'setFunc',@set_srsHVPS,...
@@ -140,15 +132,6 @@ function monitors = setupMonitors(instruments)
                                      'active',true,...
                                      'formatSpec','%.0f',...
                                      'parent',instruments.HvExbp...
-                                     ),...
-                 'voltEXB',monitor('readFunc',@read_voltEXB,...
-                                     'setFunc',@set_voltEXB,...
-                                     'textLabel','ExB Voltage',...
-                                     'unit','V',...
-                                     'active',true,...
-                                     'formatSpec','%.0f',...
-                                     'group','HV',...
-                                     'parent',[instruments.HvExbp,instruments.HvExbn]...
                                      ),...
                  'voltExt',monitor('readFunc',@(x) x.parent.performScan(1,1)*4000,...
                                      'textLabel','Extraction Voltage',...
@@ -235,6 +218,77 @@ function monitors = setupMonitors(instruments)
                                      'parent',instruments.picoFaraday...
                                      )...
                  );
+    
+    % =======================================================================
+    % Level 2 monitor read functions
+    % =======================================================================
+    function val = read_voltEXB(self)
+        % HvExbp = self.parent(1);
+        % HvExbn = self.parent(2);
+        % val = HvExbp.measV()-HvExbn.measV();
+        voltExbp = self.siblings(1).lastRead();
+        voltExbn = self.siblings(2).lastRead();
+        val = HvExbp-HvExbn;
+    end
+
+    function C = calc_C()
+        % Reference species location
+        % will be expanded with full calibration data
+        Mcal = 12; 
+        VexbCal = 912;
+        VextCal = 10000;
+        C = VexbCal/(Vext/Mcal)^(1/2);
+    end
+
+    function val = read_Mass(self)
+        voltExt = self.siblings(1).lastRead();
+        voltEXB = self.siblings(2).lastRead();
+        val = (voltEXB/(calc_C*Vext^(1/2)))^2;
+    end
+
+    % =======================================================================
+    % Level 2 monitor set functions
+    % =======================================================================
+    function set_Mass(self,M)
+        voltExt = self.siblings(1).lastRead();
+        monEXB = self.siblings(2);
+        monXsteer = self.siblings(3);
+        x_ratio = 375/10000; %Calibrated x-steer ratio (from cal)
+        
+        % set x-steer voltage to nom value
+        monXsteer.set(monExt.lastRead*x_ratio);
+
+        % set ExB voltage to desired mass
+        monEXB.set(calc_C*(voltExt/M)^(1/2))
+    end
+
+    % =======================================================================
+    % Setup level 2 monitors (Derrive values from sibling monitors)
+    %   - level 2 monitors may utilize sibling monitors to read or set values
+    %   - because these are referential to other monitors assignment order matters
+    % =======================================================================
+    monitors.voltEXB = monitor('readFunc',@read_voltEXB,...
+                                     'setFunc',@set_voltEXB,...
+                                     'textLabel','ExB Voltage',...
+                                     'unit','V',...
+                                     'active',true,...
+                                     'formatSpec','%.0f',...
+                                     'group','HV',...
+                                     'parent',[instruments.HvExbp,instruments.HvExbn],...
+                                     'siblings',[monitors.voltExbp,monitors.voltExbn]...
+                                     );
+
+    monitors.M = monitor('readFunc',@read_Mass,...
+                                     'setFunc',@set_Mass,...
+                                     'textLabel','Target Mass',...
+                                     'unit','AMU',...
+                                     'active',true,...
+                                     'formatSpec','%.3f',...
+                                     'parent',[instruments.HvExbp,instruments.HvExbn,...
+                                                instruments.keithleyMultimeter1],...
+                                     'siblings',[monitors.voltExt,monitors.voltEXB,...
+                                                monitors.voltXsteer]...
+                                     );
 
     %assign tags to instrument tag parameters, may just want to have these and the 
     %   instrument structs setup as lists

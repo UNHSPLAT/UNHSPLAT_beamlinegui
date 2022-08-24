@@ -5,6 +5,7 @@ classdef monitor < handle
         textLabel string = ""% 
         unit string = ""%
         parent % 
+        siblings =[]%
         readFunc = @(x) NaN%function which takes the relevant instrument structure and outputs val of desired format
         setFunc = @(x) NaN%
         formatSpec = '%.2e'
