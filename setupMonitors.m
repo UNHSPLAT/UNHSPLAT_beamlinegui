@@ -223,12 +223,9 @@ function monitors = setupMonitors(instruments)
     % Level 2 monitor read functions
     % =======================================================================
     function val = read_voltEXB(self)
-        % HvExbp = self.parent(1);
-        % HvExbn = self.parent(2);
-        % val = HvExbp.measV()-HvExbn.measV();
         voltExbp = self.siblings(1).lastRead();
         voltExbn = self.siblings(2).lastRead();
-        val = HvExbp-HvExbn;
+        val = voltExbp-voltExbn;
     end
 
     function C = calc_C()
@@ -237,13 +234,13 @@ function monitors = setupMonitors(instruments)
         Mcal = 12; 
         VexbCal = 912;
         VextCal = 10000;
-        C = VexbCal/(Vext/Mcal)^(1/2);
+        C = VexbCal/(VextCal/Mcal)^(1/2);
     end
 
     function val = read_Mass(self)
         voltExt = self.siblings(1).lastRead();
         voltEXB = self.siblings(2).lastRead();
-        val = (voltEXB/(calc_C*Vext^(1/2)))^2;
+        val = (calc_C*voltExt^(1/2)/voltEXB)^2;
     end
 
     % =======================================================================
@@ -256,7 +253,7 @@ function monitors = setupMonitors(instruments)
         x_ratio = 375/10000; %Calibrated x-steer ratio (from cal)
         
         % set x-steer voltage to nom value
-        monXsteer.set(monExt.lastRead*x_ratio);
+        monXsteer.set(voltExt*x_ratio);
 
         % set ExB voltage to desired mass
         monEXB.set(calc_C*(voltExt/M)^(1/2))
