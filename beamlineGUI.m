@@ -38,7 +38,7 @@ classdef beamlineGUI < handle
         
         hAcquisitionText % Handle to acquisition type label
         hAcquisitionEdit % Handle to acquisition type popupmenu
-        AcquisitionList cell = {'Faraday cup sweep','Beamline Monitor'} % Acquisition types available for selection
+        AcquisitionList cell = {'Faraday cup sweep','Faraday cup sweep 2D','Beamline Monitor'} % Acquisition types available for selection
         
         hRunBtn % Handle to run test button
     end
