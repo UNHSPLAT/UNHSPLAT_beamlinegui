@@ -4,9 +4,9 @@ classdef faradayCupSweep2D < acquisition
     properties (Constant)
         Type string = "Faraday cup Sweep 2D" % Acquisition type identifier string
         MinDefault double = 100 % Default minimum voltage
-        MaxDefault double = 2500 % Default maximum voltage
-        StepsDefault double = 40 % Default number of steps
-        DwellDefault double = 5 % Default dwell time
+        MaxDefault double = 150 % Default maximum voltage
+        StepsDefault double = 5 % Default number of steps
+        DwellDefault double = 1 % Default dwell time
         % PSList string = ["ExB","ESA","Defl","Ysteer"] % List of sweep supplies
     end
 
@@ -163,7 +163,7 @@ classdef faradayCupSweep2D < acquisition
             obj.hSpacingEdit = uicontrol(obj.hConfFigure,'Style','checkbox',...
                 'Position',[xpos-10,ypos,xtextsize+20,ysize],...
                 'String',' Logarithmic Spacing',...
-                'Value',1,...
+                'Value',0,...
                 'HorizontalAlignment','right');
             
             ypos = ypos-ysize-ygap;
@@ -251,7 +251,7 @@ classdef faradayCupSweep2D < acquisition
             obj.hSpacingEdit2 = uicontrol(obj.hConfFigure,'Style','checkbox',...
                 'Position',[xpos-10,ypos,xtextsize+20,ysize],...
                 'String',' Logarithmic Spacing',...
-                'Value',1,...
+                'Value',0,...
                 'HorizontalAlignment','right');
 
             
@@ -352,11 +352,15 @@ classdef faradayCupSweep2D < acquisition
                 else
                     vPointsY = linspace(minVal2,maxVal2,stepsVal2);
                 end
-                
+                %Define meshgrid from scan vectors
                 [xx,yy] = meshgrid(vPointsX,vPointsY);
-
-                obj.VPoints = xx(:);
-                obj.VPoints2 = yy(:);
+                %Reorder meshgrid so we scan in triangles instead of knife edges
+                xx(2:2:end,:) = fliplr(xx(2:2:end,:));
+                yy(2:2:end,:) = fliplr(yy(2:2:end,:));
+                
+                %Flatten mat values and assign
+                obj.VPoints = reshape(xx',1,[]);
+                obj.VPoints2 = reshape(yy',1,[]);
 
                 % Save config info
                 save(fullfile(obj.hBeamlineGUI.DataDir,'config.mat'),...
@@ -378,6 +382,12 @@ classdef faradayCupSweep2D < acquisition
                 obj.hAxes1 = axes(obj.hFigure1);
 
                 % Preallocate arrays
+                FX = reshape(obj.VPoints,[stepsVal,stepsVal2])';
+                FX(2:2:end,:) = fliplr(FX(2:2:end,:));
+                
+                FY = reshape(obj.VPoints2,[stepsVal,stepsVal2])';
+                FY(2:2:end,:) = fliplr(FY(2:2:end,:));
+
                 scan_mon = struct();
                 fields = fieldnames(obj.hBeamlineGUI.Monitors);
                 disp(fields);
@@ -402,10 +412,12 @@ classdef faradayCupSweep2D < acquisition
 
                     % Set ExB voltage
                     if abs(obj.hBeamlineGUI.Monitors.(psTag).lastRead - obj.VPoints(iV)) > 1
+                        display(obj.hBeamlineGUI.Monitors.(psTag).lastRead);
                         fprintf('Setting %s voltage to %.2f V...\n',psTag,obj.VPoints(iV));
                         obj.hBeamlineGUI.Monitors.(psTag).set(obj.VPoints(iV));
                     end
                     if abs(obj.hBeamlineGUI.Monitors.(psTag2).lastRead - obj.VPoints2(iV)) > 1
+                        display(obj.hBeamlineGUI.Monitors.(psTag2).lastRead);
                         fprintf('Setting %s voltage to %.2f V...\n',psTag2,obj.VPoints2(iV));
                         obj.hBeamlineGUI.Monitors.(psTag2).set(obj.VPoints2(iV));
                     end
@@ -421,12 +433,15 @@ classdef faradayCupSweep2D < acquisition
                         scan_mon.(tag)(iV) = obj.hBeamlineGUI.Monitors.(tag).lastRead;
                     end
                     
-                    imagesc(obj.hAxes1,vPointsX,vPointsY,reshape(scan_mon.Ifaraday,[stepsVal,stepsVal2]));
+                    FF = reshape(scan_mon.Ifaraday,[stepsVal,stepsVal2])';
+                    FF(2:2:end,:) = fliplr(FF(2:2:end,:));
+                    
+                    pcolor(obj.hAxes1,FX,FY,FF);
                     cBar = colorbar(obj.hAxes1);
                     cBar.Label.String = obj.hBeamlineGUI.Monitors.Ifaraday.sPrint();
+                    set(obj.hAxes1,'ColorScale','log')
                     xlabel(obj.hAxes1,obj.hBeamlineGUI.Monitors.(psTag).sPrint());
                     ylabel(obj.hAxes1,obj.hBeamlineGUI.Monitors.(psTag2).sPrint());
-
 
                 end
 
