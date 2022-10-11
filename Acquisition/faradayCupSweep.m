@@ -276,7 +276,7 @@ classdef faradayCupSweep < acquisition
                     fprintf('Setting voltage to %.2f V...\n',obj.VPoints(iV));
                     obj.hBeamlineGUI.Monitors.(psTag).set(obj.VPoints(iV));
                     % Pause for dwell time
-                    pause(obj.DwellTime);
+%                     pause(obj.DwellTime);
                     % Obtain readings
                     fname = fullfile(obj.hBeamlineGUI.DataDir,[strrep(sprintf('%s_%.2fV',psTag,obj.VPoints(iV)),'.','p'),'.mat']);
                     readings = obj.hBeamlineGUI.updateReadings([],[],fname);

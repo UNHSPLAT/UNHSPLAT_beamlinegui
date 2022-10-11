@@ -176,7 +176,7 @@ classdef faradayCupSweep2D < acquisition
             xpos = 150+300;
             xtextsize = 100;
             xeditsize = 60;
-            ypos = ystart
+            ypos = ystart;
 
             obj.hSupplyText2 = uicontrol(obj.hConfFigure,'Style','text',...
                 'Position',[xpos-xtextsize,ystart,xtextsize,ysize],...
@@ -355,8 +355,8 @@ classdef faradayCupSweep2D < acquisition
                 %Define meshgrid from scan vectors
                 [xx,yy] = meshgrid(vPointsX,vPointsY);
                 %Reorder meshgrid so we scan in triangles instead of knife edges
-                xx(2:2:end,:) = fliplr(xx(2:2:end,:));
-                yy(2:2:end,:) = fliplr(yy(2:2:end,:));
+                %xx(2:2:end,:) = fliplr(xx(2:2:end,:));
+                %yy(2:2:end,:) = fliplr(yy(2:2:end,:));
                 
                 %Flatten mat values and assign
                 obj.VPoints = reshape(xx',1,[]);
@@ -398,11 +398,13 @@ classdef faradayCupSweep2D < acquisition
                     if contains(monitor.formatSpec,'%s')
                         scan_mon.(tag)=strings(length(obj.VPoints),1);
                     else
-                        scan_mon.(tag) = zeros(length(obj.VPoints),1);
+                        scan_mon.(tag) = ones(length(obj.VPoints),1);
                     end
                 end
 
                 % Run sweep
+                vsetx = nan;
+                vsety = nan;
                 for iV = 1:length(obj.VPoints)
                     if isempty(obj.hFigure1) || ~isvalid(obj.hFigure1)
                         obj.hFigure1 = figure('NumberTitle','off',...
@@ -411,21 +413,30 @@ classdef faradayCupSweep2D < acquisition
                     end
 
                     % Set ExB voltage
-                    if abs(obj.hBeamlineGUI.Monitors.(psTag).lastRead - obj.VPoints(iV)) > 1
-                        display(obj.hBeamlineGUI.Monitors.(psTag).lastRead);
+                    % if abs(obj.hBeamlineGUI.Monitors.(psTag).lastRead - obj.VPoints(iV)) > 1
+
+                    if obj.VPoints(iV) ~= vsetx
+                        vsetx = obj.VPoints(iV);
+                        %display(obj.hBeamlineGUI.Monitors.(psTag).lastRead);
                         fprintf('Setting %s voltage to %.2f V...\n',psTag,obj.VPoints(iV));
                         obj.hBeamlineGUI.Monitors.(psTag).set(obj.VPoints(iV));
                     end
-                    if abs(obj.hBeamlineGUI.Monitors.(psTag2).lastRead - obj.VPoints2(iV)) > 1
-                        display(obj.hBeamlineGUI.Monitors.(psTag2).lastRead);
-                        fprintf('Setting %s voltage to %.2f V...\n',psTag2,obj.VPoints2(iV));
+                    if obj.VPoints2(iV) ~= vsety
+                        vsety = obj.VPoints2(iV);
+                        %display(obj.hBeamlineGUI.Monitors.(psTag2).lastRead);
+                        fprintf('Setting %s voltage to %.1f V...\n',psTag2,obj.VPoints2(iV));
                         obj.hBeamlineGUI.Monitors.(psTag2).set(obj.VPoints2(iV));
                     end
                     % Pause for dwell time
-                    pause(obj.DwellTime);
+                    %pause(obj.DwellTime);
                     % Obtain readings
                     fname = fullfile(obj.hBeamlineGUI.DataDir,[strrep(sprintf('%s_%.2fV',psTag,obj.VPoints(iV)),'.','p'),'.mat']);
                     readings = obj.hBeamlineGUI.updateReadings([],[],fname);
+
+                    fprintf('Setting: [%6.1f,%6.1f] V...\n',vsetx,vsety);
+                    fprintf('Result:  [%6.1f,%6.1f] V...\n',...
+                        obj.hBeamlineGUI.Monitors.(psTag).lastRead,...
+                        obj.hBeamlineGUI.Monitors.(psTag2).lastRead);
                     % Assign variables
                     fields = fieldnames(obj.hBeamlineGUI.Monitors);
                     for i=1:numel(fields)
@@ -434,15 +445,18 @@ classdef faradayCupSweep2D < acquisition
                     end
                     
                     FF = reshape(scan_mon.Ifaraday,[stepsVal,stepsVal2])';
-                    FF(2:2:end,:) = fliplr(FF(2:2:end,:));
+                    %FF(2:2:end,:) = fliplr(FF(2:2:end,:));
                     
-                    pcolor(obj.hAxes1,FX,FY,FF);
+                    %pcolor(obj.hAxes1,vPointsX,vPointsY,FF);
+                    imagesc(obj.hAxes1,vPointsX,vPointsY,FF);
+                    
                     cBar = colorbar(obj.hAxes1);
                     cBar.Label.String = obj.hBeamlineGUI.Monitors.Ifaraday.sPrint();
-                    set(obj.hAxes1,'ColorScale','log')
+                    %set(obj.hAxes1,'ColorScale','log')
                     xlabel(obj.hAxes1,obj.hBeamlineGUI.Monitors.(psTag).sPrint());
                     ylabel(obj.hAxes1,obj.hBeamlineGUI.Monitors.(psTag2).sPrint());
-
+                    set(obj.hAxes1,'YDir','normal');
+                    drawnow();
                 end
 
                 % Save results .mat file

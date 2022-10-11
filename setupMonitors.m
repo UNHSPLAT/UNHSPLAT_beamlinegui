@@ -27,13 +27,30 @@ function monitors = setupMonitors(instruments)
 
         %check the voltage being applied and ramp the voltage in steps if need be
         minstep = 50;
+
         if abs(volt)-abs(self.lastRead)>minstep
             multivolt = linspace(self.lastRead,volt,ceil((abs(volt)-abs(self.lastRead))/minstep));
             disp('Ramping HV')
-            for i = 1:numel(multivolt)
-                self.parent.setVSet(multivolt(i));
-                pause(2);
-            end
+
+%             n= numel(multivolt);
+            %function tcb(src,evt)
+             %   i = get(src,'TasksExecuted');
+%             for i = 1:numel(multivolt)
+%                self.parent.setVSet(multivolt(i));
+%                pause(minstep/(1000/60));
+%                disp(multivolt(i));
+%             end
+            n= numel(multivolt);
+            T = timer('Period',minstep/(2000/60),... %period
+                      'ExecutionMode','fixedSpacing',... %{singleShot,fixedRate,fixedSpacing,fixedDelay}
+                      'BusyMode','drop',... %{drop, error, queue}
+                      'TasksToExecute',numel(multivolt),...          
+                      'StartDelay',0,...
+                      'TimerFcn',@(src,evt)self.parent.setVSet(multivolt(get(src,'TasksExecuted'))),...
+                      'StartFcn',[],...
+                      'StopFcn',[],...
+                      'ErrorFcn',[]);
+            start(T);
         else
             self.parent.setVSet(volt);
         end
