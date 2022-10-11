@@ -396,9 +396,9 @@ classdef faradayCupSweep2D < acquisition
                     disp(tag);
                     monitor = obj.hBeamlineGUI.Monitors.(tag);
                     if contains(monitor.formatSpec,'%s')
-                        scan_mon.(tag)=strings(1,length(obj.VPoints));
+                        scan_mon.(tag)=strings(length(obj.VPoints),1);
                     else
-                        scan_mon.(tag) = zeros(1,length(obj.VPoints));
+                        scan_mon.(tag) = zeros(length(obj.VPoints),1);
                     end
                 end
 
