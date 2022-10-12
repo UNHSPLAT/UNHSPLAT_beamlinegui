@@ -398,7 +398,7 @@ classdef faradayCupSweep2D < acquisition
                     if contains(monitor.formatSpec,'%s')
                         scan_mon.(tag)=strings(length(obj.VPoints),1);
                     else
-                        scan_mon.(tag) = ones(length(obj.VPoints),1);
+                        scan_mon.(tag) = zeros(length(obj.VPoints),1)*nan;
                     end
                 end
 
@@ -413,22 +413,20 @@ classdef faradayCupSweep2D < acquisition
                     end
 
                     % Set ExB voltage
-                    % if abs(obj.hBeamlineGUI.Monitors.(psTag).lastRead - obj.VPoints(iV)) > 1
-
                     if obj.VPoints(iV) ~= vsetx
                         vsetx = obj.VPoints(iV);
-                        %display(obj.hBeamlineGUI.Monitors.(psTag).lastRead);
                         fprintf('Setting %s voltage to %.2f V...\n',psTag,obj.VPoints(iV));
                         obj.hBeamlineGUI.Monitors.(psTag).set(obj.VPoints(iV));
                     end
                     if obj.VPoints2(iV) ~= vsety
                         vsety = obj.VPoints2(iV);
-                        %display(obj.hBeamlineGUI.Monitors.(psTag2).lastRead);
                         fprintf('Setting %s voltage to %.1f V...\n',psTag2,obj.VPoints2(iV));
                         obj.hBeamlineGUI.Monitors.(psTag2).set(obj.VPoints2(iV));
                     end
-                    % Pause for dwell time
-                    %pause(obj.DwellTime);
+                    % Pause for ramp time
+                    waitfor(obj.hBeamlineGUI.Monitors,psTag2,false);
+                    waitfor(obj.hBeamlineGUI.Monitors,psTag,false);
+%                     pause(obj.DwellTime);
                     % Obtain readings
                     fname = fullfile(obj.hBeamlineGUI.DataDir,[strrep(sprintf('%s_%.2fV',psTag,obj.VPoints(iV)),'.','p'),'.mat']);
                     readings = obj.hBeamlineGUI.updateReadings([],[],fname);
@@ -447,12 +445,11 @@ classdef faradayCupSweep2D < acquisition
                     FF = reshape(scan_mon.Ifaraday,[stepsVal,stepsVal2])';
                     %FF(2:2:end,:) = fliplr(FF(2:2:end,:));
                     
-                    %pcolor(obj.hAxes1,vPointsX,vPointsY,FF);
                     imagesc(obj.hAxes1,vPointsX,vPointsY,FF);
                     
                     cBar = colorbar(obj.hAxes1);
                     cBar.Label.String = obj.hBeamlineGUI.Monitors.Ifaraday.sPrint();
-                    %set(obj.hAxes1,'ColorScale','log')
+                    set(obj.hAxes1,'ColorScale','log')
                     xlabel(obj.hAxes1,obj.hBeamlineGUI.Monitors.(psTag).sPrint());
                     ylabel(obj.hAxes1,obj.hBeamlineGUI.Monitors.(psTag2).sPrint());
                     set(obj.hAxes1,'YDir','normal');
@@ -464,11 +461,8 @@ classdef faradayCupSweep2D < acquisition
 %                 save(fullfile(obj.hBeamlineGUI.DataDir,fname),'Vexb','Ifar','Vext','Vesa','Vdef','Vyst','Vmfc','Pbml','Pgas','Prou','T');
 
                 % Save results .csv file
-%                 fname = strrep(fname,'.mat','.csv');
                 fname = 'results.csv';
                 writetable(struct2table(scan_mon), fullfile(obj.hBeamlineGUI.DataDir,fname))
-%                 t = table(T',Vexb',Ifar',Vext',Vesa',Vdef',Vyst',Vmfc',Pbml',Pgas',Prou','VariableNames',{'t','Vexb','Ifar','Vext','Vesa','Vdef','Vyst','Vmfc','Pbml','Pgas','Prou'});
-%                 writetable(t,fullfile(obj.hBeamlineGUI.DataDir,fname));
                 
                 fprintf('\nTest complete!\n');
                 delete(obj.hConfFigure);

@@ -27,28 +27,17 @@ function monitors = setupMonitors(instruments)
 
         %check the voltage being applied and ramp the voltage in steps if need be
         minstep = 50;
-
         if abs(volt)-abs(self.lastRead)>minstep
             multivolt = linspace(self.lastRead,volt,ceil((abs(volt)-abs(self.lastRead))/minstep));
             disp('Ramping HV')
-
-%             n= numel(multivolt);
-            %function tcb(src,evt)
-             %   i = get(src,'TasksExecuted');
-%             for i = 1:numel(multivolt)
-%                self.parent.setVSet(multivolt(i));
-%                pause(minstep/(1000/60));
-%                disp(multivolt(i));
-%             end
-            n= numel(multivolt);
             T = timer('Period',minstep/(2000/60),... %period
                       'ExecutionMode','fixedSpacing',... %{singleShot,fixedRate,fixedSpacing,fixedDelay}
                       'BusyMode','drop',... %{drop, error, queue}
                       'TasksToExecute',numel(multivolt),...          
                       'StartDelay',0,...
                       'TimerFcn',@(src,evt)self.parent.setVSet(multivolt(get(src,'TasksExecuted'))),...
-                      'StartFcn',[],...
-                      'StopFcn',[],...
+                      'StartFcn',@(src,evt)setfield( self , 'lock' , true ),...
+                      'StopFcn',@(src,evt)setfield( self , 'lock' , false ),...
                       'ErrorFcn',[]);
             start(T);
         else
@@ -63,29 +52,6 @@ function monitors = setupMonitors(instruments)
             errordlg('A valid voltage value must be entered!','Invalid input!');
         end
     end
-%     function set_voltEXB(self,volt)
-%         HvExbp = self.parent(1);
-%         HvExbn = self.parent(2);
-%         if volt ==0
-%             volt =2;
-%         end
-% 
-%         %check the voltage being applied and ramp the voltage in steps if need be
-%         minstep = 50;
-%         if (volt-self.lastRead/2)>minstep
-%             multivolt = linspace(self.lastRead,volt,ceil((volt-self.lastRead)/minstep));
-%             for i = 1:numel(multivolt)
-%                 HvExbp.setVSet(multivolt(i)/2);
-%                 pause(1);
-%                 HvExbn.setVSet(-multivolt(i)/2);
-%                 pause(1);
-%             end
-%         else
-%             HvExbp.setVSet(volt/2);
-%             pause(1);
-%             HvExbn.setVSet(-volt/2);
-%         end
-%     end
     
 
     % =======================================================================
