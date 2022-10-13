@@ -8,7 +8,7 @@ function monitors = setupMonitors(instruments)
     function val = read_srsHVPS(self)
         val = self.parent.measV;
     end
-
+ 
     % =======================================================================
     % define set functions monitors will use to set parameters
     % =======================================================================
@@ -24,7 +24,6 @@ function monitors = setupMonitors(instruments)
             errordlg(['Defl voltage setpoint must be between ',num2str(hDefl.VMin),' and ',num2str(hDefl.VMax),' V!'],'Invalid input!');
             return
         end    
-
         %check the voltage being applied and ramp the voltage in steps if need be
         minstep = 50;
         if abs(volt)-abs(self.lastRead)>minstep
@@ -32,7 +31,7 @@ function monitors = setupMonitors(instruments)
             disp('Ramping HV')
             T = timer('Period',minstep/(2000/60),... %period
                       'ExecutionMode','fixedSpacing',... %{singleShot,fixedRate,fixedSpacing,fixedDelay}
-                      'BusyMode','drop',... %{drop, error, queue}
+                      'BusyMode','queue',... %{drop, error, queue}
                       'TasksToExecute',numel(multivolt),...          
                       'StartDelay',0,...
                       'TimerFcn',@(src,evt)self.parent.setVSet(multivolt(get(src,'TasksExecuted'))),...

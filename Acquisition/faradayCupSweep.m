@@ -310,6 +310,10 @@ classdef faradayCupSweep < acquisition
                     % Obtain readings
                     fname = fullfile(obj.hBeamlineGUI.DataDir,[strrep(sprintf('%s_%.2fV',psTag,obj.VPoints(iV)),'.','p'),'.mat']);
                     readings = obj.hBeamlineGUI.updateReadings([],[],fname);
+                    
+                    fprintf('Setting: [%6.1f] V...\n',obj.VPoints(iV));
+                    fprintf('Result:  [%6.1f] V...\n',...
+                            obj.hBeamlineGUI.Monitors.(psTag).lastRead);
                     % Assign variables
                     fields = fieldnames(obj.hBeamlineGUI.Monitors);
                     for i=1:numel(fields)
