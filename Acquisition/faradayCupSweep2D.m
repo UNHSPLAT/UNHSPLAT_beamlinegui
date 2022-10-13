@@ -405,7 +405,7 @@ classdef faradayCupSweep2D < acquisition
                     if contains(monitor.formatSpec,'%s')
                         obj.scan_mon.(tag)=strings(length(obj.VPoints),1);
                     else
-                        obj.scan_mon.(tag) = ones(length(obj.VPoints),1);
+                        obj.scan_mon.(tag) = zeros(length(obj.VPoints),1)*nan;
                     end
                 end
 
@@ -435,7 +435,6 @@ classdef faradayCupSweep2D < acquisition
             end
             function scan_step(src,evt)
                         iV = get(src,'TasksExecuted');
-                    % for iV = 1:length(obj.VPoints)
                         if isempty(obj.hFigure1) || ~isvalid(obj.hFigure1)
                             obj.hFigure1 = figure('NumberTitle','off',...
                                 'Name','Faraday Cup Current vs Voltage');
