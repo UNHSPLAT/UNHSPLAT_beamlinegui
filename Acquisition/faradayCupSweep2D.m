@@ -49,7 +49,7 @@ classdef faradayCupSweep2D < acquisition
         DwellTime double % Dwell time setting
         PSList %
 
-        scanTimer %
+        scanTimer timer%
         scan_mon %
     end
 
@@ -384,13 +384,7 @@ classdef faradayCupSweep2D < acquisition
                 obj.hFigure1 = figure('NumberTitle','off',...
                                       'Name','Faraday Cup Current vs Voltage',...
                                       'DeleteFcn',@obj.closeGUI);
-                                        % figure('MenuBar',[],...
-                                        % 'ToolBar',[],...
-                                        % 'Resize',[],...
-                                        % 'Position',[],...
-                                        % 'NumberTitle','off',...
-                                        % 'Name','Faraday Cup Current vs Voltage',...
-                                        % 'DeleteFcn',@obj.closeGUI);
+
 
                 obj.hAxes1 = axes(obj.hFigure1);
 
@@ -426,7 +420,7 @@ classdef faradayCupSweep2D < acquisition
                           'StartDelay',0,...
                           'TimerFcn',@scan_step,...
                           'StartFcn',[],...
-                          'StopFcn',[],...
+                          'StopFcn',@end_scan,...
                           'ErrorFcn',[]);
                 start(obj.scanTimer);
 
@@ -492,26 +486,22 @@ classdef faradayCupSweep2D < acquisition
                         drawnow();
                     end
 
-                    % Save results .mat file
-    %                 fname = 'results.mat';
-    %                 save(fullfile(obj.hBeamlineGUI.DataDir,fname),'Vexb','Ifar','Vext','Vesa','Vdef','Vyst','Vmfc','Pbml','Pgas','Prou','T');
-
                     % Save results .csv file
-                    % function end_scan(src,evt)
-                    %     fname = 'results.csv';
-                    %     writetable(struct2table(obj.scan_mon), fullfile(obj.hBeamlineGUI.DataDir,fname))
-                        
-                    %     fprintf('\nTest complete!\n');
-                    %     delete(obj.hConfFigure);
-                    % end
+                    function end_scan(src,evt)
+                        fname = 'results.csv';
+                        writetable(struct2table(obj.scan_mon), fullfile(obj.hBeamlineGUI.DataDir,fname));
+                        obj.complete()
+                        fprintf('\nTest complete!\n');
+                    end
         end
 
-        function closeGUI(obj,~,~)
+        function complete(obj,~,~)
             %CLOSEGUI Re-enable beamline GUI run test button, restart timer, and delete obj when figure is closed
-            
             if isvalid(obj.scanTimer)
                 stop(obj.scanTimer);
+                delete(obj.scanTimer);
             end
+
             % Enable beamline GUI run test button if still valid
             if isvalid(obj.hBeamlineGUI)
                 set(obj.hBeamlineGUI.hRunBtn,'String','RUN TEST');
@@ -521,17 +511,15 @@ classdef faradayCupSweep2D < acquisition
             if strcmp(obj.hBeamlineGUI.hTimer.Running,'off')
                 start(obj.hBeamlineGUI.hTimer);
             end
+        end
 
-            %Save resulting data to file
-            fname = 'results.csv';
-            writetable(struct2table(obj.scan_mon), fullfile(obj.hBeamlineGUI.DataDir,fname));
+        function closeGUI(obj,~,~)
+            %Re-enable beamline GUI run test button, restart timer, and delete obj when figure is closed
+            obj.complete();
             
-            fprintf('\nTest complete!\n');
-            
-
-            % Delete obj
+            % stop(obj.scanTimer);
+                % Delete obj
             delete(obj);
-
         end
 
     end
