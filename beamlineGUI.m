@@ -39,6 +39,7 @@ classdef beamlineGUI < handle
         hAcquisitionText % Handle to acquisition type label
         hAcquisitionEdit % Handle to acquisition type popupmenu
         AcquisitionList cell = {'Faraday cup sweep','Faraday cup sweep 2D','Beamline Monitor'} % Acquisition types available for selection
+        Acquisitions = []%
         
         hRunBtn % Handle to run test button
     end
@@ -556,7 +557,7 @@ classdef beamlineGUI < handle
             hFcn = str2func(fcnStr);
             myAcq = hFcn(obj);
             myAcq.runSweep;
-            
+            obj.Acquisitions = myAcq; 
         end
 
         function HwRefreshCallback(obj,~,~)

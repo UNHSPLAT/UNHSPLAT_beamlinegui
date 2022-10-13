@@ -48,6 +48,9 @@ classdef faradayCupSweep2D < acquisition
 
         DwellTime double % Dwell time setting
         PSList %
+
+        scanTimer %
+        scan_mon %
     end
 
     methods
@@ -378,7 +381,17 @@ classdef faradayCupSweep2D < acquisition
                 stop(obj.hBeamlineGUI.hTimer);
 
                 % Create figures and axes
-                obj.hFigure1 = figure('NumberTitle','off','Name','Faraday Cup Current vs Voltage');
+                obj.hFigure1 = figure('NumberTitle','off',...
+                                      'Name','Faraday Cup Current vs Voltage',...
+                                      'DeleteFcn',@obj.closeGUI);
+                                        % figure('MenuBar',[],...
+                                        % 'ToolBar',[],...
+                                        % 'Resize',[],...
+                                        % 'Position',[],...
+                                        % 'NumberTitle','off',...
+                                        % 'Name','Faraday Cup Current vs Voltage',...
+                                        % 'DeleteFcn',@obj.closeGUI);
+
                 obj.hAxes1 = axes(obj.hFigure1);
 
                 % Preallocate arrays
@@ -388,7 +401,7 @@ classdef faradayCupSweep2D < acquisition
                 FY = reshape(obj.VPoints2,[stepsVal,stepsVal2])';
                 FY(2:2:end,:) = fliplr(FY(2:2:end,:));
 
-                scan_mon = struct();
+                obj.scan_mon = struct();
                 fields = fieldnames(obj.hBeamlineGUI.Monitors);
                 disp(fields);
                 for i=1:numel(fields)
@@ -396,76 +409,26 @@ classdef faradayCupSweep2D < acquisition
                     disp(tag);
                     monitor = obj.hBeamlineGUI.Monitors.(tag);
                     if contains(monitor.formatSpec,'%s')
-                        scan_mon.(tag)=strings(length(obj.VPoints),1);
+                        obj.scan_mon.(tag)=strings(length(obj.VPoints),1);
                     else
-                        scan_mon.(tag) = zeros(length(obj.VPoints),1)*nan;
+                        obj.scan_mon.(tag) = ones(length(obj.VPoints),1);
                     end
                 end
 
                 % Run sweep
                 vsetx = nan;
                 vsety = nan;
-                for iV = 1:length(obj.VPoints)
-                    if isempty(obj.hFigure1) || ~isvalid(obj.hFigure1)
-                        obj.hFigure1 = figure('NumberTitle','off',...
-                            'Name','Faraday Cup Current vs Voltage');
-                        obj.hAxes1 = axes(obj.hFigure1); %#ok<LAXES> Only executed if figure deleted or not instantiated
-                    end
 
-                    % Set ExB voltage
-                    if obj.VPoints(iV) ~= vsetx
-                        vsetx = obj.VPoints(iV);
-                        fprintf('Setting %s voltage to %.2f V...\n',psTag,obj.VPoints(iV));
-                        obj.hBeamlineGUI.Monitors.(psTag).set(obj.VPoints(iV));
-                    end
-                    if obj.VPoints2(iV) ~= vsety
-                        vsety = obj.VPoints2(iV);
-                        fprintf('Setting %s voltage to %.1f V...\n',psTag2,obj.VPoints2(iV));
-                        obj.hBeamlineGUI.Monitors.(psTag2).set(obj.VPoints2(iV));
-                    end
-                    % Pause for ramp time
-                    waitfor(obj.hBeamlineGUI.Monitors,psTag2,false);
-                    waitfor(obj.hBeamlineGUI.Monitors,psTag,false);
-%                     pause(obj.DwellTime);
-                    % Obtain readings
-                    fname = fullfile(obj.hBeamlineGUI.DataDir,[strrep(sprintf('%s_%.2fV',psTag,obj.VPoints(iV)),'.','p'),'.mat']);
-                    readings = obj.hBeamlineGUI.updateReadings([],[],fname);
-
-                    fprintf('Setting: [%6.1f,%6.1f] V...\n',vsetx,vsety);
-                    fprintf('Result:  [%6.1f,%6.1f] V...\n',...
-                        obj.hBeamlineGUI.Monitors.(psTag).lastRead,...
-                        obj.hBeamlineGUI.Monitors.(psTag2).lastRead);
-                    % Assign variables
-                    fields = fieldnames(obj.hBeamlineGUI.Monitors);
-                    for i=1:numel(fields)
-                        tag = fields{i};
-                        scan_mon.(tag)(iV) = obj.hBeamlineGUI.Monitors.(tag).lastRead;
-                    end
-                    
-                    FF = reshape(scan_mon.Ifaraday,[stepsVal,stepsVal2])';
-                    %FF(2:2:end,:) = fliplr(FF(2:2:end,:));
-                    
-                    imagesc(obj.hAxes1,vPointsX,vPointsY,FF);
-                    
-                    cBar = colorbar(obj.hAxes1);
-                    cBar.Label.String = obj.hBeamlineGUI.Monitors.Ifaraday.sPrint();
-                    set(obj.hAxes1,'ColorScale','log')
-                    xlabel(obj.hAxes1,obj.hBeamlineGUI.Monitors.(psTag).sPrint());
-                    ylabel(obj.hAxes1,obj.hBeamlineGUI.Monitors.(psTag2).sPrint());
-                    set(obj.hAxes1,'YDir','normal');
-                    drawnow();
-                end
-
-                % Save results .mat file
-%                 fname = 'results.mat';
-%                 save(fullfile(obj.hBeamlineGUI.DataDir,fname),'Vexb','Ifar','Vext','Vesa','Vdef','Vyst','Vmfc','Pbml','Pgas','Prou','T');
-
-                % Save results .csv file
-                fname = 'results.csv';
-                writetable(struct2table(scan_mon), fullfile(obj.hBeamlineGUI.DataDir,fname))
-                
-                fprintf('\nTest complete!\n');
-                delete(obj.hConfFigure);
+                obj.scanTimer = timer('Period',obj.DwellTime,... %period
+                          'ExecutionMode','fixedDelay',... %{singleShot,fixedRate,fixedSpacing,fixedDelay}
+                          'BusyMode','drop',... %{drop, error, queue}
+                          'TasksToExecute',numel(obj.VPoints),...          
+                          'StartDelay',0,...
+                          'TimerFcn',@scan_step,...
+                          'StartFcn',[],...
+                          'StopFcn',[],...
+                          'ErrorFcn',[]);
+                start(obj.scanTimer);
 
             catch MExc
 
@@ -476,12 +439,79 @@ classdef faradayCupSweep2D < acquisition
                 rethrow(MExc);
 
             end
+            function scan_step(src,evt)
+                        iV = get(src,'TasksExecuted');
+                    % for iV = 1:length(obj.VPoints)
+                        if isempty(obj.hFigure1) || ~isvalid(obj.hFigure1)
+                            obj.hFigure1 = figure('NumberTitle','off',...
+                                'Name','Faraday Cup Current vs Voltage');
+                            obj.hAxes1 = axes(obj.hFigure1); %#ok<LAXES> Only executed if figure deleted or not instantiated
+                        end
 
+                        % Set ExB voltage
+                        if obj.VPoints(iV) ~= vsetx
+                            vsetx = obj.VPoints(iV);
+                            fprintf('Setting %s voltage to %.2f V...\n',psTag,obj.VPoints(iV));
+                            obj.hBeamlineGUI.Monitors.(psTag).set(obj.VPoints(iV));
+                        end
+                        if obj.VPoints2(iV) ~= vsety
+                            vsety = obj.VPoints2(iV);
+                            fprintf('Setting %s voltage to %.1f V...\n',psTag2,obj.VPoints2(iV));
+                            obj.hBeamlineGUI.Monitors.(psTag2).set(obj.VPoints2(iV));
+                        end
+                        % Pause for ramp time
+                        waitfor(obj.hBeamlineGUI.Monitors,psTag2,false);
+                        waitfor(obj.hBeamlineGUI.Monitors,psTag,false);
+                        % pause(obj.DwellTime);
+                        % Obtain readings
+                        fname = fullfile(obj.hBeamlineGUI.DataDir,[strrep(sprintf('%s_%.2fV',psTag,obj.VPoints(iV)),'.','p'),'.mat']);
+                        readings = obj.hBeamlineGUI.updateReadings([],[],fname);
+
+                        fprintf('Setting: [%6.1f,%6.1f] V...\n',vsetx,vsety);
+                        fprintf('Result:  [%6.1f,%6.1f] V...\n',...
+                            obj.hBeamlineGUI.Monitors.(psTag).lastRead,...
+                            obj.hBeamlineGUI.Monitors.(psTag2).lastRead);
+                        % Assign variables
+                        fields = fieldnames(obj.hBeamlineGUI.Monitors);
+                        for i=1:numel(fields)
+                            tag = fields{i};
+                            obj.scan_mon.(tag)(iV) = obj.hBeamlineGUI.Monitors.(tag).lastRead;
+                        end
+                        
+                        FF = reshape(obj.scan_mon.Ifaraday,[stepsVal,stepsVal2])';
+                        %FF(2:2:end,:) = fliplr(FF(2:2:end,:));
+                        
+                        imagesc(obj.hAxes1,vPointsX,vPointsY,FF);
+                        
+                        cBar = colorbar(obj.hAxes1);
+                        cBar.Label.String = obj.hBeamlineGUI.Monitors.Ifaraday.sPrint();
+                        set(obj.hAxes1,'ColorScale','log')
+                        xlabel(obj.hAxes1,obj.hBeamlineGUI.Monitors.(psTag).sPrint());
+                        ylabel(obj.hAxes1,obj.hBeamlineGUI.Monitors.(psTag2).sPrint());
+                        set(obj.hAxes1,'YDir','normal');
+                        drawnow();
+                    end
+
+                    % Save results .mat file
+    %                 fname = 'results.mat';
+    %                 save(fullfile(obj.hBeamlineGUI.DataDir,fname),'Vexb','Ifar','Vext','Vesa','Vdef','Vyst','Vmfc','Pbml','Pgas','Prou','T');
+
+                    % Save results .csv file
+                    % function end_scan(src,evt)
+                    %     fname = 'results.csv';
+                    %     writetable(struct2table(obj.scan_mon), fullfile(obj.hBeamlineGUI.DataDir,fname))
+                        
+                    %     fprintf('\nTest complete!\n');
+                    %     delete(obj.hConfFigure);
+                    % end
         end
 
         function closeGUI(obj,~,~)
             %CLOSEGUI Re-enable beamline GUI run test button, restart timer, and delete obj when figure is closed
-
+            
+            if isvalid(obj.scanTimer)
+                stop(obj.scanTimer);
+            end
             % Enable beamline GUI run test button if still valid
             if isvalid(obj.hBeamlineGUI)
                 set(obj.hBeamlineGUI.hRunBtn,'String','RUN TEST');
@@ -491,6 +521,13 @@ classdef faradayCupSweep2D < acquisition
             if strcmp(obj.hBeamlineGUI.hTimer.Running,'off')
                 start(obj.hBeamlineGUI.hTimer);
             end
+
+            %Save resulting data to file
+            fname = 'results.csv';
+            writetable(struct2table(obj.scan_mon), fullfile(obj.hBeamlineGUI.DataDir,fname));
+            
+            fprintf('\nTest complete!\n');
+            
 
             % Delete obj
             delete(obj);
