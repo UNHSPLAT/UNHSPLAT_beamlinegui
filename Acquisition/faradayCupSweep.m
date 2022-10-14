@@ -4,9 +4,9 @@ classdef faradayCupSweep < acquisition
     properties (Constant)
         Type string = "Faraday cup Sweep" % Acquisition type identifier string
         MinDefault double = 100 % Default minimum voltage
-        MaxDefault double = 2500 % Default maximum voltage
-        StepsDefault double = 40 % Default number of steps
-        DwellDefault double = 5 % Default dwell time
+        MaxDefault double = 300 % Default maximum voltage
+        StepsDefault double = 4 % Default number of steps
+        DwellDefault double = 1 % Default dwell time
         % PSList string = ["ExB","ESA","Defl","Ysteer"] % List of sweep supplies
     end
 
@@ -36,6 +36,7 @@ classdef faradayCupSweep < acquisition
 
         scanTimer timer%
         scan_mon %
+        listo%
     end
 
     methods
@@ -88,6 +89,7 @@ classdef faradayCupSweep < acquisition
             obj.hSupplyEdit = uicontrol(obj.hConfFigure,'Style','popupmenu',...
                 'Position',[xpos,ystart,xeditsize,ysize],...
                 'String',obj.PSList,...
+                'Value',10,...
                 'HorizontalAlignment','right');
             
             % Set positions
@@ -133,7 +135,7 @@ classdef faradayCupSweep < acquisition
             obj.hSpacingEdit = uicontrol(obj.hConfFigure,'Style','checkbox',...
                 'Position',[xpos-10,ypos,xtextsize+20,ysize],...
                 'String',' Logarithmic Spacing',...
-                'Value',1,...
+                'Value',0,...
                 'HorizontalAlignment','right');
             
             ypos = ystart;
@@ -205,7 +207,7 @@ classdef faradayCupSweep < acquisition
                 dwellVal = str2double(obj.hDwellEdit.String);
     
                 % % Error checking
-                if isnan(minVal) || isnan(maxVal) || isnan(stepsVal) || isnan(dwellVal)
+                if isnan(minVal) || isnan(maxVal) || isnan(stepsVal) || isnan(dwellVal) || isempty(psTag)
                     errordlg('All fields must be filled with a valid numeric entry!','User input error!');
                     return
                 elseif minVal > maxVal || minVal < 0 || maxVal < 0
@@ -257,10 +259,8 @@ classdef faradayCupSweep < acquisition
                 % Preallocate arrays
                 obj.scan_mon = struct();
                 fields = fieldnames(obj.hBeamlineGUI.Monitors);
-                disp(fields);
                 for i=1:numel(fields)
                     tag = fields{i};
-                    disp(tag);
                     monitor = obj.hBeamlineGUI.Monitors.(tag);
                     if contains(monitor.formatSpec,'%s')
                         obj.scan_mon.(tag)=strings(length(obj.VPoints),1);
@@ -268,45 +268,48 @@ classdef faradayCupSweep < acquisition
                         obj.scan_mon.(tag) = zeros(length(obj.VPoints),1);
                     end
                 end
-    
-                obj.scanTimer = timer('Period',obj.DwellTime,... %period
-                          'ExecutionMode','fixedDelay',... %{singleShot,fixedRate,fixedSpacing,fixedDelay}
-                          'BusyMode','drop',... %{drop, error, queue}
-                          'TasksToExecute',numel(obj.VPoints),...          
-                          'StartDelay',0,...
-                          'TimerFcn',@scan_step,...
-                          'StartFcn',[],...
-                          'StopFcn',@end_scan,...
-                          'ErrorFcn',[]);
-                start(obj.scanTimer);
+                
+                iV = 0;
+                % Listener to sample measurements after voltage ramp and
+                % dwell time
+                obj.listo = listener(obj.hBeamlineGUI.Monitors.(psTag),'lock',...
+                                                 'PostSet',...
+                                                    @read_buffer);
+                % trigger voltage ramp
+                scan_step();
 
             catch MExc
-
                 % Delete figure if error, triggering closeGUI callback
                 delete(obj.hConfFigure);
-
                 % Rethrow caught exception
                 rethrow(MExc);
 
             end
 
                            % Run sweep
-                function scan_step(src,evt)
+            function scan_step(varargin)
+                iV=iV+1;
+                if isempty(obj.hFigure1) || ~isvalid(obj.hFigure1)
+                    obj.hFigure1 = figure('NumberTitle','off',...
+                        'Name','Faraday Cup Current vs Voltage');
+                    obj.hAxes1 = axes(obj.hFigure1); %#ok<LAXES> Only executed if figure deleted or not instantiated
+                end
 
-                    iV = get(src,'TasksExecuted');
-                    if isempty(obj.hFigure1) || ~isvalid(obj.hFigure1)
-                        obj.hFigure1 = figure('NumberTitle','off',...
-                            'Name','Faraday Cup Current vs Voltage');
-        
-                        obj.hAxes1 = axes(obj.hFigure1); %#ok<LAXES> Only executed if figure deleted or not instantiated
-                    end
+                fprintf('Setting voltage to %.2f V...\n',obj.VPoints(iV));
+                obj.hBeamlineGUI.Monitors.(psTag).set(obj.VPoints(iV));    
+            end
 
-                    % Set ExB voltage
-                    fprintf('Setting voltage to %.2f V...\n',obj.VPoints(iV));
-                    obj.hBeamlineGUI.Monitors.(psTag).set(obj.VPoints(iV));
+            function read_buffer(varargin)
+                tRead = timer('ExecutionMode','singleShot',...
+                'StartDelay',obj.DwellTime,...
+                'TimerFcn',@read_results);
+                 start(tRead);
+            end
 
+            function read_results(varargin)
+                if ~obj.hBeamlineGUI.Monitors.(psTag).lock
                     % Wait for voltage ramp to complete
-                    waitfor(obj.hBeamlineGUI.Monitors,psTag,false);
+
                     % Obtain readings
                     fname = fullfile(obj.hBeamlineGUI.DataDir,[strrep(sprintf('%s_%.2fV',psTag,obj.VPoints(iV)),'.','p'),'.mat']);
                     readings = obj.hBeamlineGUI.updateReadings([],[],fname);
@@ -324,15 +327,20 @@ classdef faradayCupSweep < acquisition
                     set(obj.hAxes1,'YScale','log');
                     xlabel(obj.hAxes1,obj.hBeamlineGUI.Monitors.(psTag).sPrint());
                     ylabel(obj.hAxes1,obj.hBeamlineGUI.Monitors.Ifaraday.sPrint());
+                    if iV<numel(obj.VPoints)
+                        scan_step();
+                    else
+                        end_scan();
+                    end
                 end
-
-                % Save results .csv file
-                function end_scan(src,evt)
-                    fname = 'results.csv';
-                    writetable(struct2table(obj.scan_mon), fullfile(obj.hBeamlineGUI.DataDir,fname));
-                    obj.complete()
-                    fprintf('\nTest complete!\n');
-                end
+            end
+            % Save results .csv file
+            function end_scan(src,evt)
+                fname = 'results.csv';
+                writetable(struct2table(obj.scan_mon), fullfile(obj.hBeamlineGUI.DataDir,fname));
+                obj.complete()
+                fprintf('\nTest complete!\n');
+            end
 
         end
 
@@ -341,6 +349,10 @@ classdef faradayCupSweep < acquisition
             if isvalid(obj.scanTimer)
                 stop(obj.scanTimer);
                 delete(obj.scanTimer);
+            end
+
+            if isvalid(obj.listo)
+                delete(obj.listo);
             end
 
             % Enable beamline GUI run test button if still valid

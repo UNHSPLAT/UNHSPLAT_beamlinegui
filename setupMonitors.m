@@ -24,23 +24,30 @@ function monitors = setupMonitors(instruments)
             errordlg(['Defl voltage setpoint must be between ',num2str(hDefl.VMin),' and ',num2str(hDefl.VMax),' V!'],'Invalid input!');
             return
         end    
+
+        function stop_func(src,evt)
+            self.read();
+            self.lock = false;
+        end
+        self.lock = true;
         %check the voltage being applied and ramp the voltage in steps if need be
         minstep = 50;
         if abs(volt)-abs(self.lastRead)>minstep
-            multivolt = linspace(self.lastRead,volt,ceil((abs(volt)-abs(self.lastRead))/minstep));
-            disp('Ramping HV')
-            T = timer('Period',minstep/(2000/60),... %period
+            multivolt = linspace(self.lastRead,volt,ceil((abs(volt)-abs(self.lastRead))/minstep)+1);
+            multivolt = multivolt(2:end);
+            self.monTimer = timer('Period',minstep/(2000/60),... %period
                       'ExecutionMode','fixedSpacing',... %{singleShot,fixedRate,fixedSpacing,fixedDelay}
                       'BusyMode','queue',... %{drop, error, queue}
                       'TasksToExecute',numel(multivolt),...          
                       'StartDelay',0,...
                       'TimerFcn',@(src,evt)self.parent.setVSet(multivolt(get(src,'TasksExecuted'))),...
                       'StartFcn',@(src,evt)setfield( self , 'lock' , true ),...
-                      'StopFcn',@(src,evt)setfield( self , 'lock' , false ),...
-                      'ErrorFcn',[]);
-            start(T);
+                      'StopFcn',@stop_func,...
+                      'ErrorFcn',@stop_func);
+            start(self.monTimer);
         else
             self.parent.setVSet(volt);
+            self.lock = false;
         end
     end
 
@@ -250,10 +257,19 @@ function monitors = setupMonitors(instruments)
     end
 
     function set_voltEXB(self,volt)
+        disp(volt);
         monVoltExbp = self.siblings(1);
         monVoltExbn = self.siblings(2);
-        monVoltExbp.set(volt/2)
-        monVoltExbn.set(volt/2)
+        monVoltExbp.set(volt/2);
+        monVoltExbn.set(volt/2);
+
+        % get the siblings ramp timers and locks
+        self.monTimer = self.siblings.monTimer;
+        self.lock = self.siblings.lock;
+        function stop_func(varargin)
+            self.lock = false;
+        end
+        set(self.monTimer,'StopFcn',@stop_func);
     end
     % =======================================================================
     % Setup level 2 monitors (Derrive values from sibling monitors)

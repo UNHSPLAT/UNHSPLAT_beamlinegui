@@ -7,6 +7,9 @@ classdef guiListener < handle
         listener %
         guiHand %
         fSetFunction = @(x) x%
+        propertyName = ''%
+        bufferTime = 0%
+        buffer = timer%
     end
 
     methods
@@ -20,6 +23,7 @@ classdef guiListener < handle
                                 propertyName,'PostSet',@obj.fTriggered);
             obj.guiHand = guiHand;
             obj.fSetFunction = fSetFunction;
+            obj.propertyName = propertyName;
 
         end
     end

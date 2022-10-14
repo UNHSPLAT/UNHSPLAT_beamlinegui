@@ -13,10 +13,11 @@ classdef monitor < handle
         active = false %tag indicating if the monitor can be set (like a highvoltage power supply) or cant be set (like a pressure monitor)
         group string = ""%
         children = []%
-        lock = false%
     end
     properties (SetObservable) 
         lastRead %
+        lock = false%
+        monTimer = timer%
     end
 
     methods
@@ -41,9 +42,9 @@ classdef monitor < handle
         end
 
         function set(obj,val)
-            if all([obj.parent.Connected])
-                obj.setFunc(obj,val);
-            end
+            % if all([obj.parent.Connected])
+            obj.setFunc(obj,val);
+            % end
         end
 
         function guiSetCallback(obj,~,~)
