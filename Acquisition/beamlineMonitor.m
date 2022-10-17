@@ -18,11 +18,10 @@ classdef beamlineMonitor < acquisition
     methods
         function obj = beamlineMonitor(hGUI)
             %BEAMLINEMONITOR Construct an instance of this class
-
             obj@acquisition(hGUI);
 
             % Add listener to delete configuration GUI figure if main beamline GUI deleted
-            addlistener(obj.hBeamlineGUI,'ObjectBeingDestroyed',@obj.beamlineGUIDeleted);
+            listener(obj.hBeamlineGUI,'ObjectBeingDestroyed',@obj.beamlineGUIDeleted);
 
         end
 
@@ -30,31 +29,30 @@ classdef beamlineMonitor < acquisition
             %RUNSWEEP Establishes configuration GUI, with run sweep button triggering actual sweep execution
 
             % Disable and relabel beamline GUI run test button
-            set(obj.hBeamlineGUI.hRunBtn,'String','Test in progress...');
-            set(obj.hBeamlineGUI.hRunBtn,'Enable','off');
+            %set(obj.hBeamlineGUI.hRunBtn,'String','Test in progress...');
+            %set(obj.hBeamlineGUI.hRunBtn,'Enable','off');
 
             % Create figures
             obj.hFigure = figure('NumberTitle','off',...
                 'Name','Beamline Monitor - Close Window to Exit Test',...
-                'Position',[100,100,1680,480],...
+                'Position',[100,100,900,600],...
                 'DeleteFcn',@obj.closeFigure);
-
             try
-
                 % Create axes
                 obj.hAxesP = axes(obj.hFigure);
-                subplot(1,3,1,obj.hAxesP);
+                subplot(2,2,[1 2],obj.hAxesP);
                 obj.hAxesI = axes(obj.hFigure);
-                subplot(1,3,2,obj.hAxesI);
+                subplot(2,2,3,obj.hAxesI);
                 obj.hAxesV = axes(obj.hFigure);
-                subplot(1,3,3,obj.hAxesV);
+                subplot(2,2,4,obj.hAxesV);
 
-                % Add listener to update data when new readings are taken by main beamlineGUI
-                obj.ReadingsListener = addlistener(obj.hBeamlineGUI,'LastRead','PostSet',@obj.updateFigures);
+                % legend(obj.hAxesP,'Rough Vac','Gas Line','Beamline','Chambe
     
+                % Add listener to update data when new readings are taken by main beamlineGUI
+                obj.ReadingsListener = listener(obj.hBeamlineGUI,...
+                                'LastRead','PostSet',@obj.updateFigures);
                 % Initialize Readings with LastRead from beamlineGUI
                 obj.Readings = obj.hBeamlineGUI.LastRead;
-    
                 % Retrieve config info
                 operator = obj.hBeamlineGUI.TestOperator;
                 gasType = obj.hBeamlineGUI.GasType;
@@ -88,47 +86,16 @@ classdef beamlineMonitor < acquisition
             %CLOSEFIGURE Re-enable beamline GUI run test button, plot all data, and delete obj when figure is closed
             
             % Enable beamline GUI run test button if still valid
-            if isvalid(obj.hBeamlineGUI)
-                set(obj.hBeamlineGUI.hRunBtn,'String','RUN TEST');
-                set(obj.hBeamlineGUI.hRunBtn,'Enable','on');
-            end
-    
-            % Plot pressure data
-            hFigP = figure('NumberTitle','off','Name','Pressure Data');
-            hAxP = axes(hFigP);
-            plot(hAxP,[obj.Readings.T],[obj.Readings.PRough],'r-',...
-                [obj.Readings.T],[obj.Readings.PGas],'g-',...
-                [obj.Readings.T],[obj.Readings.PBeamline],'b-',...
-                [obj.Readings.T],[obj.Readings.PChamber],'c-');
-            set(hAxP,'YScale','log');
-            datetick(hAxP,'x','HH:MM:SS');
-            ylabel(hAxP,'Pressure [torr]');
-            title(hAxP,'Pressure vs Time');
-            legend(hAxP,'Rough Vac','Gas Line','Beamline','Chamber','Location','northwest');
-
-            % Plot current data
-            hFigI = figure('NumberTitle','off','Name','Current Data');
-            hAxI = axes(hFigI);
-            plot(hAxI,[obj.Readings.T],[obj.Readings.IFaraday],'r-');
-            datetick(hAxI,'x','HH:MM:SS');
-            ylabel(hAxI,'I_F_a_r_a_d_a_y [A]');
-            title(hAxI,'Current vs Time');
-
-            % Plot voltage data
-            hFigV = figure('NumberTitle','off','Name','Voltage Data');
-            hAxV = axes(hFigV);
-            plot(hAxV,[obj.Readings.T],[obj.Readings.VExtraction],'r-',...
-                [obj.Readings.T],[obj.Readings.VEinzel],'g-',...
-                [obj.Readings.T],[obj.Readings.VExb],'b-',...
-                [obj.Readings.T],[obj.Readings.VEsa],'c-',...
-                [obj.Readings.T],[obj.Readings.VDefl],'m-',...
-                [obj.Readings.T],[obj.Readings.VYsteer],'k-');
-            datetick(hAxV,'x','HH:MM:SS');
-            ylabel(hAxV,'Voltage [V]');
-            title(hAxV,'Voltage vs Time');
-            legend(hAxV,'Extraction','Einzel','ExB','ESA','Defl','y-steer','Location','northwest');
+%             if isvalid(obj.hBeamlineGUI)
+%                 set(obj.hBeamlineGUI.hRunBtn,'String','RUN TEST');
+%                 set(obj.hBeamlineGUI.hRunBtn,'Enable','on');
+%                 obj.mkFigure();
+%                 obj.plotVals();
+%             end
 
             % Delete obj
+%             readings = obj.Readings;
+%             save(fullfile(obj.hBeamlineGUI.DataDir,'beamlineMonitor.mat'),'readings');
             delete(obj.ReadingsListener);
             delete(obj);
 
@@ -137,69 +104,105 @@ classdef beamlineMonitor < acquisition
     end
 
     methods (Access = private)
+        function mkFigure(obj,~,~)
+
+                 obj.hFigure = figure('NumberTitle','off',...
+                'Name','Beamline Monitor - Close Window to Exit Test',...
+                'Position',[100,100,900,600],...
+                'DeleteFcn',@obj.closeFigure);
+                % Create axes
+                obj.hAxesP = axes(obj.hFigure);
+                subplot(2,2,[1 2],obj.hAxesP);
+                obj.hAxesI = axes(obj.hFigure);
+                subplot(2,2,3,obj.hAxesI);
+                obj.hAxesV = axes(obj.hFigure);
+                subplot(2,2,4,obj.hAxesV);
+
+
+
+        end
+        
+        function plotVals(obj)
+            % Update subplots with readings arrays
+            % Currently re-plotting all values, probaby can just add individual values
+            if isvalid(obj)
+                time = [obj.Readings.dateTime];
+
+                % Plot pressure data
+                plot(obj.hAxesP,...
+                        time,[obj.Readings.pressureBeamIG1],...
+                        time,[obj.Readings.pressureChamberIG1],...
+                        time,[obj.Readings.pressureChamberIG2],...
+                        time,[obj.Readings.pressureChamberRough1],...
+                        time,[obj.Readings.pressureSourceGas],...
+                        time,[obj.Readings.pressureBeamTurboRough],...
+                        time,[obj.Readings.pressureBeamIG2]);
+
+                % Plot optics voltage data
+                plot(obj.hAxesV,...
+                        time,[obj.Readings.voltDefl],...
+                        time,[obj.Readings.voltXsteer],...
+                        time,[obj.Readings.voltYsteer],...
+                        time,[obj.Readings.voltExB],...
+                        time,[obj.Readings.voltExt],...
+                        time,[obj.Readings.voltLens]);
+                % plot faraday cup current
+                plot(obj.hAxesI,[obj.Readings.T],...
+                                [obj.Readings.Ifaraday],'r-');
+
+                legend(obj.hAxesP,...
+                                ["BeamIG1",...
+                                "ChamberIG1",...
+                                "ChamberIG2",...
+                                "ChamberRough1",...
+                                "sourceGas",...
+                                "BeamRough",...
+                                "BeamIG2"],...
+                        'Location','northwest');
+
+                legend(obj.hAxesV,...
+                        ["Defl",...
+                        "Xsteer",...
+                        "Ysteer",...
+                        "ExB",...
+                        "Ext",...
+                        "Lens"],...
+                        'Location','northwest');
+    
+                set(obj.hAxesP,'YScale','log');
+                %datetick(obj.hAxesP,'x','HH:MM:SS');
+                ylabel(obj.hAxesP,'Pressure [torr]');
+                title(obj.hAxesP,'System Pressure');
+    
+                %datetick(obj.hAxesI,'x','HH:MM:SS');
+                ylabel(obj.hAxesI,'I_{Faraday} [A]');
+                title(obj.hAxesI,'Beam Current');
+    
+                %datetick(obj.hAxesV,'x','HH:MM:SS');
+                ylabel(obj.hAxesV,'Voltage [V]');
+                title(obj.hAxesV,'Optics Voltage');
+                set(obj.hAxesV,'YScale','log');
+            end
+        end
 
         function updateFigures(obj,~,~)
 
             % Check that a new timestamp was recorded
             if obj.Readings(end).T ~= obj.hBeamlineGUI.LastRead.T
-
                 try
-
                     % Append LastRead to Readings property
                     obj.Readings(end+1) = obj.hBeamlineGUI.LastRead;
-    
+                    
+                    time = [obj.Readings.dateTime];
+                    log_time = time>(max(time)-.01);
+                    obj.Readings = obj.Readings(log_time);
+
                     % Update pressure monitor
-                    if length(obj.Readings)>=100
-                        plot(obj.hAxesP,[obj.Readings(end-99:end).T],[obj.Readings(end-99:end).PRough],'r-',...
-                            [obj.Readings(end-99:end).T],[obj.Readings(end-99:end).PGas],'g-',...
-                            [obj.Readings(end-99:end).T],[obj.Readings(end-99:end).PBeamline],'b-',...
-                            [obj.Readings(end-99:end).T],[obj.Readings(end-99:end).PChamber],'c-');
-                    else
-                        plot(obj.hAxesP,[obj.Readings.T],[obj.Readings.PRough],'r-',...
-                            [obj.Readings.T],[obj.Readings.PGas],'g-',...
-                            [obj.Readings.T],[obj.Readings.PBeamline],'b-',...
-                            [obj.Readings.T],[obj.Readings.PChamber],'c-');
-                    end
-                    set(obj.hAxesP,'YScale','log');
-                    datetick(obj.hAxesP,'x','HH:MM:SS');
-                    ylabel(obj.hAxesP,'Pressure [torr]');
-                    title(obj.hAxesP,'PRESSURE MONITOR (LAST 100 READINGS)');
-                    legend(obj.hAxesP,'Rough Vac','Gas Line','Beamline','Chamber','Location','northwest');
-    
-                    % Update current monitor
-                    if length(obj.Readings)>=100
-                        plot(obj.hAxesI,[obj.Readings(end-99:end).T],[obj.Readings(end-99:end).IFaraday],'r-');
-                    else
-                        plot(obj.hAxesI,[obj.Readings.T],[obj.Readings.IFaraday],'r-');
-                    end
-                    datetick(obj.hAxesI,'x','HH:MM:SS');
-                    ylabel(obj.hAxesI,'I_{Faraday} [A]');
-                    title(obj.hAxesI,'CURRENT MONITOR (LAST 100 READINGS)');
-    
-                    % Update voltage monitor
-                    if length(obj.Readings)>=100
-                        plot(obj.hAxesV,[obj.Readings(end-99:end).T],[obj.Readings(end-99:end).VExtraction],'r-',...
-                            [obj.Readings(end-99:end).T],[obj.Readings(end-99:end).VEinzel],'g-',...
-                            [obj.Readings(end-99:end).T],[obj.Readings(end-99:end).VExb],'b-',...
-                            [obj.Readings(end-99:end).T],[obj.Readings(end-99:end).VEsa],'c-',...
-                            [obj.Readings(end-99:end).T],[obj.Readings(end-99:end).VDefl],'m-',...
-                            [obj.Readings(end-99:end).T],[obj.Readings(end-99:end).VYsteer],'k-');
-                    else
-                        plot(obj.hAxesV,[obj.Readings.T],[obj.Readings.VExtraction],'r-',...
-                            [obj.Readings.T],[obj.Readings.VEinzel],'g-',...
-                            [obj.Readings.T],[obj.Readings.VExb],'b-',...
-                            [obj.Readings.T],[obj.Readings.VEsa],'c-',...
-                            [obj.Readings.T],[obj.Readings.VDefl],'m-',...
-                            [obj.Readings.T],[obj.Readings.VYsteer],'k-');
-                    end
-                    datetick(obj.hAxesV,'x','HH:MM:SS');
-                    ylabel(obj.hAxesV,'Voltage [V]');
-                    title(obj.hAxesV,'VOLTAGE MONITOR (LAST 100 READINGS)');
-                    legend(obj.hAxesV,'Extraction','Einzel','ExB','ESA','Defl','y-steer','Location','northwest');
+                    obj.plotVals()
 
                     % Append new data to file
-                    readings = obj.Readings;
-                    save(fullfile(obj.hBeamlineGUI.DataDir,'beamlineMonitor.mat'),'readings');
+%                     readings = obj.Readings;
+%                     save(fullfile(obj.hBeamlineGUI.DataDir,'beamlineMonitor.mat'),'readings');
     
                 catch MExc
     
