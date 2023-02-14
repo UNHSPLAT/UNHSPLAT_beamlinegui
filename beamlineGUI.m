@@ -42,9 +42,8 @@ classdef beamlineGUI < handle
         Acquisitions = []%
         
         hRunBtn % Handle to run test button
-
-        hCamController; % Handle to cam controller 
         hCamGUI; % IHandle to cam conctrol init button
+        hCamButton %
 
     end
 
@@ -82,7 +81,6 @@ classdef beamlineGUI < handle
             pause(1);
             obj.hMonitorPlt = beamlineMonitor(obj);
             obj.hMonitorPlt.runSweep();
-
         end
 
         function readings = updateReadings(obj,~,~,fname)
@@ -133,8 +131,15 @@ classdef beamlineGUI < handle
             end
 
         end
-
+        
+        function setRefreshRate(obj,t)
+            stop(obj.hTimer);
+            obj.hTimer.set('period',t);
+            start(obj.hTimer);
+        end
+    
     end
+
 
     methods (Access = private)
 
@@ -171,7 +176,7 @@ classdef beamlineGUI < handle
             % Create figure
             obj.hFigure = figure('MenuBar','none',...
                 'ToolBar','none',...
-                'Position',[0,0,1200,700],...
+                'Position',[0,0,1200,750],...
                 'NumberTitle','off',...
                 'Name','Beamline GUI',...
                 'DeleteFcn',@obj.closeGUI);
@@ -256,14 +261,14 @@ classdef beamlineGUI < handle
 
             colInd = 1;
             xColStart = xstart;
-            uicontrol(obj.hCamGUI, ...
+            obj.hCamButton = uicontrol(obj.hCamGUI, ...
                 'Style','pushbutton',...
                'Position',[xColStart,ygap,colSize(colInd),ysize],...
                'String','Start',...
                'FontSize',12,...
                'FontWeight','bold',...
                 'HorizontalAlignment','center',...
-                'Callback',@obj.initCamController);
+                'Callback',@obj.trigCamController);
 %             ypos = ypos+ygap;
             
             obj.hCamGUI.Position(4) = ysize+ygap+yBorderBuffer;
@@ -277,7 +282,7 @@ classdef beamlineGUI < handle
             xgap = 15;
             xstart = 10;
 
-            colSize = [180,140,40,60,60];
+            colSize = [180,140,60,60,60];
 
             obj.hStatusGrp = uipanel(obj.hFigure,...
                 'Title','Beamline Status',...
@@ -493,12 +498,6 @@ classdef beamlineGUI < handle
             % Start timer
             start(obj.hTimer);
 
-%             obj.hCamTimer = timer('Name','readTimer',...
-%                 'Period',1,...
-%                 'ExecutionMode','fixedRate',...
-%                 'TimerFcn',@obj.hCamController.datamanager.mainLoop,...
-%                 'ErrorFcn',@obj.restartTimer);
-%             start(obj.hCamTimer);
         end
 
         function restartTimer(obj,~,~)
@@ -514,8 +513,14 @@ classdef beamlineGUI < handle
 
         end
 
-        function initCamController(obj,~,~)
-            obj.hCamController = camControl();
+        function trigCamController(obj,~,~)
+            if obj.Hardware.MCPwebCam.Connected
+                obj.Hardware.MCPwebCam.shutdown();
+                obj.hCamButton.set('String','Start');
+            else
+                obj.Hardware.MCPwebCam.run();
+                obj.hCamButton.set('String','Stop');
+            end
         end
 
 
@@ -632,13 +637,12 @@ classdef beamlineGUI < handle
             if strcmp(obj.hTimer.Running,'on')
                 stop(obj.hTimer);
             end
-            obj.hCamController.shutdown();
+            obj.Hardware.MCPwebCam.shutdown();
             % Delete obj
             delete(obj);
-
-
-
         end
+
+
 
     end
 

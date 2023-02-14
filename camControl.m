@@ -5,17 +5,27 @@ classdef camControl < handle
         textLabel string = ""% 
         unit string = ""%
     end
+
     properties (SetObservable) 
         figmanager%
         datamanager%
         uimanager%
-        timer%
+        Timer%
+        cam%
+        Connected%
+        lastRead%
     end
 
     methods
         function obj = camControl(varargin)
             % Initialize Webcam
-            try cam = webcam; %cam.ColorEnable = 0;
+            obj.Connected = false;
+            obj.Tag = 'MCPcam';
+            obj.lastRead = nan;
+        end
+
+        function run(obj,~,~)
+            try obj.cam = webcam; %cam.ColorEnable = 0;
             catch
                 link = 'https://www.mathworks.com/matlabcentral/fileexchange/45182-matlab-support-package-for-usb-webcams';
                 error(['Missing MATLAB Support Package for USB Webcams!' ...
@@ -26,11 +36,11 @@ classdef camControl < handle
                 mkdir input\
             end
             addpath(genpath('.'));
-            
             % Initialize Figure, UI, and Data Manager objects
-            obj.figmanager = FigureManager(cam);
-            obj.uimanager = UIManager(cam);
-            obj.datamanager = DataManager(obj.figmanager,obj.uimanager,cam);
+            obj.figmanager = FigureManager(obj.cam);
+            obj.uimanager = UIManager(obj.cam);
+            obj.datamanager = DataManager(obj.figmanager,obj.uimanager,obj.cam);
+
             connectComponents(obj.uimanager,obj.figmanager,obj.datamanager);
             
             % Test if using supported gpu
@@ -46,32 +56,45 @@ classdef camControl < handle
             obj.datamanager.setupPreview;
             
             % initialize timer to execute peakfinding
-            obj.timer =  timer('Period',.5,... %period
+            obj.Timer =  timer('Period',.5,... %period
                       'ExecutionMode','fixedSpacing',... %{singleShot,fixedRate,fixedSpacing,fixedDelay}
                       'BusyMode','queue',... %{drop, error, queue}
                       'StartDelay',0,...
                       'TimerFcn',@obj.update ...
                       );
 
-            start(obj.timer);
-            
+            start(obj.Timer);
+            obj.Connected = true;
         end
 
         function update(obj,~,~)
-            obj.datamanager.mainLoop;
+            if obj.Connected
+                obj.datamanager.mainLoop;
+                obj.lastRead = obj.datamanager.CountRate;
+            else
+                obj.lastRead = nan;
+            end
         end
 
         function shutdown(obj,~,~)
+            if obj.Connected
             close(obj.figmanager.RecordingFigure);
             close(obj.figmanager.RateGraphFigure);
             close(obj.figmanager.PreviewFigure);
             close(obj.uimanager.WebcamUIFigure);
-            stop(obj.timer);
+            stop(obj.Timer);
+            obj.Connected = false;
+            obj.lastRead = nan;
+            end
+        end
+
+        function connectDevice(obj)
+            % Dummy function to allow for structure to work as a hwDevice.
         end
 
         function restart(obj,~,~)
             obj.shutdown();
-            obj = camControl;
+            obj.run();
         end
 
     end
