@@ -145,6 +145,18 @@ classdef beamlineGUI < handle
             start(obj.hTimer);
 
         end
+
+        function garbo = readHardware(obj)
+            t1 = now();
+            garbo = structfun(@(x)x.read(),obj.Hardware,'UniformOutput',false);
+            disp(now()-t1);
+            disp(structfun(@(x)x.lastRead,obj.Hardware,'UniformOutput',false));
+
+            t2 = now();
+            garbo = structfun(@(x)parfeval(@x.read,0),obj.Hardware,'UniformOutput',false);
+            disp(now()-t2);
+            disp(structfun(@(x)x.lastRead,obj.Hardware,'UniformOutput',false));
+        end
     
     end
 
@@ -516,6 +528,8 @@ classdef beamlineGUI < handle
 
         end
 
+
+
         function restartTimer(obj,~,~)
             %RESTARTTIMER Restarts timer if error
 
@@ -535,7 +549,7 @@ classdef beamlineGUI < handle
                 stop(obj.hTimer);
             end
         end
-        
+
         function trigCamController(obj,~,~)
             if obj.Hardware.MCPwebCam.Connected
                 obj.Hardware.MCPwebCam.shutdown();

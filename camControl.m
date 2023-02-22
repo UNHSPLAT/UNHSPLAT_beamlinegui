@@ -76,6 +76,14 @@ classdef camControl < handle
             end
         end
 
+        function val = read(obj);
+            if obj.Connected
+                val = obj.lastRead;
+            else
+                val = nan;
+            end
+        end
+
         function shutdown(obj,~,~)
             if obj.Connected
             close(obj.figmanager.RecordingFigure);
