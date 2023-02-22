@@ -200,13 +200,17 @@ classdef beamlineGUI < handle
             obj.hCopyTS = uimenu(obj.hEditMenu,'Text','Copy Test Sequence',...
                 'MenuSelectedFcn',@obj.copyTSCallback);
 
-            % Create copy test sequence menu button
+            % add option to set sample rate
             uimenu(obj.hEditMenu,'Text','Set Sample Rate',...
                 'MenuSelectedFcn',@obj.setRefreshRate);
+            % add option to disable Timer
+            uimenu(obj.hEditMenu,'Text','Disable Timer',...
+                'MenuSelectedFcn',@obj.stopTimer);
+            uimenu(obj.hEditMenu,'Text','Restart Timer',...
+                'MenuSelectedFcn',@obj.restartTimer);
 
             % Turn off dock controls (defaults to on when first uimenu created)
             set(obj.hFigure,'DockControls','off');
-
 
             %===================================================================================
             % Create instrument connection status uicontrol group
@@ -525,6 +529,13 @@ classdef beamlineGUI < handle
 
         end
 
+        function stopTimer(obj,~,~)
+            % Stop timer if still running
+            if strcmp(obj.hTimer.Running,'on')
+                stop(obj.hTimer);
+            end
+        end
+        
         function trigCamController(obj,~,~)
             if obj.Hardware.MCPwebCam.Connected
                 obj.Hardware.MCPwebCam.shutdown();

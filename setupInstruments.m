@@ -52,16 +52,15 @@
 
     % Config Power Supplies
     % add popup window to ask if user wants to zero power supplies or not
-    set_zero_yn = questdlg('Set power supply voltages to 0v?', ...
-                            'Stanford Research Config');
-    
+    % way this is implemented, this removes the zeroing completely, which might not be what I want
+%     set_zero_yn = questdlg('Set power supply voltages to 0v?', ...
+%                             'Stanford Research Config');
      function self = config_pwrsupply(self)
-        % Handle response
-        switch set_zero_yn
-            case 'Yes'
+%         % Handle response
+%         switch set_zero_yn
+%             case 'Yes'
                 self.setVSet(2);
-
-        end
+%         end
     end
 
     % Generate list of available hardware
