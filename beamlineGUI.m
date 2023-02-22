@@ -72,7 +72,7 @@ classdef beamlineGUI < handle
             % obj.createTimer;
             obj.hTimer = timer('Name','readTimer',...
                 'Period',4,...
-                'ExecutionMode','fixedDelay',...
+                'ExecutionMode','fixedRate',...
                 'TimerFcn',@obj.updateReadings,...
                 'ErrorFcn',@obj.restartTimer);
             start(obj.hTimer);
@@ -132,10 +132,18 @@ classdef beamlineGUI < handle
 
         end
         
-        function setRefreshRate(obj,t)
+        function setRefreshRate(obj,~,~)
             stop(obj.hTimer);
-            obj.hTimer.set('period',t);
+            
+            prompt = {'Enter desired rate [S]'};
+            dlgtitle = 'Refresh Rate';
+            dims = [1 35];
+            definput = {'4'};
+            answer = inputdlg(prompt,dlgtitle,dims,definput);
+
+            obj.hTimer.set('period',str2double(answer));
             start(obj.hTimer);
+
         end
     
     end
@@ -191,6 +199,10 @@ classdef beamlineGUI < handle
             % Create copy test sequence menu button
             obj.hCopyTS = uimenu(obj.hEditMenu,'Text','Copy Test Sequence',...
                 'MenuSelectedFcn',@obj.copyTSCallback);
+
+            % Create copy test sequence menu button
+            uimenu(obj.hEditMenu,'Text','Set Sample Rate',...
+                'MenuSelectedFcn',@obj.setRefreshRate);
 
             % Turn off dock controls (defaults to on when first uimenu created)
             set(obj.hFigure,'DockControls','off');
