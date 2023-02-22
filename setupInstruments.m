@@ -51,8 +51,17 @@
 
 
     % Config Power Supplies
-    function self = config_pwrsupply(self)
-        self.setVSet(2);
+    % add popup window to ask if user wants to zero power supplies or not
+    set_zero_yn = questdlg('Set power supply voltages to 0v?', ...
+                            'Stanford Research Config');
+    
+     function self = config_pwrsupply(self)
+        % Handle response
+        switch set_zero_yn
+            case 'Yes'
+                self.setVSet(2);
+
+        end
     end
 
     % Generate list of available hardware
